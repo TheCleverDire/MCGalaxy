@@ -1,5 +1,5 @@
-MCGalaxy Classic
-===============
+MCGalaxy Classic - Dire Edition
+==============================
 
 MCGalaxy is a **ClassiCube Server Software** based on MCForge, which is in turn based on MCLawl.
 
