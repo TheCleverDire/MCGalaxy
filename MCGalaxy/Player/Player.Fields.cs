@@ -28,6 +28,7 @@ namespace MCGalaxy {
     
     public partial class Player : IDisposable {
 
+        public static VolatileArray<Player> pending = new VolatileArray<Player>(false);
         public PlayerIgnores Ignores = new PlayerIgnores();
         public static string lastMSG = "";
         public Zone ZoneIn;
@@ -39,7 +40,7 @@ namespace MCGalaxy {
 
         public string truename;
         internal bool nonPlayerClient = false;
-        public INetSocket Socket;
+        public INetworkSocket Socket;
         public PingList Ping = new PingList();
         public BlockID MaxRawBlock = Block.OriginalMaxBlock;
         
@@ -50,7 +51,7 @@ namespace MCGalaxy {
         public string BrushName = "Normal", DefaultBrushArgs = "";
         public Transform Transform = NoTransform.Instance;
         public string afkMessage;
-        public bool ClickToMark = true;
+        public bool disconnected, ClickToMark = true;
 
         public string name;
         public string DisplayName;
@@ -118,7 +119,7 @@ namespace MCGalaxy {
             set { startTime = DateTime.UtcNow.Subtract(value); }
         }
         public DateTime SessionStartTime;
-        public DateTime FirstLogin, LastLogin;
+        public DateTime FirstLogin, LastLogin, LastLogout;
 
         public bool staticCommands;
         internal DateTime lastAccessStatus;

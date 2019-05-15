@@ -31,7 +31,7 @@ namespace MCGalaxy.Commands.Info {
             Player pl = PlayerInfo.FindMatches(p, message, out matches);
             if (matches > 1) return;
             if (matches == 1) {
-                Show(p, pl.ColoredName, pl.FirstLogin, pl.LastLogin);
+                Show(p, pl.ColoredName, pl.FirstLogin, pl.LastLogin, pl.LastLogout);
                 p.Message(pl.ColoredName + " %Sis currently online.");
                 return;
             }
@@ -39,21 +39,27 @@ namespace MCGalaxy.Commands.Info {
             p.Message("Searching PlayerDB..");
             PlayerData target = PlayerDB.Match(p, message);
             if (target == null) return;
-            Show(p, target.Name, target.FirstLogin, target.LastLogin);
+            Show(p, target.Name, target.FirstLogin, target.LastLogin, target.LastLogout);
         }
         
-        static void Show(Player p, string name, DateTime first, DateTime last) {
-            TimeSpan firstDelta = DateTime.Now - first;
-            TimeSpan lastDelta = DateTime.Now - last;
-            
+        static void Show(Player p, string name, DateTime first, DateTime last, DateTime lastd) {
             name = PlayerInfo.GetColoredName(p, name);
-            p.Message("{0} %Swas first seen at {1:H:mm} on {1:d} ({2} ago)", name, first, firstDelta.Shorten());
+            p.Message("%aLast seen data for {0}%a:", name);
+
+            TimeSpan firstDelta = DateTime.Now - first;
+            TimeSpan firstDelta2 = last - first;
+            TimeSpan lastDelta = DateTime.Now - last;
+            TimeSpan lastDeltad = DateTime.Now - lastd;
+
+            p.Message("{0} %Swas first seen at {1:H:mm} on {1:d} ({2} ago) ({3} ago since last seen)", name, first, firstDelta.Shorten(), firstDelta2.Shorten());
             p.Message("{0} %Swas last seen at {1:H:mm} on {1:d} ({2} ago)", name, last, lastDelta.Shorten());
+            p.Message("{0} %Swas last seen {1} ago", name, lastDeltad.Shorten());
         }
         
         public override void Help(Player p) {
             p.Message("%T/Seen [player]");
             p.Message("%HSays when a player was first and last seen on the server");
+            p.Message("&HAlso says how long ago it was");
         }
     }
 }

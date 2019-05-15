@@ -26,27 +26,24 @@ namespace MCGalaxy.DB {
 
         public const string ColumnDeaths = "totalDeaths";
         public const string ColumnLogins = "totalLogin";
-        public const string ColumnMoney  = "Money";
+        public const string ColumnMoney = "Money";
         public const string ColumnKicked = "totalKicked";
         
-        public const string ColumnColor  = "color";
-        public const string ColumnTitle  = "title";
+        public const string ColumnColor = "color";
+        public const string ColumnTitle = "title";
         public const string ColumnTColor = "title_color";
         
-        public const string ColumnName = "Name";
-        public const string ColumnIP   = "IP";
-        public const string ColumnID   = "ID";
-        
         public const string ColumnFirstLogin = "FirstLogin";
-        public const string ColumnLastLogin  = "LastLogin";
-        public const string ColumnTimeSpent  = "TimeSpent";
+        public const string ColumnLastLogin = "LastLogin";
+        public const string ColumnLastLogout = "Lastlogout";
+        public const string ColumnTimeSpent = "TimeSpent";
         
-        public const string ColumnTotalBlocks   = "totalBlocks";
+        public const string ColumnTotalBlocks = "totalBlocks";
         public const string ColumnTotalCuboided = "totalCuboided";
-        public const string ColumnMessages      = "Messages";
+        public const string ColumnMessages = "Messages";
         
         public string Name, Color, Title, TitleColor, IP;
-        public DateTime FirstLogin, LastLogin;
+        public DateTime FirstLogin, LastLogin, LastLogout;
         public int DatabaseID, Money, Deaths, Logins, Kicks, Messages;
         public long TotalModified, TotalDrawn, TotalPlaced, TotalDeleted;
         public TimeSpan TotalTime;
@@ -59,9 +56,9 @@ namespace MCGalaxy.DB {
             p.TimesVisited = 1;
             
             string now = DateTime.Now.ToString(Database.DateFormat);
-            Database.Backend.AddRow("Players", "Name, IP, FirstLogin, LastLogin, totalLogin, Title, " +
+            Database.Backend.AddRow("Players", "Name, IP, FirstLogin, LastLogin, LastLogout, totalLogin, Title, " +
                                     "totalDeaths, Money, totalBlocks, totalKicked, Messages, TimeSpent",
-                                    p.name, p.ip, now, now, 1, "", 0, 0, 0, 0, 0, (long)p.TotalTime.TotalSeconds);
+                                    p.name, p.ip, now, now, DateTime.MinValue, 1, "", 0, 0, 0, 0, 0, (long)p.TotalTime.TotalSeconds);
             
             object id = Database.Backend.ReadRows("Players", "ID", null, ReadID, "WHERE Name=@0", p.name);
             if (id != null) {
@@ -76,6 +73,7 @@ namespace MCGalaxy.DB {
             p.TotalTime = data.TotalTime;
             p.DatabaseID = data.DatabaseID;
             p.FirstLogin = data.FirstLogin;
+            p.LastLogout = data.LastLogout;
             
             p.title = data.Title;
             p.titlecolor = data.TitleColor;
@@ -95,9 +93,9 @@ namespace MCGalaxy.DB {
         
         internal static PlayerData Parse(IDataRecord record) {
             PlayerData data = new PlayerData();
-            data.Name = record.GetText(ColumnName);
-            data.IP   = record.GetText(ColumnIP);
-            data.DatabaseID = record.GetInt(ColumnID);
+            data.Name = record.GetText("Name");
+            data.IP   = record.GetText("IP");
+            data.DatabaseID = record.GetInt("ID");
             
             // Backwards compatibility with old format
             string rawTime = record.GetText(ColumnTimeSpent);
@@ -110,6 +108,7 @@ namespace MCGalaxy.DB {
             
             data.FirstLogin = ParseDateTime(record, ColumnFirstLogin);
             data.LastLogin  = ParseDateTime(record, ColumnLastLogin);
+            data.LastLogout = ParseDateTime(record, ColumnLastLogout);
             
             data.Title = record.GetText(ColumnTitle);
             data.Title = data.Title.Cp437ToUnicode();
