@@ -94,11 +94,24 @@ namespace MCGalaxy {
             if (save) BotsFile.Save(bot.level);
         }
         
-        internal static void RemoveLoadedBots(Level lvl, bool save) {
+        internal static int RemoveLoadedBots(Level lvl, bool save) {
             PlayerBot[] bots = lvl.Bots.Items;
             for (int i = 0; i < bots.Length; i++) {
                 Remove(bots[i], save);
             }
+            return bots.Length;
+        }
+        
+        internal static int RemoveBotsOwnedBy(Player p, string ownerName, Level lvl, bool save) {
+            PlayerBot[] bots = lvl.Bots.Items;
+            int removedCount = 0;
+            for (int i = 0; i < bots.Length; i++) {
+                if (ownerName.CaselessEq(bots[i].Owner)) {
+                    Remove(bots[i], save);
+                    removedCount++;
+                }
+            }
+            return removedCount;
         }
         
 
