@@ -33,8 +33,6 @@ namespace MCGalaxy.Scripting {
         public const string SourceDir = "extra/commands/source/";
         public const string DllDir = "extra/commands/dll/";
         public const string ErrorPath = "logs/errors/compiler.log";
-        
-        static readonly string divider = new string('-', 25);
         protected CodeDomProvider compiler;
         
         public abstract string Ext { get; }
@@ -74,49 +72,40 @@ namespace MCGalaxy.Scripting {
         }
 
         public bool Compile(string srcPath, string dstPath) {
-            StringBuilder sb = null;
-            bool exists = File.Exists(ErrorPath);
-            
-            if (!File.Exists(srcPath)) {
-                sb = new StringBuilder();
-                using (StreamWriter w = new StreamWriter(ErrorPath, exists)) {
-                    AppendDivider(sb, exists);
-                    sb.AppendLine("File not found: " + srcPath);
-                    w.Write(sb.ToString());
-                }
-                return false;
-            }
-
             CompilerParameters args = new CompilerParameters();
             args.GenerateExecutable = false;
             args.OutputAssembly = dstPath;
             
-            List<string> source = ReadSourceCode(srcPath, args);
+            List<string> source = ReadSource(srcPath, args);
             CompilerResults results = CompileSource(source.Join(Environment.NewLine), args);
-            if (results.Errors.Count == 0) return true;
-
-            sb = new StringBuilder();
-            AppendDivider(sb, exists);
-            bool first = true;
+            if (!results.Errors.HasErrors) return true;
+            
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("############################################################");
+            sb.AppendLine("Errors when compiling " + srcPath);
+            sb.AppendLine("############################################################");
+            sb.AppendLine();
             
             foreach (CompilerError err in results.Errors) {
-                if (!first) AppendDivider(sb, true);
-                string type = err.IsWarning ? "Warning" : "Error";
-                
+                string type = err.IsWarning ? "Warning" : "Error";                
                 sb.AppendLine(type + " on line " + err.Line + ":");
+                
                 if (err.Line > 0) sb.AppendLine(source[err.Line - 1]);
                 if (err.Column > 0) sb.Append(' ', err.Column - 1);
                 sb.AppendLine("^-- " + type + " #" + err.ErrorNumber + " - " + err.ErrorText);
-                first = false;
+                
+                sb.AppendLine();
+                sb.AppendLine("-------------------------");
+                sb.AppendLine();
             }
             
-            using (StreamWriter w = new StreamWriter(ErrorPath, exists)) {
+            using (StreamWriter w = new StreamWriter(ErrorPath, true)) {
                 w.Write(sb.ToString());
             }
             return !results.Errors.HasErrors;
         }
         
-        List<string> ReadSourceCode(string path, CompilerParameters args) {
+        List<string> ReadSource(string path, CompilerParameters args) {
             List<string> lines = Utils.ReadAllLinesList(path);
             // Allow referencing other assemblies using 'Reference [assembly name]' at top of the file
             for (int i = 0; i < lines.Count; i++) {
@@ -128,13 +117,6 @@ namespace MCGalaxy.Scripting {
                 lines.RemoveAt(i); i--;
             }
             return lines;
-        }
-        
-        void AppendDivider(StringBuilder sb, bool exists) {
-            if (!exists) return;
-            sb.AppendLine();
-            sb.AppendLine(divider);
-            sb.AppendLine();
         }
         
         public CompilerResults CompileSource(string source, CompilerParameters args) {

@@ -37,8 +37,8 @@ namespace MCGalaxy {
         public string ListenIP = "0.0.0.0";
         [ConfigInt("port", "Server", 25565, 0, 65535)]
         public int Port = 25565;
-        [ConfigBool("public", "Server", true)]
-        public bool Public = true;
+        [ConfigBool("public", "Server", false)]
+        public bool Public = false;
         [ConfigBool("verify-names", "Server", true)]
         public bool VerifyNames = true;
         [ConfigBool("support-web-client", "Server", true)]
@@ -237,6 +237,8 @@ namespace MCGalaxy {
         public string DefaultDemoteMessage = "&4DEMOTED! &6We're sorry for your loss. Good luck on your future endeavors! &1:'(";       
         [ConfigString("custom-restart-message", "Messages", "Server restarted. Sign in again and rejoin.")]
         public string DefaultRestartMessage = "Server restarted. Sign in again and rejoin.";
+        [ConfigString("custom-whitelist-message", "Messages", "This is a private server!")]
+        public string DefaultWhitelistMessage = "This is a private server!";
         
         static readonly bool[] defLogLevels = new bool[] { 
             true,true,true,true,true,true, true,true,true, 

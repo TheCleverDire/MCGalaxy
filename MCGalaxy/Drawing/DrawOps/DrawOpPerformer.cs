@@ -138,10 +138,7 @@ namespace MCGalaxy.Drawing.Ops {
         }
 
         static void DoReload(Player p, Level lvl) {
-            Player[] players = PlayerInfo.Online.Items;
-            foreach (Player pl in players) {
-                if (pl.level == lvl) LevelActions.ReloadFor(p, pl, true);
-            }
+            LevelActions.ReloadAll(lvl, p, true);
             Server.DoGC();
         }
 
@@ -170,7 +167,6 @@ namespace MCGalaxy.Drawing.Ops {
                 if (old == Block.custom_block) old = (BlockID)(Block.Extended | lvl.FastGetExtTile(b.X, b.Y, b.Z));
                 #endif
                 
-                if (old == Block.Invalid) return;
                 // Check to make sure the block is actually different and that can be used
                 if (old == b.Block || !p.group.Blocks[old] || !p.group.Blocks[b.Block]) return;
                 
