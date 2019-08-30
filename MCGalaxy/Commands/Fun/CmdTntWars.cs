@@ -17,7 +17,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using MCGalaxy.Games;
 using MCGalaxy.Maths;
 using BlockID = System.UInt16;
@@ -56,9 +55,10 @@ namespace MCGalaxy.Commands.Fun {
         
         protected override void HandleSet(Player p, RoundsGame game_, string[] args) {
             TWGame game = (TWGame)game_;
-            TWMapConfig cfg = RetrieveConfig(p);
+            TWMapConfig cfg  = new TWMapConfig();
             TWConfig gameCfg = TWGame.Config;
             
+            LoadMapConfig(p, cfg);
             if (args.Length == 1) { Help(p, "set"); return; }
             if (args.Length == 2) { OutputStatus(p, gameCfg, cfg); return; }
 
@@ -121,7 +121,7 @@ namespace MCGalaxy.Commands.Fun {
                 SetBool(p, ref cfg.BalanceTeams, value, "Team balancing");
             } else if (prop.CaselessEq("teamkill")) {
                 SetBool(p, ref cfg.TeamKills, value, "Team killing");
-            } else if (prop.CaselessEq("zones")) {
+            } else if (prop.CaselessEq("zone")) {
                 if (args.Length < 4) { Help(p, "zone"); return; }
                 
                 if (value.CaselessEq("notnt")) {
@@ -134,7 +134,7 @@ namespace MCGalaxy.Commands.Fun {
             } else {
                 OutputStatus(p, gameCfg, cfg); return;
             }
-            UpdateConfig(p, cfg);
+            SaveMapConfig(p, cfg);
         }
         
         static void OutputStatus(Player p, TWConfig gameCfg, TWMapConfig cfg) {
@@ -190,7 +190,7 @@ namespace MCGalaxy.Commands.Fun {
                 if (assist == 0) {
                     p.Message("Scores per assist is now &cdisabled");
                 } else {
-                    p.Message("TScore per assist is now &a{0} %Spoints", assist);
+                    p.Message("Score per assist is now &a{0} %Spoints", assist);
                 }
             } else {
                 return false;
@@ -288,18 +288,6 @@ namespace MCGalaxy.Commands.Fun {
         static void SetBool(Player p, ref bool target, string opt, string name) {
             if (!CommandParser.GetBool(p, opt, ref target)) return;
             p.Message("TNT Wars: {0} is now {1}", name, GetBool(target));
-        }
-        
-        static TWMapConfig RetrieveConfig(Player p) {
-            TWMapConfig cfg = new TWMapConfig();
-            cfg.SetDefaults(p.level);
-            cfg.Load(p.level.name);
-            return cfg;
-        }
-        
-        static void UpdateConfig(Player p, TWMapConfig cfg) {
-            cfg.Save(p.level.name);
-            if (p.level == TWGame.Instance.Map) TWGame.Instance.UpdateMapConfig();
         }
         
         

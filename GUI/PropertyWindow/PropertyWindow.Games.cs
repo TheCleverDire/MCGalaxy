@@ -20,16 +20,18 @@ using MCGalaxy.Games;
 
 namespace MCGalaxy.Gui {
     public partial class PropertyWindow : Form {
-        GamesHelper lsHelper, ctfHelper, twHelper;
+        GamesHelper lsHelper, zsHelper, ctfHelper, twHelper;
         
         void LoadGameProps() {
             string[] allMaps = LevelInfo.AllMapNames();
+            LoadZSSettings(allMaps);
             LoadCTFSettings(allMaps);
             LoadLSSettings(allMaps);
             LoadTWSettings(allMaps);
         }
 
         void SaveGameProps() {
+            SaveZSSettings();
             SaveCTFSettings();
             SaveLSSettings();
             SaveTWSettings();
@@ -37,6 +39,7 @@ namespace MCGalaxy.Gui {
         
         GamesHelper GetGameHelper(IGame game) {
             // TODO: Find a better way of doing this
+            if (game == ZSGame.Instance)  return zsHelper;
             if (game == CTFGame.Instance) return ctfHelper;
             if (game == LSGame.Instance)  return lsHelper;
             if (game == TWGame.Instance)  return twHelper;
@@ -53,6 +56,48 @@ namespace MCGalaxy.Gui {
             GamesHelper helper = GetGameHelper(game);
             if (helper == null) return;
             RunOnUI_Async(() => helper.UpdateButtons());
+        }
+        
+        
+        void LoadZSSettings(string[] allMaps) {
+            zsHelper = new GamesHelper(
+                ZSGame.Instance, zs_cbStart, zs_cbMap, zs_cbMain,
+                zs_btnStart, zs_btnStop, zs_btnEnd,
+                zs_btnAdd, zs_btnRemove, zs_lstUsed, zs_lstNotUsed);
+            zsHelper.Load(allMaps);
+            
+            ZSConfig cfg = ZSGame.Config;
+            zs_numInvHumanDur.Value  = cfg.InvisibilityDuration;
+            zs_numInvHumanMax.Value  = cfg.InvisibilityPotions;
+            zs_numInvZombieDur.Value = cfg.ZombieInvisibilityDuration;
+            zs_numInvZombieMax.Value = cfg.ZombieInvisibilityPotions;
+            
+            zs_numReviveMax.Value   = cfg.ReviveTimes;
+            zs_numReviveEff.Value   = cfg.ReviveChance;
+            zs_numReviveLimit.Value = cfg.ReviveTooSlow;
+            
+            zs_txtName.Text  = cfg.ZombieName;
+            zs_txtModel.Text = cfg.ZombieModel;
+        }
+        
+        void SaveZSSettings() {
+            try {
+                ZSConfig cfg = ZSGame.Config;
+                cfg.InvisibilityDuration = (int)zs_numInvHumanDur.Value;
+                cfg.InvisibilityPotions  = (int)zs_numInvHumanMax.Value;
+                cfg.ZombieInvisibilityDuration = (int)zs_numInvZombieDur.Value;
+                cfg.ZombieInvisibilityPotions  = (int)zs_numInvZombieMax.Value;
+                
+                cfg.ReviveTimes   = (int)zs_numReviveMax.Value;
+                cfg.ReviveChance  = (int)zs_numReviveEff.Value;
+                cfg.ReviveTooSlow = (int)zs_numReviveLimit.Value;
+                
+                cfg.ZombieName  = zs_txtName.Text;
+                cfg.ZombieModel = zs_txtModel.Text;
+                zsHelper.Save();
+            } catch (Exception ex) {
+                Logger.LogError("Error saving ZS settings", ex);
+            }
         }
         
         
@@ -148,12 +193,9 @@ namespace MCGalaxy.Gui {
             lsCurCfg.RoundTime = ls_numRound.Value;
             lsCurCfg.FloodTime = ls_numFlood.Value;
             lsCurCfg.LayerInterval = ls_numLayerTime.Value;
-            lsCurCfg.Save(lsCurMap);
             
-            LSGame game = LSGame.Instance;
-            if (game.Running && game.Map.name == lsCurMap) {
-                game.UpdateMapConfig();
-            }
+            lsCurCfg.Save(lsCurMap);
+            lsHelper.UpdateMapConfig(lsCurMap);
         }
         
         
@@ -231,12 +273,9 @@ namespace MCGalaxy.Gui {
             twCurCfg.GracePeriodTime = tw_numGrace.Value;
             twCurCfg.BalanceTeams = tw_cbBalance.Checked;
             twCurCfg.TeamKills = tw_cbKills.Checked;
-            twCurCfg.Save(twCurMap);
             
-            TWGame game = TWGame.Instance;
-            if (game.Running && game.Map.name == twCurMap) {
-                game.UpdateMapConfig();
-            }
+            twCurCfg.Save(twCurMap);          
+            twHelper.UpdateMapConfig(twCurMap);
         }       
 
         void tw_btnAbout_Click(object sender, EventArgs e) {

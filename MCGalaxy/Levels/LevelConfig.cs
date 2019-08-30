@@ -245,12 +245,12 @@ namespace MCGalaxy {
         // Survival settings
         [ConfigInt("Drown", "Survival", 70)]
         public int DrownTime = 70;
-        [ConfigBool("Edge water", "Survival", true)]
+        [ConfigBool("Edge water", "Survival", false)]
         public bool EdgeWater;
         [ConfigInt("Fall", "Survival", 9)]
         public int FallHeight = 9;
         [ConfigBool("Guns", "Survival", false)]
-        public bool Guns = false;
+        public bool Guns;
         [ConfigBool("Survival death", "Survival", false)]
         public bool SurvivalDeath;
         [ConfigBool("Killer blocks", "Survival", true)]
@@ -271,8 +271,6 @@ namespace MCGalaxy {
         
         [ConfigTimespan("MinRoundTime", "Game", 4, true)]
         public TimeSpan RoundTime = TimeSpan.FromMinutes(5);
-        [ConfigTimespan("MaxRoundTime", "Game", 7, true)]
-        public TimeSpan __MaxRoundTime = TimeSpan.FromMinutes(7);
         [ConfigBool("DrawingAllowed", "Game", true)]
         public bool Drawing = true;
         [ConfigInt("RoundsPlayed", "Game", 0)]
