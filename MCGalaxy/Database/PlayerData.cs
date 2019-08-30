@@ -32,7 +32,11 @@ namespace MCGalaxy.DB {
         public const string ColumnColor = "color";
         public const string ColumnTitle = "title";
         public const string ColumnTColor = "title_color";
-        
+
+        public const string ColumnName = "Name";
+        public const string ColumnIP = "IP";
+        public const string ColumnID = "ID";
+
         public const string ColumnFirstLogin = "FirstLogin";
         public const string ColumnLastLogin = "LastLogin";
         public const string ColumnLastLogout = "Lastlogout";

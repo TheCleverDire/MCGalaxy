@@ -38,8 +38,8 @@ namespace MCGalaxy {
         // 11    | Extended custom blocks 512 to 767
         
         #if TEN_BIT_BLOCKS
-        public const ushort MaxRaw = 767;
-        public const int ExtendedCount = 256 * 4;
+        public const ushort MaxRaw = 1767;
+        public const int ExtendedCount = 256 * 8;
         public static ushort[] ExtendedBase = new ushort[Block.Count];
         public static byte[] ExtendedClass = new byte[4];
         
