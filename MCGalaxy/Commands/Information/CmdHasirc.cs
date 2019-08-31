@@ -25,8 +25,9 @@ namespace MCGalaxy.Commands.Info {
             if (message.Length > 0) { Help(p); return; }
 
             if (Server.Config.UseIRC) {
-                p.Message("IRC is &aEnabled%S.");
-                p.Message("Location: " + Server.Config.IRCServer + " > " + Server.Config.IRCChannels);
+                p.Message("IRC is &aEnabled%S @ Location:");
+                p.Message("IRC Network: " + Server.Config.IRCServer);
+                p.Message("Channel: " + Server.Config.IRCChannels);
             } else {
                 p.Message("IRC is &cDisabled%S.");
             }

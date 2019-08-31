@@ -35,7 +35,7 @@ namespace MCGalaxy.Commands.Info
             if (matches > 1) return;
             if (matches == 1)
             {
-                Show(p, pl.ColoredName, pl.FirstLogin, pl.LastLogin, pl.LastLogout);
+                Show(p, pl.ColoredName, pl.name, pl.ip, pl.FirstLogin, pl.LastLogin, pl.LastLogout);
                 p.Message(pl.ColoredName + " %Sis currently online.");
                 return;
             }
@@ -43,16 +43,20 @@ namespace MCGalaxy.Commands.Info
             p.Message("Searching PlayerDB..");
             PlayerData target = PlayerDB.Match(p, message);
             if (target == null) return;
-            Show(p, target.Name, target.FirstLogin, target.LastLogin, target.LastLogout);
+            Show(p, target.Name, target.Name, target.IP, target.FirstLogin, target.LastLogin, target.LastLogout);
         }
 
-        static void Show(Player p, string name, DateTime first, DateTime last, DateTime lastd)
+        static void Show(Player p, string name, string realname, string ip, DateTime first, DateTime last, DateTime lastd)
         {
+            string rname = realname;
+            string ipmsg = ip;
             name = PlayerInfo.GetColoredName(p, name);
-            p.Message("%aConnection data for {0}%a:", name);
+            p.Message("%aConnection info for {0}%a:", name);
 
             DateTime minval = DateTime.MinValue;
 
+            p.Message("{0} %Sis connecting as {1}", name, rname);
+            p.Message("{0} %Sis connecting from IP: {1}", name, ipmsg);
             p.Message("{0} %Sfirst connected at {1:H:mm} on {1:d}", name, first);
             p.Message("{0} %Slast connected at {1:H:mm} on {1:d}", name, last);
             if (lastd == minval) {
@@ -67,7 +71,7 @@ namespace MCGalaxy.Commands.Info
         public override void Help(Player p)
         {
             p.Message("%T/Connection [player]");
-            p.Message("%HSays when a player first and last connected/disconnected to/from the server");
+            p.Message("%HShows information about a players connection");
         }
     }
 }

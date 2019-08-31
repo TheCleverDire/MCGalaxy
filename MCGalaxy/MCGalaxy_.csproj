@@ -51,7 +51,7 @@
     <DebugType>PdbOnly</DebugType>
     <Optimize>True</Optimize>
     <OutputPath>..\bin\Release\</OutputPath>
-    <DefineConstants>TRACE;</DefineConstants>
+    <DefineConstants>TRACE;TEN_BIT_BLOCKS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>..\..\Source\General.ruleset</CodeAnalysisRuleSet>
@@ -722,22 +722,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Commands\Maintenance" />
-    <Folder Include="Config\Permissions" />
-    <Folder Include="Database\Stats" />
-    <Folder Include="Games\Weapons" />
-    <Folder Include="Games\RoundsGame" />
-    <Folder Include="Generator\Realistic" />
-    <Folder Include="Network\Heartbeat" />
-    <Folder Include="Network\IRCPlugin" />
-    <Folder Include="Network\Utils" />
-    <Folder Include="Network\Packets" />
-    <Folder Include="Entity" />
-    <Folder Include="Server\Maintenance" />
-    <Folder Include="util\Formatting" />
-    <Folder Include="util\Threading" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

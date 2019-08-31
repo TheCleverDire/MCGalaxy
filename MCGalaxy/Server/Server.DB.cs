@@ -21,15 +21,18 @@ using System.Data;
 using System.IO;
 using MCGalaxy.SQL;
 
-namespace MCGalaxy {
-    public sealed partial class Server {
-        
+namespace MCGalaxy
+{
+    public sealed partial class Server
+    {
+
         static ColumnDesc[] createPlayers = new ColumnDesc[] {
             new ColumnDesc("ID", ColumnType.Integer, priKey: true, autoInc: true, notNull: true),
             new ColumnDesc("Name", ColumnType.VarChar, 17),
             new ColumnDesc("IP", ColumnType.Char, 15),
             new ColumnDesc("FirstLogin", ColumnType.DateTime),
             new ColumnDesc("LastLogin", ColumnType.DateTime),
+            new ColumnDesc("LastLogout", ColumnType.DateTime),
             new ColumnDesc("totalLogin", ColumnType.Int24),
             new ColumnDesc("Title", ColumnType.Char, 20),
             new ColumnDesc("TotalDeaths", ColumnType.Int16),
@@ -42,7 +45,7 @@ namespace MCGalaxy {
             new ColumnDesc("title_color", ColumnType.VarChar, 6),
             new ColumnDesc("Messages", ColumnType.UInt24),
         };
-        
+
         static ColumnDesc[] createOpstats = new ColumnDesc[] {
             new ColumnDesc("ID", ColumnType.Integer, priKey: true, autoInc: true, notNull: true),
             new ColumnDesc("Time", ColumnType.DateTime),
@@ -50,13 +53,17 @@ namespace MCGalaxy {
             new ColumnDesc("Cmd", ColumnType.VarChar, 40),
             new ColumnDesc("Cmdmsg", ColumnType.VarChar, 40),
         };
-                
-        static void InitDatabase() {
+
+        static void InitDatabase()
+        {
             if (!Directory.Exists("blockdb")) Directory.CreateDirectory("blockdb");
-            
-            try {
+
+            try
+            {
                 Database.Backend.CreateDatabase();
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Logger.LogError(e);
                 Logger.Log(LogType.Warning, "MySQL settings have not been set! Please Setup using the properties window.");
                 return;
@@ -64,10 +71,11 @@ namespace MCGalaxy {
 
             Database.Backend.CreateTable("Opstats", createOpstats);
             Database.Backend.CreateTable("Players", createPlayers);
-            
+
             //since 5.5.11 we are cleaning up the table Playercmds
             //if Playercmds exists copy-filter to Opstats and remove Playercmds
-            if (Database.TableExists("Playercmds")) {
+            if (Database.TableExists("Playercmds"))
+            {
                 const string sql = "INSERT INTO Opstats (Time, Name, Cmd, Cmdmsg) SELECT Time, Name, Cmd, Cmdmsg FROM Playercmds WHERE {0};";
                 foreach (string cmd in Server.Opstats)
                     Database.Execute(string.Format(sql, "cmd = '" + cmd + "'"));
@@ -77,20 +85,29 @@ namespace MCGalaxy {
 
             List<string> columns = Database.Backend.ColumnNames("Players");
             if (columns.Count == 0) return;
-            
-            if (!columns.CaselessContains("Color")) {
+
+            if (!columns.CaselessContains("LastLogout"))
+            {
+                Database.Backend.AddColumn("Players", new ColumnDesc("LastLogout", ColumnType.DateTime), "");
+            }
+            if (!columns.CaselessContains("Color"))
+            {
                 Database.Backend.AddColumn("Players", new ColumnDesc("color", ColumnType.VarChar, 6), "totalKicked");
             }
-            if (!columns.CaselessContains("Title_Color")) {
+            if (!columns.CaselessContains("Title_Color"))
+            {
                 Database.Backend.AddColumn("Players", new ColumnDesc("title_color", ColumnType.VarChar, 6), "color");
             }
-            if (!columns.CaselessContains("TimeSpent")) {
+            if (!columns.CaselessContains("TimeSpent"))
+            {
                 Database.Backend.AddColumn("Players", new ColumnDesc("TimeSpent", ColumnType.VarChar, 20), "totalKicked");
             }
-            if (!columns.CaselessContains("TotalCuboided")) {
+            if (!columns.CaselessContains("TotalCuboided"))
+            {
                 Database.Backend.AddColumn("Players", new ColumnDesc("totalCuboided", ColumnType.Int64), "totalBlocks");
             }
-            if (!columns.CaselessContains("Messages")) {
+            if (!columns.CaselessContains("Messages"))
+            {
                 Database.Backend.AddColumn("Players", new ColumnDesc("Messages", ColumnType.UInt24), "title_color");
             }
         }

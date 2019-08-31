@@ -39,7 +39,7 @@ namespace MCGalaxy.DB {
 
         public const string ColumnFirstLogin = "FirstLogin";
         public const string ColumnLastLogin = "LastLogin";
-        public const string ColumnLastLogout = "Lastlogout";
+        public const string ColumnLastLogout = "LastLogout";
         public const string ColumnTimeSpent = "TimeSpent";
         
         public const string ColumnTotalBlocks = "totalBlocks";

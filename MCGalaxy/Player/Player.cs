@@ -254,6 +254,8 @@ namespace MCGalaxy {
                 Entities.DespawnEntities(this, false);
                 ShowDisconnectInChat(chatMsg, isKick);
                 save();
+                Database.Backend.UpdateRows("Players", "LastLogout=@0", "WHERE Name=@1", DateTime.Now.ToString(Database.DateFormat), name);
+
 
                 PlayerInfo.Online.Remove(this);
                 OnPlayerDisconnectEvent.Call(this, discMsg);
