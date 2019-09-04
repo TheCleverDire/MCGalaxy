@@ -2,3 +2,4 @@ devs:Dire+
 mods:Goodly+
 helpers:GamerTito+
 helpers:bioclassic23+
+helpers:Doc+
