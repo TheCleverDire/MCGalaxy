@@ -26,6 +26,7 @@ namespace MCGalaxy.Commands.Info {
             if (message.Length > 0) { Help(p); return; }
             p.Message("&9{1} devs: %S{0}", Server.Devs.Join(), Server.SoftwareName);
             p.Message("&2{1} mods: %S{0}", Server.Mods.Join(), Server.SoftwareName);
+            p.Message("&2{1} helpers: %2{0}", Server.Helpers.Join(), Server.SoftwareName);
         }
 
         public override void Help(Player p) {

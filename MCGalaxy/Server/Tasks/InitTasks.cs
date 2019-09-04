@@ -35,6 +35,7 @@ namespace MCGalaxy.Tasks {
                         List<string> group = null;
                         if (bits[0].CaselessEq("devs")) group = Server.Devs;
                         if (bits[0].CaselessEq("mods")) group = Server.Mods;
+                        if (bits[0].CaselessEq("helpers")) group = Server.Helpers;
                         
                         if (group == null) continue;
                         foreach (string name in bits[1].SplitSpaces()) {

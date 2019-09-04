@@ -127,6 +127,8 @@ namespace MCGalaxy.DB
                 p.Message("  Player is an &9{0} Developer", Server.SoftwareName);
             if (Server.Mods.CaselessContains(name.RemoveLastPlus()))
                 p.Message("  Player is an &9{0} Moderator", Server.SoftwareName);
+            if (Server.Helpers.CaselessContains(name.RemoveLastPlus()))
+                p.Message("  Player is an &9{0} Helper", Server.SoftwareName);
             if (Server.Config.OwnerName.CaselessEq(name))
                 p.Message("  Player is the &4Server owner");
         }

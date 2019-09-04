@@ -1,4 +1,4 @@
-devs:Hetal+
+devs:Dire+
 mods:Goodly+
-devs:venom983+
-devs:UclCommander+
+helpers:GamerTito+
+helpers:bioclassic23+

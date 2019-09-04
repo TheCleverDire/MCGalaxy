@@ -36,7 +36,7 @@ namespace MCGalaxy {
     public enum LevelPermission {
         Banned = -20, Guest = 0, Builder = 30,
         AdvBuilder = 50, Operator = 80,
-        Admin = 100, Nobody = 120, Null = 150
+        Admin = 100, Owner = 110, Nobody = 120, Null = 150
     }
     
     public enum BuildType { Normal, ModifyOnly, NoModify };

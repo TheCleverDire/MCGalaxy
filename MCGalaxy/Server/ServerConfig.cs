@@ -115,10 +115,11 @@ namespace MCGalaxy {
         [ConfigBool("repeat-messages", "Other", false)]
         public bool RepeatMBs = false;
         [ConfigString("money-name", "Other", "moneys")]
-        public string Currency = "moneys";        
+        public string Currency = "moneys";
         [ConfigString("server-owner", "Other", "the owner")]
         public string OwnerName = "the owner";
-        
+        [ConfigString("server-owners", "Other", "the owner")]
+        public string OwnersNames = "1";
         [ConfigBool("guest-limit-notify", "Other", false)]
         public bool GuestLimitNotify = false;
         [ConfigBool("guest-join-notify", "Other", true)]

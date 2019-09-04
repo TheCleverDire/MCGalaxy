@@ -75,6 +75,9 @@ namespace MCGalaxy {
         
         /// <summary> Message shown to console. </summary>
         ConsoleMessage,
+
+        /// <summary> Message shown from Owners</summary>
+        OwnerMessage,
     }
     
     public delegate void LogHandler(LogType type, string message);

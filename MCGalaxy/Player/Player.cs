@@ -115,10 +115,12 @@ namespace MCGalaxy {
             
             bool isDev = Server.Devs.CaselessContains(truename);
             bool isMod = Server.Mods.CaselessContains(truename);
+            bool isHelper = Server.Helpers.CaselessContains(truename);
             bool devPrefix = Server.Config.SoftwareStaffPrefixes;
             
             if (devPrefix && isMod) prefix += MakeTitle("Info", "&a");
             if (devPrefix && isDev) prefix += MakeTitle("Dev", "&9");
+            if (devPrefix && isHelper) prefix += MakeTitle("Helper", "&c");
             if (title.Length > 0)   prefix += MakeTitle(title, titlecolor);
         }
         

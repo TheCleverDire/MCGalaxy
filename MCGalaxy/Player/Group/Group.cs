@@ -31,6 +31,7 @@ namespace MCGalaxy {
 
         public static Group BannedRank { get { return Find(LevelPermission.Banned); } }
         public static Group GuestRank  { get { return Find(LevelPermission.Guest); } }
+        public static Group OwnerRank { get { return Find(LevelPermission.Owner);  } }
         public static Group NobodyRank { get { return Find(LevelPermission.Nobody); } }
         public static Group DefaultRank;
         public static List<Group> GroupList = new List<Group>();
@@ -193,6 +194,8 @@ namespace MCGalaxy {
                 Register(new Group(LevelPermission.Banned, 1, 1, "Banned", '8'));
             if (GuestRank == null)
                 Register(new Group(LevelPermission.Guest, 1, 120, "Guest", '7'));
+            if (OwnerRank == null)
+                Register(new Group(LevelPermission.Owner, 65536, int.MaxValue, "Owner", '0'));
             if (NobodyRank == null)
                 Register(new Group(LevelPermission.Nobody, 65536, int.MaxValue, "Nobody", '0'));
             
