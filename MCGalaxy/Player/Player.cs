@@ -369,7 +369,9 @@ namespace MCGalaxy {
                 selMarkCallback = markCallback;
                 selIndex = 0;
                 Blockchange = SelectionBlockChange;
+                
                 if (title != null) InitSelectionHUD();
+                else ResetSelectionHUD();
             }
         }
         
