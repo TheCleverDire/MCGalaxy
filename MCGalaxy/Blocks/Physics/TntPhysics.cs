@@ -21,9 +21,9 @@ using MCGalaxy.Games;
 using BlockID = System.UInt16;
 
 namespace MCGalaxy.Blocks.Physics {
-    
+
     public static class TntPhysics {
-        
+
         internal static void ToggleFuse(Level lvl, ushort x, ushort y, ushort z) {
             if (lvl.GetBlock(x, y, z) == Block.StillLava) {
                 lvl.Blockchange(x, y, z, Block.Air);
@@ -31,13 +31,13 @@ namespace MCGalaxy.Blocks.Physics {
                 lvl.Blockchange(x, y, z, Block.StillLava);
             }
         }
-        
+
         public static void DoTntExplosion(Level lvl, ref PhysInfo C) {
             Random rand = lvl.physRandom;
             if (rand.Next(1, 11) <= 7)
                 lvl.AddUpdate(C.Index, Block.Air, default(PhysicsArgs));
         }
-        
+
         public static void DoSmallTnt(Level lvl, ref PhysInfo C) {
             ushort x = C.X, y = C.Y, z = C.Z;
             if (lvl.physics < 3) {
@@ -51,9 +51,11 @@ namespace MCGalaxy.Blocks.Physics {
                 MakeExplosion(lvl, x, y, z, 0);
             }
         }
-        
-        public static void DoBigTnt(Level lvl, ref PhysInfo C) { DoLargeTnt(lvl, ref C, 1); }     
-        public static void DoNukeTnt(Level lvl, ref PhysInfo C) { DoLargeTnt(lvl, ref C, 4); }
+
+
+        public static void DoRegularTnt(Level lvl, ref PhysInfo c) { DoLargeTnt(lvl, ref c, 4); }
+        public static void DoBigTnt(Level lvl, ref PhysInfo C) { DoLargeTnt(lvl, ref C, 40); }     
+        public static void DoNukeTnt(Level lvl, ref PhysInfo C) { DoLargeTnt(lvl, ref C, 400); }
         
         public static void DoLargeTnt(Level lvl, ref PhysInfo C, int power) {
             ushort x = C.X, y = C.Y, z = C.Z;

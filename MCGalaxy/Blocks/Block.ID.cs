@@ -270,7 +270,7 @@ namespace MCGalaxy {
         public const byte oDoor_Lava_air = 180;
         public const byte oDoor_Water_air = 181;
 
-        // Explosions
+        // Explosions           
         public const byte TNT_Small = 182;
         public const byte TNT_Big = 183;
         public const byte TNT_Explosion = 184;

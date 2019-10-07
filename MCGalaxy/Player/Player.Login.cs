@@ -44,7 +44,9 @@ namespace MCGalaxy {
             if (cancelconnecting) { cancelconnecting = false; return; }
             
             hasCpe = buffer[offset + 130] == 0x42 && Server.Config.EnableCPE;
-            level = Server.mainLevel;
+
+            level = Server.mainLevel; 
+
             Loading = true;
             if (Socket.Disconnected) return;
             
@@ -61,8 +63,8 @@ namespace MCGalaxy {
                 Send(Packet.ExtEntry(ext.ExtName, ext.ServerExtVersion));
             }
         }
-        
-        void CompleteLoginProcess() {
+
+        private void CompleteLoginProcess() {
             Player clone = null;
             OnPlayerFinishConnectingEvent.Call(this);
             if (cancelconnecting) { cancelconnecting = false; return; }
@@ -151,9 +153,11 @@ namespace MCGalaxy {
                 Message("Lowlag mode is currently &aON.");
 
             if (String.IsNullOrEmpty(appName)) {
-                Logger.Log(LogType.UserActivity, "{0} [{1}] connected.", name, ip);
+                Logger.Log(LogType.UserActivity, "{0} [{1}] connected.", name, ip);        
+                Chat.MessageFrom(ChatScope.All, this, name + " connected" + ".", null, Chat.FilterVisible(this), !hidden);
             } else {
                 Logger.Log(LogType.UserActivity, "{0} [{1}] connected using {2}.", name, ip, appName);
+                Chat.MessageFrom(ChatScope.All, this, name + " connected using " + appName + ".", null, Chat.FilterVisible(this), !hidden);
             }
             
             PlayerActions.PostSentMap(this, null, level, false);

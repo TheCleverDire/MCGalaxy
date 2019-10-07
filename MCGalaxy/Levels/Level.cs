@@ -35,7 +35,7 @@ using BlockRaw = System.Byte;
 namespace MCGalaxy {
     public enum LevelPermission {
         Banned = -20, Guest = 0, Builder = 30,
-        AdvBuilder = 50, Operator = 80,
+        AdvBuilder = 50, Moderator = 80, Operator = 90,
         Admin = 100, Owner = 110, Nobody = 120, Null = 150
     }
     

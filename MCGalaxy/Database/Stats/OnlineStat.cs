@@ -85,15 +85,11 @@ namespace MCGalaxy.DB
         {
             TimeSpan idleTime = DateTime.UtcNow - who.LastAction;
             TimeSpan timeOnline = DateTime.UtcNow - who.SessionStartTime;
-            TimeSpan truetimeOnline = DateTime.UtcNow - who.LastLogin;
-            TimeSpan truetimeOnlinenoafk = truetimeOnline - idleTime;
             TimeSpan timeOnlinenoafk = timeOnline - idleTime;
             p.Message("  Spent &a{0} %Son the server since first login, &a{1} %Sthis session, &a{2} %Sof which was spent idling",
                            who.TotalTime.Shorten(true), timeOnline.Shorten(true), idleTime.Shorten(true));
-            p.Message("  Spent &a{0} %Sactive on the server (Based on session start)",
+            p.Message("  Spent &a{0} %Sactive on the server",
                             timeOnlinenoafk.Shorten(true));
-            p.Message("  Spent &a{0} %Sactive on the server (Based on recent login)",
-                            truetimeOnlinenoafk.Shorten(true));
             p.Message("  The last action was at &a{1}",
                             who.FullName, who.LastAction.ToString("H:mm yyyy-MM-dd"));
         }

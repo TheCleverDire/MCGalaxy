@@ -145,7 +145,7 @@ namespace MCGalaxy.Blocks {
                 case Block.Air_FloodUp: return (Level lvl, ref PhysInfo C) =>
                     AirPhysics.DoFlood(lvl, ref C, AirFlood.Up, Block.Air_FloodUp);
                     
-                case Block.TNT_Small: return TntPhysics.DoSmallTnt;
+                case Block.TNT_Small: return TntPhysics.DoRegularTnt;
                 case Block.TNT_Big: return TntPhysics.DoBigTnt;
                 case Block.TNT_Nuke: return TntPhysics.DoNukeTnt;
                 case Block.TNT_Explosion: return TntPhysics.DoTntExplosion;

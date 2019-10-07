@@ -249,7 +249,9 @@ namespace MCGalaxy {
                 if (!loggedIn) {
                     PlayerInfo.Online.Remove(this);
                     string user = name + " (" + ip + ")";
+                    string usernoip = name;
                     Logger.Log(LogType.UserActivity, "{0} disconnected. ({1})", user, discMsg);
+                    Chat.MessageOps("%# <login failure> " + user + " disconnected. " + "(" + discMsg + ")");
                     return;
                 }
 

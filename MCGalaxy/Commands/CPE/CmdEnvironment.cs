@@ -103,7 +103,7 @@ namespace MCGalaxy.Commands.CPE {
             if (value.CaselessEq("gloomy"))   return new EnvPreset("6A80A5 405875 405875 444466 3B3B59");
             if (value.CaselessEq("cloudy"))   return new EnvPreset("AFAFAF 8E8E8E 8E8E8E 9B9B9B 8C8C8C");
             if (value.CaselessEq("sunset"))   return new EnvPreset("FFA322 836668 9A6551 7F6C60 46444C");
-            if (value.CaselessEq("midnight")) return new EnvPreset("131947 070A23 1E223A 181828 0F0F19");
+            if (value.CaselessEq("midn-ight")) return new EnvPreset("131947 070A23 1E223A 181828 0F0F19");
             
             if (value.CaselessEq("normal")) {
                 return new EnvPreset("    ");

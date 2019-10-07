@@ -249,9 +249,7 @@ namespace MCGalaxy {
                 case 228:
                 case 229:
                 case 84:
-                case 66:
                 case 67:
-                case 68:
                 case 69:
                     return Air;
                 case Door_Green_air: return Red;

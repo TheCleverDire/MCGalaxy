@@ -18,6 +18,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using MCGalaxy.Blocks;
 using MCGalaxy.Blocks.Physics;
+using MCGalaxy;
 using MCGalaxy.Commands;
 using MCGalaxy.Commands.Chatting;
 using MCGalaxy.DB;

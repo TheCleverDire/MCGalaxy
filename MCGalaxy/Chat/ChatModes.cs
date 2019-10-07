@@ -53,6 +53,9 @@ namespace MCGalaxy {
             } else if (p.adminchat) {
                 MessageAdmins(p, text);
                 return true;
+            } else if (p.staffchat) {
+                MessageStaff(p, text);
+                return true;
             } else if (text[0] == '#') {
                 if (text.Length > 1 && text[1] == '#') {
                     MessageOps(p, text.Substring(2));
@@ -67,28 +70,39 @@ namespace MCGalaxy {
                 } else {
                     p.Message("%HIf you meant to send this to adminchat, use %T++" + text.Substring(1));
                 }
+            } else if (text[0] == '*') {
+                if (text.Length > 1 && text[1] == '*') {
+                    MessageStaff(p, text.Substring(2));
+                    return true;
+                } else {
+                    p.Message("%HIf you meant to send this to staffchat, use %T**" + text.Substring(1));
+                }
             }
             return false;
         }
         
         public static void MessageOps(Player p, string message) {
             if (!MessageCmd.CanSpeak(p, "OpChat")) return;
-            MessageStaff(p, message, Chat.OpchatPerms, "Ops");
+            MessageGroup(p, message, Chat.OpchatPerms, "Ops");
         }
-
         public static void MessageAdmins(Player p, string message) {
             if (!MessageCmd.CanSpeak(p, "AdminChat")) return;
-            MessageStaff(p, message, Chat.AdminchatPerms, "Admins");
+            MessageGroup(p, message, Chat.AdminchatPerms, "Admins");
         }
-        
-        public static void MessageStaff(Player p, string message,
+        public static void MessageStaff(Player p, string message) {
+            if (!MessageCmd.CanSpeak(p, "Staff")) return;
+            MessageGroup(p, message, Chat.StaffchatPerms, "Staff");
+        }
+
+ 
+        public static void MessageGroup(Player p, string message,
                                         ItemPerms perms, string group) {
             if (message.Length == 0) { p.Message("No message to send."); return; }
             
             string chatMsg = "To " + group + " &f-λNICK&f- " + message;
             Chat.MessageChat(ChatScope.Perms, p, chatMsg, perms, null, true);
         }
-        
+
         static void DoPM(Player p, Player who, string message) {
             if (message.Length == 0) { p.Message("No message entered"); return; }
             Logger.Log(LogType.PrivateChat, "{0} @{1}: {2}", p.name, who.name, message);

@@ -90,6 +90,7 @@ namespace MCGalaxy
         public bool parseEmotes = Server.Config.ParseEmotes;
         public bool opchat;
         public bool adminchat;
+        public bool staffchat;
         public bool whisper;
         public string whisperTo = "";
         string partialMessage = "";
@@ -117,7 +118,7 @@ namespace MCGalaxy
         DateTime startTime;
         public TimeSpan TotalTime {
             get { return DateTime.UtcNow - startTime; }
-            set { startTime = DateTime.UtcNow.Subtract (value); }
+            set { startTime = DateTime.UtcNow.Subtract(value) ; }
         }
         public DateTime SessionStartTime;
         public DateTime FirstLogin, LastLogin, LastLogout;
@@ -194,6 +195,7 @@ namespace MCGalaxy
         public sbyte c4circuitNumber = -1;
 
         public Level level;
+        public Level oplevel;
         public bool Loading = true; //True if player is loading a map.
         internal int UsingGoto = 0, GeneratingMap = 0, LoadingMuseum = 0;
         public Vec3U16 lastClick = Vec3U16.Zero;
