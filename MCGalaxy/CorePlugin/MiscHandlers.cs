@@ -45,7 +45,7 @@ namespace MCGalaxy.Core {
             p.prevMsg = "";
             p.showMBs = false;
             p.showPortals = false;
-            p.SetModel(p.Model, level); // in case had been using a level-only custom block for their model
+            p.SetModel(p.Model); // in case had been using a level-only custom block for their model
 
             p.ZoneIn = null;
             OnChangedZoneEvent.Call(p);
@@ -60,7 +60,7 @@ namespace MCGalaxy.Core {
 
             if (p.weapon != null && !level.Config.Guns) p.weapon.Disable();
             if (!level.Config.UseBlockDB) {
-                p.Message("BlockDB is disabled here, %Wyou will not be able to /undo or /redo");
+                p.Message("BlockDB is disabled here, &Wyou will not be able to /undo or /redo");
             }
         }
 		
@@ -69,7 +69,7 @@ namespace MCGalaxy.Core {
             p.SendCurrentEnv();
             
             if (p.isFlying && !Hacks.CanUseFly(p)) {
-                p.Message("You cannot use %T/Fly %Son this map.");
+                p.Message("You cannot use &T/Fly &Son this map.");
                 p.isFlying = false;
             }
         }
@@ -92,14 +92,19 @@ namespace MCGalaxy.Core {
             PlayerBot[] bots = p.level.Bots.Items;
             for (int i = 0; i < bots.Length; i++) {
                 if (bots[i].EntityID != entity) continue;
-                if (bots[i].ClickedOnText == null) return false;
+                if (bots[i].ClickedOnText == null && !p.checkingBotInfo) return false;
                 
                 Vec3F32 delta = p.Pos.ToVec3F32() - bots[i].Pos.ToVec3F32();
                 float reachSq = p.ReachDistance * p.ReachDistance;
                 if (delta.LengthSquared > (reachSq + 1)) return false;
                 
+                if (p.checkingBotInfo) {
+                    bots[i].DisplayInfo(p);
+                    p.checkingBotInfo = false;
+                    return true;
+                }
                 string message = bots[i].ClickedOnText;
-                MessageBlock.Execute(p, message);
+                MessageBlock.Execute(p, message, bots[i].Pos.FeetBlockCoords);
                 return true;
             }
             return false;

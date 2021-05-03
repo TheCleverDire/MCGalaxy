@@ -23,11 +23,11 @@ namespace MCGalaxy.Blocks {
 
     /// <summary> Handles the player deleting a block at the given coordinates. </summary>
     /// <remarks> Use p.ChangeBlock to do a normal player block change (adds to BlockDB, updates dirt/grass beneath) </remarks>
-    public delegate void HandleDelete(Player p, BlockID oldBlock, ushort x, ushort y, ushort z);
+    public delegate ChangeResult HandleDelete(Player p, BlockID oldBlock, ushort x, ushort y, ushort z);
 
     /// <summary> Handles the player placing a block at the given coordinates. </summary>
     /// <remarks> Use p.ChangeBlock to do a normal player block change (adds to BlockDB, updates dirt/grass beneath) </remarks>
-    public delegate void HandlePlace(Player p, BlockID newBlock, ushort x, ushort y, ushort z);
+    public delegate ChangeResult HandlePlace(Player p, BlockID newBlock, ushort x, ushort y, ushort z);
 
     /// <summary> Returns whether this block handles the player walking through this block at the given coordinates. </summary>
     /// <remarks> If this returns false, continues trying other walkthrough blocks the player is touching. </remarks>
@@ -47,7 +47,7 @@ namespace MCGalaxy.Blocks {
             
             if (props[block].GrassBlock != Block.Invalid) return PlaceBehaviour.DirtGrow;
             if (props[block].DirtBlock  != Block.Invalid) return PlaceBehaviour.GrassDie;
-            if (props[block].StackBlock != Block.Air)        return PlaceBehaviour.Stack;
+            if (props[block].StackBlock != Block.Air)     return PlaceBehaviour.Stack;
             return null;
         }
         
@@ -62,6 +62,7 @@ namespace MCGalaxy.Blocks {
                 case Block.Door_Green_air: return DeleteBehaviour.RevertDoor;
             }
             
+        	// NOTE: If this gets changed, make sure to change BlockOptions.cs too
             if (props[block].IsMessageBlock)              return DeleteBehaviour.DoMessageBlock;
             if (props[block].IsPortal)                    return DeleteBehaviour.DoPortal;            
             if (props[block].IsTDoor)                     return DeleteBehaviour.RevertDoor;
@@ -123,6 +124,7 @@ namespace MCGalaxy.Blocks {
                     
                 case Block.Air: return AirPhysics.DoAir;
                 case Block.Leaves: return LeafPhysics.DoLeaf;
+                case Block.Log: return LeafPhysics.DoLog;
                 case Block.Sapling: return OtherPhysics.DoShrub;
                 case Block.Fire: return FirePhysics.Do;
                 case Block.LavaFire: return FirePhysics.Do;

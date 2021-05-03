@@ -29,7 +29,7 @@ namespace MCGalaxy.Commands.Misc {
 
         public override void Use(Player p, string message, CommandData data) {
             if (!Hacks.CanUseHacks(p)) {
-                p.Message("You cannot use %T/Ascend %Son this map."); return;
+                p.Message("You cannot use &T/Ascend &Son this map."); return;
             }
             int x = p.Pos.BlockX, y = p.Pos.BlockY, z = p.Pos.BlockZ;
             if (y < 0) y = 0;
@@ -40,7 +40,7 @@ namespace MCGalaxy.Commands.Misc {
             }
             
             if (freeY == -1) {
-                p.Message("No free spaces found above you.");
+                p.Message("There are no blocks above to ascend to.");
             } else {
                 p.Message("Teleported you up.");
                 Position pos = Position.FromFeet(p.Pos.X, freeY * 32, p.Pos.Z);
@@ -49,7 +49,7 @@ namespace MCGalaxy.Commands.Misc {
         }
         
         static int FindYAbove(Level lvl, ushort x, ushort y, ushort z) {
-            for (; y < lvl.Height; y++) {
+            for (; y <= lvl.Height; y++) {
                 BlockID block = lvl.GetBlock(x, y, z);
                 if (block != Block.Invalid && CollideType.IsSolid(lvl.CollideType(block))) continue;
                     
@@ -64,10 +64,10 @@ namespace MCGalaxy.Commands.Misc {
         
         public override void Help(Player p) {
             string name = Group.GetColoredName(LevelPermission.Operator);
-            p.Message("%T/Ascend");
-            p.Message("%HTeleports you to the first free space above you.");
-            p.Message("%H  Cannot be used on maps which have -hax in their motd. " +
-                           "(unless you are {0}%H+ and the motd has +ophax)", name);
+            p.Message("&T/Ascend");
+            p.Message("&HTeleports you to the first free space above you.");
+            p.Message("&H  Cannot be used on maps which have -hax in their motd. " +
+                           "(unless you are {0}&H+ and the motd has +ophax)", name);
         }
     }
 }

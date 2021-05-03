@@ -40,7 +40,7 @@ namespace MCGalaxy.Network {
                 NetUtils.Write(motd, buffer, 66, p.hasCP437);
             }
 
-            buffer[130] = p.group.Blocks[Block.Bedrock] ? (byte)100 : (byte)0;
+            buffer[130] = p.UserType();
             return buffer;
         }
         
@@ -57,7 +57,7 @@ namespace MCGalaxy.Network {
         public static byte[] LevelFinalise(ushort width, ushort height, ushort length) {
             byte[] buffer = new byte[7];
             buffer[0] = Opcode.LevelFinalise;
-            NetUtils.WriteU16(width, buffer, 1);
+            NetUtils.WriteU16(width,  buffer, 1);
             NetUtils.WriteU16(height, buffer, 3);
             NetUtils.WriteU16(length, buffer, 5);
             return buffer;
@@ -68,7 +68,7 @@ namespace MCGalaxy.Network {
             byte[] buffer = new byte[74 + (extPos ? 6 : 0)];
             buffer[0] = Opcode.AddEntity;
             buffer[1] = entityID;
-            NetUtils.Write(name.RemoveLastPlus(), buffer, 2, hasCP437);
+            NetUtils.Write(name, buffer, 2, hasCP437);
             
             int offset = NetUtils.WritePos(pos, buffer, 66, extPos);
             buffer[66 + offset] = rot.RotY;
@@ -95,10 +95,14 @@ namespace MCGalaxy.Network {
         
         public static byte[] Message(string message, CpeMessageType type, bool hasCp437) {
             byte[] buffer = new byte[66];
-            buffer[0] = Opcode.Message;
-            buffer[1] = (byte)type;
-            NetUtils.Write(message, buffer, 2, hasCp437);
+            WriteMessage(message, (byte)type, hasCp437, buffer, 0);
             return buffer;
+        }
+        
+        public static void WriteMessage(string message, byte type, bool hasCp437, byte[] buffer, int index) {
+            buffer[index++] = Opcode.Message;
+            buffer[index++] = type;
+            NetUtils.Write(message, buffer, index, hasCp437);
         }
         
         public static byte[] Kick(string message, bool cp437) {
@@ -108,11 +112,8 @@ namespace MCGalaxy.Network {
             return buffer;
         }
 
-        public static byte[] UserType(Player p) {
-            byte[] buffer = new byte[2];
-            buffer[0] = Opcode.SetPermission;
-            buffer[1] = p.group.Blocks[Block.Bedrock] ? (byte)100 : (byte)0;
-            return buffer;
+        public static byte[] UserType(byte type) {
+            return new byte[] { Opcode.SetPermission, type };
         }
         
         #endregion
@@ -169,12 +170,12 @@ namespace MCGalaxy.Network {
             return buffer;
         }
         
-        public static byte[] ExtAddEntity(byte entityID, string name, string displayname, bool hasCP437) {
+        public static byte[] ExtAddEntity(byte entityID, string skin, string name, bool hasCP437) {
             byte[] buffer = new byte[130];
             buffer[0] = Opcode.CpeExtAddEntity;
             buffer[1] = entityID;
-            NetUtils.Write(name, buffer, 2, hasCP437);
-            NetUtils.Write(displayname, buffer, 66, hasCP437);
+            NetUtils.Write(skin, buffer, 2, hasCP437);
+            NetUtils.Write(name, buffer, 66, hasCP437);
             return buffer;
         }
         
@@ -308,8 +309,8 @@ namespace MCGalaxy.Network {
             byte[] buffer = new byte[138 + (extPos ? 6 : 0)];
             buffer[0] = Opcode.CpeExtAddEntity2;
             buffer[1] = entityID;
-            NetUtils.Write(displayName.RemoveLastPlus(), buffer, 2, hasCP437);
-            NetUtils.Write(skinName.RemoveLastPlus(), buffer, 66, hasCP437);
+            NetUtils.Write(displayName, buffer,  2, hasCP437);
+            NetUtils.Write(skinName,    buffer, 66, hasCP437);
             
             int offset = NetUtils.WritePos(pos, buffer, 130, extPos);
             buffer[130 + offset] = rot.RotY;
@@ -366,6 +367,272 @@ namespace MCGalaxy.Network {
             return buffer;
         }
         
+        public static byte[] SetHotbar(BlockID rawId, byte slot, bool extBlocks) {
+            byte[] buffer = new byte[extBlocks ? 4 : 3];
+            buffer[0] = Opcode.CpeSetHotbar;
+            NetUtils.WriteBlock(rawId, buffer, 1, extBlocks);
+            buffer[extBlocks ? 3 : 2] = slot;
+            return buffer;
+        }
+        
+        public static byte[] SetSpawnpoint(Position pos, Orientation rot, bool extPos) {
+            byte[] buffer = new byte[extPos ? 15 : 9];
+            buffer[0] = Opcode.CpeSetSpawnpoint;
+            NetUtils.WritePos(pos, buffer, 1, extPos);
+            int offset = extPos ? 13 : 7;
+            buffer[offset] = rot.RotY;
+            buffer[1+offset] = rot.HeadX;
+            return buffer;
+        }
+        
+        /// <summary> Velocity is considered in terms of the 
+        /// force needed to reach [num] block height if applied to Y velocity.
+        /// e.g. 0 1.233 0 would give an upward force identical to a default clientside jump.
+        /// </summary>
+        public static byte[] VelocityControl(float x, float y, float z, byte xMode, byte yMode, byte zMode) {
+            byte[] buffer = new Byte[16];
+            buffer[0] = Opcode.CpeVelocityControl;
+            NetUtils.WriteI32((int)(x * 10000), buffer, 1);
+            NetUtils.WriteI32((int)(y * 10000), buffer, 5);
+            NetUtils.WriteI32((int)(z * 10000), buffer, 9);
+            buffer[13] = xMode;
+            buffer[14] = yMode;
+            buffer[15] = zMode;
+            return buffer;
+        }
+        
+        public static byte[] DefineEffect(byte effectID,
+                                            byte U1, byte V1, byte U2, byte V2,
+                                            byte tintRed, byte tintGreen, byte tintBlue,
+                                            byte frameCount, byte particleCount,
+                                            byte size, float sizeVariation,
+                                            float spread, float speed, float gravity,
+                                            float baseLifetime, float lifetimeVariation,
+                                            bool expireUponTouchingGround, bool collidesSolid, bool collidesLiquid, bool collidesLeaves,
+                                            bool fullBright) {
+            byte[] buffer = new byte[36];
+            buffer[0] = Opcode.CpeDefineEffect;           
+            buffer[1] = effectID;
+            
+            buffer[2] = U1;
+            buffer[3] = V1;
+            buffer[4] = U2;
+            buffer[5] = V2;
+            
+            buffer[6] = tintRed;
+            buffer[7] = tintGreen;
+            buffer[8] = tintBlue;
+            
+            buffer[9]  = frameCount;
+            buffer[10] = particleCount;
+            buffer[11] = size;
+            
+            NetUtils.WriteI32((int)(sizeVariation * 10000),     buffer, 12);         
+            NetUtils.WriteU16((ushort)(spread * 32),            buffer, 16);
+            NetUtils.WriteI32((int)(speed * 10000),             buffer, 18);
+            NetUtils.WriteI32((int)(gravity * 10000),           buffer, 22);
+            NetUtils.WriteI32((int)(baseLifetime * 10000),      buffer, 26);
+            NetUtils.WriteI32((int)(lifetimeVariation * 10000), buffer, 30);
+            byte flags = 0;
+            if (expireUponTouchingGround) flags |= 1 << 0;
+            if (collidesSolid)            flags |= 1 << 1;
+            if (collidesLiquid)           flags |= 1 << 2;
+            if (collidesLeaves)           flags |= 1 << 3;
+            
+            buffer[34] = flags;
+            buffer[35] = fullBright ? (byte)1 : (byte)0;
+            return buffer;
+        }
+        
+        public static byte[] SpawnEffect(byte effectId, float x, float y, float z, float originX, float originY, float originZ) {
+            byte[] buffer = new byte[26];
+            buffer[0] = Opcode.CpeSpawnEffect;
+            buffer[1] = effectId;
+            
+            NetUtils.WriteI32((int)(x * 32),       buffer,  2);
+            NetUtils.WriteI32((int)(y * 32),       buffer,  6);
+            NetUtils.WriteI32((int)(z * 32),       buffer, 10);
+            NetUtils.WriteI32((int)(originX * 32), buffer, 14);
+            NetUtils.WriteI32((int)(originY * 32), buffer, 18);
+            NetUtils.WriteI32((int)(originZ * 32), buffer, 22);
+            return buffer;
+        }
+
+        public const int MaxCustomModels = 64;
+        public const int MaxCustomModelParts = 64;
+        public const int MaxCustomModelAnims = 4;
+        public static byte[] DefineModel(byte modelId, CustomModel customModel) {
+            // 116 = 1 + 1 + 64 + 1 + 2*4 + 3*4 + 2*3*4 + 2*2 + 1
+            byte[] buffer = new byte[116];
+            int i = 0;
+            buffer[i++] = Opcode.CpeDefineModel;
+            buffer[i++] = modelId;
+
+            // write model name
+            NetUtils.Write(customModel.name, buffer, i, false);
+            i += NetUtils.StringSize;
+
+            // write bool flags
+            byte flags = 0;
+            flags |= (byte)((customModel.bobbing ? 1 : 0) << 0);
+            flags |= (byte)((customModel.pushes ? 1 : 0) << 1);
+            flags |= (byte)((customModel.usesHumanSkin ? 1 : 0) << 2);
+            flags |= (byte)((customModel.calcHumanAnims ? 1 : 0) << 3);
+            buffer[i++] = flags;
+
+            // write nameY, eyeY
+            NetUtils.WriteF32(customModel.nameY, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(customModel.eyeY, buffer, i);
+            i += 4;
+
+            // write collisionBounds
+            NetUtils.WriteF32(customModel.collisionBounds.X, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(customModel.collisionBounds.Y, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(customModel.collisionBounds.Z, buffer, i);
+            i += 4;
+
+            // write pickingBoundsAABB
+            NetUtils.WriteF32(customModel.pickingBoundsMin.X, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(customModel.pickingBoundsMin.Y, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(customModel.pickingBoundsMin.Z, buffer, i);
+            i += 4;
+
+            NetUtils.WriteF32(customModel.pickingBoundsMax.X, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(customModel.pickingBoundsMax.Y, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(customModel.pickingBoundsMax.Z, buffer, i);
+            i += 4;
+
+            // write uScale, vScale
+            NetUtils.WriteU16(customModel.uScale, buffer, i);
+            i += 2;
+            NetUtils.WriteU16(customModel.vScale, buffer, i);
+            i += 2;
+
+            // write # CustomModelParts
+            buffer[i++] = customModel.partCount;
+
+            return buffer;
+        }
+
+        public static byte[] DefineModelPart(byte modelId, CustomModelPart part) {
+            // v1: 104 = (1 + 1 + 3*4 + 3*4 + 6*(2*2 + 2*2) + 3*4 + 3*4) + 1 + 4 + 1
+            byte[] buffer = new byte[104];
+            int i = WriteDefineModelPart(buffer, modelId, part);
+
+            // ignore animations
+            i++;
+            i += 4;
+
+            // write bool flags
+            byte flags = 0;
+            flags |= (byte)((part.fullbright ? 1 : 0) << 0);
+            flags |= (byte)((part.firstPersonArm ? 1 : 0) << 1);
+
+            buffer[i++] = flags;
+
+            return buffer;
+        }
+        
+        public static byte[] DefineModelPartV2(byte modelId, CustomModelPart part) {
+            // v2: 167 = (1 + 1 + 3*4 + 3*4 + 6*(2*2 + 2*2) + 3*4 + 3*4) + 4*(1 + 4*4) + 1
+            byte[] buffer = new byte[167];
+            int i = WriteDefineModelPart(buffer, modelId, part);
+
+            for (int j = 0; j < MaxCustomModelAnims; j++) {
+                var anim = part.anims[j];
+
+                buffer[i++] = (byte)(
+                    ((byte)anim.type & 0x3F) | ((byte)anim.axis << 6)
+                );
+
+                NetUtils.WriteF32(anim.a, buffer, i);
+                i += 4;
+                NetUtils.WriteF32(anim.b, buffer, i);
+                i += 4;
+                NetUtils.WriteF32(anim.c, buffer, i);
+                i += 4;
+                NetUtils.WriteF32(anim.d, buffer, i);
+                i += 4;
+            }
+
+            // write bool flags
+            byte flags = 0;
+            flags |= (byte)((part.fullbright ? 1 : 0) << 0);
+            flags |= (byte)((part.firstPersonArm ? 1 : 0) << 1);
+
+            buffer[i++] = flags;
+
+            return buffer;
+        }
+
+        public static int WriteDefineModelPart(byte[] buffer, byte modelId, CustomModelPart part) {
+            int i = 0;
+            buffer[i++] = Opcode.CpeDefineModelPart;
+            buffer[i++] = modelId;
+
+            /* write min, max vec3 coords */
+            NetUtils.WriteF32(part.min.X, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(part.min.Y, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(part.min.Z, buffer, i);
+            i += 4;
+
+            NetUtils.WriteF32(part.max.X, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(part.max.Y, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(part.max.Z, buffer, i);
+            i += 4;
+
+            /* write u, v coords for our 6 faces */
+            for (int j = 0; j < 6; j++) {
+                NetUtils.WriteU16(part.u1[j], buffer, i);
+                i += 2;
+                NetUtils.WriteU16(part.v1[j], buffer, i);
+                i += 2;
+
+                NetUtils.WriteU16(part.u2[j], buffer, i);
+                i += 2;
+                NetUtils.WriteU16(part.v2[j], buffer, i);
+                i += 2;
+            }
+
+            /* write rotation origin point */
+            NetUtils.WriteF32(part.rotationOrigin.X, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(part.rotationOrigin.Y, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(part.rotationOrigin.Z, buffer, i);
+            i += 4;
+
+            /* write rotation angles */
+            NetUtils.WriteF32(part.rotation.X, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(part.rotation.Y, buffer, i);
+            i += 4;
+            NetUtils.WriteF32(part.rotation.Z, buffer, i);
+            i += 4;
+
+            return i;
+        }
+
+        public static byte[] UndefineModel(byte modelId) {
+            byte[] buffer = new byte[2];
+            int i = 0;
+            buffer[i++] = Opcode.CpeUndefineModel;
+            buffer[i++] = modelId;
+
+            return buffer;
+        }
+
         #endregion
         
         

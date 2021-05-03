@@ -25,9 +25,7 @@ namespace MCGalaxy {
     public static class Formatter {
         
         public static void PrintCommandInfo(Player p, Command cmd) {
-            ItemPerms perms = CommandPerms.Find(cmd.name);
-            if (perms == null) perms = new ItemPerms(cmd.defaultRank, null, null);
-            
+            ItemPerms perms = CommandPerms.Find(cmd.name) ?? new ItemPerms(cmd.defaultRank);
             p.Message("Usable by: " + perms.Describe());
             PrintAliases(p, cmd);
             
@@ -35,21 +33,21 @@ namespace MCGalaxy {
             if (cmd.ExtraPerms == null) extraPerms.Clear();
             if (extraPerms.Count == 0) return;
             
-            p.Message("%TExtra permissions:");
+            p.Message("&TExtra permissions:");
             foreach (CommandExtraPerms extra in extraPerms) {
                 p.Message("{0}) {1} {2}", extra.Num, extra.Describe(), extra.Desc);
             }
         }
         
         static void PrintAliases(Player p, Command cmd) {
-            StringBuilder dst = new StringBuilder("Shortcuts: %T");
+            StringBuilder dst = new StringBuilder("Shortcuts: &T");
             if (!String.IsNullOrEmpty(cmd.shortcut)) {
                 dst.Append('/').Append(cmd.shortcut).Append(", ");
             }
             FindAliases(Alias.coreAliases, cmd, dst);
             FindAliases(Alias.aliases, cmd, dst);
             
-            if (dst.Length == "Shortcuts: %T".Length) return;
+            if (dst.Length == "Shortcuts: &T".Length) return;
             p.Message(dst.ToString(0, dst.Length - 2));
         }
         
@@ -70,7 +68,7 @@ namespace MCGalaxy {
         }
         
         public static void MessageNeedMinPerm(Player p, string action, LevelPermission perm) {
-            p.Message("Only {0}%S{1}", Group.GetColoredName(perm), action);
+            p.Message("Only {0}&S{1}", Group.GetColoredName(perm), action);
         }
         
         public static bool ValidName(Player p, string name, string type) {

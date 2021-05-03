@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright 2015 MCGalaxy team
+    Copyright 2015 MCGalaxy
         
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -38,7 +38,7 @@ namespace MCGalaxy.Commands.World {
             if (DoResize(p, args, data, out needConfirm)) return;
             
             if (!needConfirm) return;
-            p.Message("Type %T/ResizeLvl {0} {1} {2} {3} confirm %Sif you're sure.",
+            p.Message("Type &T/ResizeLvl {0} {1} {2} {3} confirm &Sif you're sure.",
                       args[0], args[1], args[2], args[3]);
         }
         
@@ -50,17 +50,16 @@ namespace MCGalaxy.Commands.World {
             if (!LevelInfo.Check(p, data.Rank, lvl, "resize this level")) return false;
             
             ushort x = 0, y = 0, z = 0;
-            if (!CmdNewLvl.GetDimensions(p, args, 1, ref x, ref y, ref z)) return false;
+            if (!MapGen.GetDimensions(p, args, 1, ref x, ref y, ref z)) return false;
             
             bool confirmed = args.Length > 4 && args[4].CaselessEq("confirm");
             if (!confirmed && (x < lvl.Width || y < lvl.Height || z < lvl.Length)) {
-                p.Message("New level dimensions are smaller than the current dimensions, %Wyou will lose blocks%S.");
+                p.Message("New level dimensions are smaller than the current dimensions, &Wyou will lose blocks&S.");
                 needConfirm = true;
                 return false;
             }
             
             Level resized = ResizeLevel(lvl, x, y, z);
-            if (resized == null) { p.Message("%WError resizing map."); return false; }
             LevelActions.Replace(lvl, resized);
             return true;
         }
@@ -99,11 +98,17 @@ namespace MCGalaxy.Commands.World {
                 Buffer.BlockCopy(src, 0, dst, 0, 16 * 16 * 16);
             }
             
+            // TODO: This copying is really ugly and probably not 100% right
             res.spawnx = lvl.spawnx; res.spawny = lvl.spawny; res.spawnz = lvl.spawnz;
             res.rotx = lvl.rotx; res.roty = lvl.roty;
             
             lock (lvl.saveLock) {
                 lvl.Backup(true);
+                
+                // Make sure zones are kept
+                res.Zones = lvl.Zones;
+                lvl.Zones = new VolatileArray<Zone>(false);
+            
                 IMapExporter.Formats[0].Write(LevelInfo.MapPath(lvl.name), res);
                 lvl.SaveChanges = false;
             }
@@ -115,8 +120,8 @@ namespace MCGalaxy.Commands.World {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/ResizeLvl [level] [width] [height] [length]");
-            p.Message("%HResizes the given level.");
+            p.Message("&T/ResizeLvl [level] [width] [height] [length]");
+            p.Message("&HResizes the given level.");
         }
     }
 }

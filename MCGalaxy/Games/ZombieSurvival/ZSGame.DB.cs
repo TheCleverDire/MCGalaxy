@@ -87,12 +87,12 @@ namespace MCGalaxy.Games {
         }
         
         static void PrintZSStats(Player p, int rounds, int infected, int roundsMax, int infectedMax) {
-            p.Message("  Survived &a{0} %Srounds (max &e{1}%S)", rounds, roundsMax);
-            p.Message("  Infected &a{0} %Splayers (max &e{1}%S)", infected, infectedMax);
+            p.Message("  Survived &a{0} &Srounds (max &e{1}&S)", rounds, roundsMax);
+            p.Message("  Infected &a{0} &Splayers (max &e{1}&S)", infected, infectedMax);
         }        
         
                 
-        static ColumnDesc[] createSyntax = new ColumnDesc[] {
+        static ColumnDesc[] zsTable = new ColumnDesc[] {
             new ColumnDesc("ID", ColumnType.Integer, priKey: true, autoInc: true, notNull: true),
             new ColumnDesc("Name", ColumnType.Char, 20),
             new ColumnDesc("TotalRounds", ColumnType.Int32),
@@ -114,8 +114,8 @@ namespace MCGalaxy.Games {
         
         static ZombieStats LoadStats(string name) {
             ZombieStats stats = default(ZombieStats);
-            return (ZombieStats)Database.Backend.ReadRows("ZombieStats", "*", stats,
-                                                          ReadStats, "WHERE Name=@0", name);
+            return (ZombieStats)Database.ReadRows("ZombieStats", "*", stats,
+                                                  ReadStats, "WHERE Name=@0", name);
         }
         
         protected override void SaveStats(Player p) {
@@ -124,13 +124,13 @@ namespace MCGalaxy.Games {
             
             int count = Database.CountRows("ZombieStats", "WHERE Name=@0", p.name);
             if (count == 0) {
-                Database.Backend.AddRow("ZombieStats", "TotalRounds, MaxRounds, TotalInfected, MaxInfected, Name",
-                                        data.TotalRoundsSurvived, data.MaxRoundsSurvived,
-                                        data.TotalInfected,       data.MaxInfected, p.name);
+                Database.AddRow("ZombieStats", "TotalRounds, MaxRounds, TotalInfected, MaxInfected, Name",
+            	                data.TotalRoundsSurvived, data.MaxRoundsSurvived,
+            	                data.TotalInfected,       data.MaxInfected, p.name);
             } else {
-                Database.Backend.UpdateRows("ZombieStats", "TotalRounds=@0, MaxRounds=@1, TotalInfected=@2, MaxInfected=@3",
-                                            "WHERE Name=@4", data.TotalRoundsSurvived, data.MaxRoundsSurvived,
-                                                             data.TotalInfected,       data.MaxInfected, p.name);
+                Database.UpdateRows("ZombieStats", "TotalRounds=@0, MaxRounds=@1, TotalInfected=@2, MaxInfected=@3",
+            	                    "WHERE Name=@4", data.TotalRoundsSurvived, data.MaxRoundsSurvived,
+            	                                     data.TotalInfected,       data.MaxInfected, p.name);
             }
         }
     }

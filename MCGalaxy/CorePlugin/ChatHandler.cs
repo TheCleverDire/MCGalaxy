@@ -36,16 +36,6 @@ namespace MCGalaxy.Core {
             }
             
             if (scope != ChatScope.PM) Logger.Log(logType, msg);
-            Player[] players = PlayerInfo.Online.Items;
-            ChatMessageFilter scopeFilter = Chat.scopeFilters[(int)scope];
-            
-            foreach (Player pl in players) {
-                if (pl == source || Chat.Ignoring(pl, source)) continue;
-                if (!scopeFilter(pl, arg)) continue;
-                if (filter != null && !filter(pl, arg)) continue;
-                
-                source.TotalMessagesSent++; break;
-            }
         }
         
         internal static void HandleCommand(Player p, string cmd, string args, CommandData data) {
@@ -58,13 +48,13 @@ namespace MCGalaxy.Core {
                 int used = p.Extras.GetInt("MCG_PONY");
                             
                 if (used < 2) {
-                    Chat.MessageFrom(p, "λNICK %Sjust so happens to be a proud brony! Everyone give λNICK %Sa brohoof!");
+                    Chat.MessageFrom(p, "λNICK &Sjust so happens to be a proud brony! Everyone give λNICK &Sa brohoof!");
                     Logger.Log(LogType.CommandUsage, "{0} used /{1}", p.name, cmd);
                 } else {
                     p.Message("You have used this command 2 times. You cannot use it anymore! Sorry, Brony!");
                 }
                 
-                p.Extras.PutInt("MCG_PONY", used + 1);
+                p.Extras["MCG_PONY"] = used + 1;
             } else if (cmd == "rainbowdashlikescoolthings") {
                 p.cancelcommand = true;
                 if (!MessageCmd.CanSpeak(p, cmd)) return;
@@ -77,7 +67,7 @@ namespace MCGalaxy.Core {
                     p.Message("You have used this command 2 times. You cannot use it anymore! Sorry, Brony!");
                 }
                 
-                p.Extras.PutInt("MCG_RD", used + 1);
+                p.Extras["MCG_RD"] = used + 1;
             }
         }
     }

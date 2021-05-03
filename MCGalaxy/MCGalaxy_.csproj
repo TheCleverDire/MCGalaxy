@@ -70,9 +70,6 @@
     <StartAction>Project</StartAction>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="LibNoise">
-      <HintPath>..\LibNoise.dll</HintPath>
-    </Reference>
     <Reference Include="MySql.Data">
       <HintPath>..\MySql.Data.dll</HintPath>
     </Reference>
@@ -169,7 +166,6 @@
     <Compile Include="Commands\Chat\Cmd8Ball.cs" />
     <Compile Include="Commands\Chat\CmdAdminChat.cs" />
     <Compile Include="Commands\Chat\CmdAfk.cs" />
-    <Compile Include="Commands\Chat\CmdChatRoom.cs" />
     <Compile Include="Commands\Chat\CmdColor.cs" />
     <Compile Include="Commands\Chat\CmdEat.cs" />
     <Compile Include="Commands\Chat\CmdEmote.cs" />
@@ -200,6 +196,7 @@
     <Compile Include="Commands\CPE\CmdEnvironment.cs" />
     <Compile Include="Commands\CPE\CmdHold.cs" />
     <Compile Include="Commands\CPE\CmdModel.cs" />
+    <Compile Include="Commands\CPE\CmdModelScale.cs" />
     <Compile Include="Commands\CPE\CmdPing.cs" />
     <Compile Include="Commands\CPE\CmdReachDistance.cs" />
     <Compile Include="Commands\CPE\CmdSkin.cs" />
@@ -233,7 +230,6 @@
     <Compile Include="Commands\Fun\CTF\CmdCtf.cs" />
     <Compile Include="Commands\Fun\RateMapCmds.cs" />
     <Compile Include="Commands\Fun\RoundsGameCmd.cs" />
-    <Compile Include="Commands\Fun\WeaponCmd.cs" />
     <Compile Include="Commands\Fun\ZombieSurvival\CmdAka.cs" />
     <Compile Include="Commands\Fun\ZombieSurvival\CmdAlive.cs" />
     <Compile Include="Commands\Fun\ZombieSurvival\CmdBounties.cs" />
@@ -259,7 +255,7 @@
     <Compile Include="Commands\Information\CmdRankInfo.cs" />
     <Compile Include="Commands\Information\CmdServerInfo.cs" />
     <Compile Include="Commands\Information\CmdLastCmd.cs" />
-    <Compile Include="Commands\Information\CmdLevels.cs" />
+    <Compile Include="Commands\Information\CmdLoaded.cs" />
     <Compile Include="Commands\Information\CmdMapInfo.cs" />
     <Compile Include="Commands\Information\CmdNews.cs" />
     <Compile Include="Commands\Information\CmdOpRules.cs" />
@@ -269,10 +265,9 @@
     <Compile Include="Commands\Information\CmdRules.cs" />
     <Compile Include="Commands\Information\CmdSearch.cs" />
     <Compile Include="Commands\Information\CmdSeen.cs" />
-    <Compile Include="Commands\Information\CmdDevs.cs" />
     <Compile Include="Commands\Information\CmdTime.cs" />
     <Compile Include="Commands\Information\CmdTop.cs" />
-    <Compile Include="Commands\Information\CmdWorlds.cs" />
+    <Compile Include="Commands\Information\CmdLevels.cs" />
     <Compile Include="Commands\Information\CmdView.cs" />
     <compile Include="Commands\Information\CmdViewAdmins.cs" />
     <compile Include="Commands\Information\CmdViewOps.cs" />
@@ -284,7 +279,6 @@
     <Compile Include="Commands\Maintenance\CmdBlockDB.cs" />
     <Compile Include="Commands\Maintenance\CmdBlockSpeed.cs" />
     <Compile Include="Commands\Maintenance\CmdInfoSwap.cs" />
-    <Compile Include="Commands\Maintenance\CmdIRCBot.cs" />
     <Compile Include="Commands\Maintenance\CmdLimit.cs" />
     <Compile Include="Commands\Maintenance\CmdLowlag.cs" />
     <Compile Include="Commands\Maintenance\CmdPlayerEdit.cs" />
@@ -456,6 +450,7 @@
     <Compile Include="Drawing\DrawOps\RestoreSelectionDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\SpheroidDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\PyramidDrawOp.cs" />
+    <Compile Include="Drawing\DrawOps\SPlaceDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\TorusDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\TreeDrawOp.cs" />
     <Compile Include="Drawing\DrawOps\TriangleDrawOp.cs" />
@@ -475,6 +470,7 @@
     <Compile Include="Drawing\Transform\Transform.cs" />
     <Compile Include="Economy\Awards.cs" />
     <Compile Include="Economy\Economy.DB.cs" />
+    <Compile Include="Economy\OtherItems.cs" />
     <Compile Include="Economy\ZombieItems.cs" />
     <Compile Include="Economy\Economy.cs" />
     <Compile Include="Economy\Item.cs" />
@@ -482,10 +478,13 @@
     <Compile Include="Economy\MessageItems.cs" />
     <Compile Include="Economy\NameItems.cs" />
     <Compile Include="Economy\RankItem.cs" />
+    <Compile Include="Entity\CustomModel.cs" />
     <Compile Include="Entity\Entities.cs" />
     <Compile Include="Entity\Entity.cs" />
+    <Compile Include="Entity\ModelInfo.cs" />
     <Compile Include="Entity\Structs.cs" />
     <Compile Include="Entity\TabList.cs" />
+    <Compile Include="Events\PlayerDBEvents.cs" />
     <Compile Include="Events\EconomyEvents.cs" />
     <Compile Include="Events\EntityEvents.cs" />
     <Compile Include="Events\GameEvents.cs" />
@@ -498,7 +497,7 @@
     <Compile Include="Games\Countdown\CountdownGame.cs" />
     <Compile Include="Games\Countdown\CountdownGame.Plugin.cs" />
     <Compile Include="Games\Countdown\CountdownGame.Round.cs" />
-    <Compile Include="Games\Countdown\CountdownMapGen.cs" />
+    <Compile Include="Games\Countdown\CountdownMap.cs" />
     <Compile Include="Games\CTF\CtfConfig.cs" />
     <Compile Include="Games\CTF\CtfGame.DB.cs" />
     <Compile Include="Games\CTF\CtfGame.Plugin.cs" />
@@ -509,7 +508,7 @@
     <Compile Include="Games\LavaSurvival\LSGame.cs" />
     <Compile Include="Games\LavaSurvival\LSConfig.cs" />
     <Compile Include="Games\LavaSurvival\LSGame.Round.cs" />
-    <Compile Include="Games\MovementCheck.cs" />
+    <Compile Include="Games\HacksDetection.cs" />
     <Compile Include="Games\RoundsGame\LevelPicker.cs" />
     <Compile Include="Games\RoundsGame\RoundsGameConfig.cs" />
     <Compile Include="Games\RoundsGame\RoundsGame.cs" />
@@ -519,6 +518,7 @@
     <Compile Include="Games\TntWars\TWGame.Round.cs" />
     <Compile Include="Games\TntWars\TWGame.cs" />
     <Compile Include="Games\TntWars\TWConfig.cs" />
+    <Compile Include="Games\Weapons\Missile.cs" />
     <Compile Include="Games\Weapons\Weapon.cs" />
     <Compile Include="Games\Weapons\Guns.cs" />
     <Compile Include="Games\ZombieSurvival\ZSGame.DB.cs" />
@@ -537,11 +537,19 @@
     <Compile Include="Generator\Foliage\Tree.cs" />
     <Compile Include="Generator\HeightmapGen.cs" />
     <Compile Include="Generator\ImprovedNoise.cs" />
+    <Compile Include="Generator\LibNoise\Billow.cs" />
+    <Compile Include="Generator\LibNoise\Checkerboard.cs" />
+    <Compile Include="Generator\LibNoise\GradientNoiseBasis.cs" />
+    <Compile Include="Generator\LibNoise\IModule.cs" />
+    <Compile Include="Generator\LibNoise\Perlin.cs" />
+    <Compile Include="Generator\LibNoise\RidgedMultifractal.cs" />
+    <Compile Include="Generator\LibNoise\Voronoi.cs" />
     <Compile Include="Generator\MapGen.cs" />
     <Compile Include="Generator\Realistic\MapGenArgs.cs" />
     <Compile Include="Generator\Realistic\Noise.cs" />
     <Compile Include="Generator\Realistic\MapGen.cs" />
     <Compile Include="Generator\SimpleGen.cs" />
+    <Compile Include="Levels\EnvPreset.cs" />
     <Compile Include="Levels\Hacks.cs" />
     <Compile Include="Levels\IO\Exporters\LvlExporter.cs" />
     <Compile Include="Levels\IO\fNbt.cs" />
@@ -584,10 +592,19 @@
     <Compile Include="Blocks\Physics\TntPhysics.cs" />
     <Compile Include="Blocks\Physics\ZombiePhysics.cs" />
     <Compile Include="Levels\Zone.cs" />
+    <Compile Include="Modules\Relay\Discord\CmdDiscordBot.cs" />
+    <Compile Include="Modules\Relay\Discord\DiscordApiClient.cs" />
+    <Compile Include="Modules\Relay\Discord\DiscordBot.cs" />
+    <Compile Include="Modules\Relay\Discord\DiscordPlugin.cs" />
+    <Compile Include="Modules\Relay\Discord\DiscordWebsocket.cs" />
+    <Compile Include="Modules\Relay\IRC\CmdIRCBot.cs" />
+    <Compile Include="Modules\Relay\IRC\IRCNickList.cs" />
+    <Compile Include="Modules\Relay\RelayBot.cs" />
+    <Compile Include="Modules\Relay\RelayBotCmd.cs" />
+    <Compile Include="Network\BaseWebSocket.cs" />
     <Compile Include="Network\Heartbeat\ClassiCube.cs" />
     <Compile Include="Network\Heartbeat\Heartbeat.cs" />
-    <Compile Include="Network\IRCPlugin\IRCBot.cs" />
-    <Compile Include="Network\IRCPlugin\IRCHandlers.cs" />
+    <Compile Include="Modules\Relay\IRC\IRCBot.cs" />
     <Compile Include="Network\Listeners.cs" />
     <Compile Include="Network\Packets\Opcode.cs" />
     <Compile Include="Network\Packets\Packet.cs" />
@@ -610,14 +627,10 @@
     <Compile Include="Player\PlayerInfo.cs" />
     <Compile Include="Player\PlayerPhysics.cs" />
     <Compile Include="Player\SpamChecker.cs" />
-    <Compile Include="Database\Undo\UndoFormatCBin.cs" />
     <Compile Include="Player\Warp.cs" />
     <Compile Include="Database\Undo\UndoFormat.cs" />
-    <Compile Include="Database\Undo\UndoFormatBin.cs" />
-    <Compile Include="Database\Undo\UndoFormatText.cs" />
     <Compile Include="Network\Player.Networking.cs" />
-    <Compile Include="Plugins\Plugin.cs" />
-    <Compile Include="Plugins\PluginManager.cs" />
+    <Compile Include="Scripting\Plugin.cs" />
     <Compile Include="Scripting\Scripting.cs" />
     <Compile Include="Player\Ban.cs" />
     <Compile Include="Database\SqlTransaction.cs" />
@@ -639,7 +652,6 @@
     <Compile Include="Server\Server.Init.cs" />
     <Compile Include="Server\ServerConfig.cs" />
     <Compile Include="Server\ServerProperties.cs" />
-    <Compile Include="Server\Tasks\InitTasks.cs" />
     <Compile Include="Server\Tasks\ModerationTasks.cs" />
     <Compile Include="Server\Tasks\ServerTasks.cs" />
     <Compile Include="Server\Tasks\UpgradeTasks.cs" />
@@ -651,6 +663,7 @@
     <Compile Include="util\Formatting\Formatter.cs" />
     <Compile Include="util\Formatting\Matcher.cs" />
     <Compile Include="util\Formatting\MultiPageOutput.cs" />
+    <Compile Include="util\IO\FileIO.cs" />
     <Compile Include="util\IO\Paths.cs" />
     <Compile Include="util\IO\TextFile.cs" />
     <Compile Include="util\Math\AABB.cs" />
@@ -664,21 +677,15 @@
     <Compile Include="util\Threading\VolatileArray.cs" />
     <Compile Include="util\UIHelpers.cs" />
     <Compile Include="util\Utils.cs" />
-    <Compile Include="sharkbite.thresher\ChannelModeInfo.cs" />
-    <Compile Include="sharkbite.thresher\CommandBuilder.cs" />
     <Compile Include="sharkbite.thresher\Connection.cs" />
     <Compile Include="sharkbite.thresher\ConnectionArgs.cs" />
     <Compile Include="sharkbite.thresher\Delegates.cs" />
-    <Compile Include="sharkbite.thresher\Enums.cs" />
     <Compile Include="sharkbite.thresher\Listener.cs" />
     <Compile Include="sharkbite.thresher\NameGenerator.cs" />
     <Compile Include="sharkbite.thresher\ReplyCode.cs" />
     <Compile Include="sharkbite.thresher\Rfc2812Util.cs" />
     <Compile Include="sharkbite.thresher\Sender.cs" />
-    <Compile Include="sharkbite.thresher\ServerProperties.cs" />
-    <Compile Include="sharkbite.thresher\TextColor.cs" />
     <Compile Include="sharkbite.thresher\UserInfo.cs" />
-    <Compile Include="sharkbite.thresher\WhoisInfo.cs" />
     <Compile Include="util\ExtrasCollection.cs" />
     <Compile Include="properties\AssemblyInfo.cs" />
     <Compile Include="Player\Player.CPE.cs" />
@@ -707,14 +714,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\mcf.sh">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <None Include="..\README.md">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="..\Changelog.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -728,7 +727,26 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Commands\Maintenance" />
+    <Folder Include="Config\Permissions" />
+    <Folder Include="Database\Stats" />
+    <Folder Include="Games\Weapons" />
+    <Folder Include="Games\RoundsGame" />
+    <Folder Include="Generator\LibNoise" />
+    <Folder Include="Generator\Realistic" />
+    <Folder Include="Modules\Relay\Discord" />
+    <Folder Include="Modules\Relay" />
+    <Folder Include="Network\Heartbeat" />
+    <Folder Include="Modules\Relay\IRC" />
+    <Folder Include="Network\Utils" />
+    <Folder Include="Network\Packets" />
+    <Folder Include="Entity" />
+    <Folder Include="Modules" />
+    <Folder Include="Server\Maintenance" />
+    <Folder Include="util\Formatting" />
+    <Folder Include="util\Threading" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -37,13 +37,16 @@ namespace MCGalaxy {
             GetEntry(p, dst, out name, out group);
             
             name  = Colors.Escape(name); // for nicks
-            name  = Colors.Cleanup(name, dst.hasTextColors);
-            group = Colors.Cleanup(group, dst.hasTextColors);
+            name  = LineWrapper.CleanupColors(name,  dst);
+            group = LineWrapper.CleanupColors(group, dst);
             dst.Send(Packet.ExtAddPlayerName(id, p.truename, name, group, grpPerm, dst.hasCP437));
         }
         
         static void GetEntry(Player p, Player dst, out string name, out string group) {
-            group = Server.Config.TablistGlobal ? "On " + p.level.name : "&fPlayers";
+            string map = p.level.name;
+            if (!p.level.SeesServerWideChat) map += " &S<Local chat>";
+            
+            group = Server.Config.TablistGlobal ? "On " + map : "&fPlayers";
             name  = dst.Ignores.Nicks ? p.color + p.truename : p.ColoredName;
             OnTabListEntryAddedEvent.Call(p, ref name, ref group, dst);
 
@@ -82,10 +85,8 @@ namespace MCGalaxy {
                 }
                 if (!Server.Config.TablistGlobal && p.level != other.level) continue;
                 
-                if (other.CanSeeEntity(p))
-                    Add(other, p, p.id);
-                if (p.CanSeeEntity(other))
-                    Add(p, other, other.id);
+                if (other.CanSee(p)) Add(other, p, p.id);
+                if (p.CanSee(other)) Add(p, other, other.id);
             }
         }
         
@@ -100,11 +101,11 @@ namespace MCGalaxy {
                     continue;
                 }
                 
-                bool despawn = other.CanSeeEntity(p);
+                bool despawn = other.CanSee(p);
                 if (!toVisible) despawn = !despawn;
                 if (despawn) Remove(other, p);
                 
-                despawn = p.CanSeeEntity(other);
+                despawn = p.CanSee(other);
                 if (!toVisible) despawn = !despawn;
                 if (despawn) Remove(p, other);
             }

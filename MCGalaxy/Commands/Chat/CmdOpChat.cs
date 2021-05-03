@@ -21,6 +21,7 @@ namespace MCGalaxy.Commands.Chatting {
         public override string shortcut { get { return "Op"; } }
         public override string type { get { return CommandTypes.Chat; } }
         public override bool UseableWhenFrozen { get { return true; } }
+        public override bool UpdatesLastCmd { get { return false; } }
         public override CommandPerm[] ExtraPerms {
             get { return new[] { new CommandPerm(LevelPermission.Operator, "can read opchat messages") }; }
         }
@@ -34,10 +35,10 @@ namespace MCGalaxy.Commands.Chatting {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/OpChat [message]");
-            p.Message("%HSends a message to online OPs");
-            p.Message("%T/OpChat");
-            p.Message("%HMakes all messages sent go to OPs by default");
+            p.Message("&T/OpChat [message]");
+            p.Message("&HSends a message to online OPs");
+            p.Message("&T/OpChat");
+            p.Message("&HMakes all messages sent go to OPs by default");
         }
     }
 }

@@ -33,7 +33,7 @@ namespace MCGalaxy {
 
             using (IDisposable wLock = lvl.BlockDB.Locker.AccquireWrite(60 * 1000)) {
                 if (wLock == null) {
-                    Logger.Log(LogType.Warning, "%WCouldn't accquire BlockDB write lock on {0}, skipping save", lvl.name);
+                    Logger.Log(LogType.Warning, "&WCouldn't accquire BlockDB write lock on {0}, skipping save", lvl.name);
                     return;
                 }
                 lvl.BlockDB.FlushCache();
@@ -60,7 +60,7 @@ namespace MCGalaxy {
             if (!Database.TableExists("Zone" + map)) return;
             
             List<Zone> zones = new List<Zone>();
-            Database.Backend.ReadRows("Zone" + map, "*", zones, ListZones);
+            Database.ReadRows("Zone" + map, "*", zones, ListZones);
             
             bool changedPerbuild = false;
             for (int i = 0; i < zones.Count; i++) {
@@ -86,14 +86,14 @@ namespace MCGalaxy {
             if (changedPerbuild) level.SaveSettings();
             if (level.Zones.Count > 0 && !level.Save(true)) return;
             
-            Database.Backend.DeleteTable("Zone" + map);
+            Database.DeleteTable("Zone" + map);
             Logger.Log(LogType.SystemActivity, "Upgraded zones for map " + map);
         }
         
         internal static void LoadPortals(Level level, string map) {
-            level.hasPortals = Database.TableExists("Portals" + map);
-            if (!level.hasPortals) return;
             List<Vec3U16> coords = Portal.GetAllCoords(map);
+            level.hasPortals     = coords.Count > 0;
+            if (!level.hasPortals) return;
             
             foreach (Vec3U16 p in coords) {
                 BlockID block = level.GetBlock(p.X, p.Y, p.Z);
@@ -103,9 +103,9 @@ namespace MCGalaxy {
         }
         
         internal static void LoadMessages(Level level, string map) {
-            level.hasMessageBlocks = Database.TableExists("Messages" + map);
+            List<Vec3U16> coords   = MessageBlock.GetAllCoords(map);
+            level.hasMessageBlocks = coords.Count > 0;
             if (!level.hasMessageBlocks) return;
-            List<Vec3U16> coords = MessageBlock.GetAllCoords(map);
             
             foreach (Vec3U16 p in coords) {
                 BlockID block = level.GetBlock(p.X, p.Y, p.Z);

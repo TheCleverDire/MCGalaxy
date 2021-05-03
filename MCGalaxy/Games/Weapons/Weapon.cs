@@ -26,7 +26,6 @@ using BlockID = System.UInt16;
 namespace MCGalaxy.Games {
 
     /// <summary> Represents a weapon which can interact with blocks or players until it dies. </summary>
-    /// <remarks> Activated by clicking through either PlayerClick or on a glass box around the player. </remarks>
     public abstract class Weapon {
 
         public abstract string Name { get; }
@@ -35,14 +34,15 @@ namespace MCGalaxy.Games {
         protected Player p;
         AimBox aimer;
         
-        public void Enable(Player p) {
+        /// <summary> Applies this weapon to the given player, and sets up necessary state. </summary>
+        public virtual void Enable(Player p) {
             if (!hookedEvents) {
                 OnPlayerClickEvent.Register(PlayerClickCallback, Priority.Low);
-                OnBlockChangeEvent.Register(BlockChangeCallback, Priority.Low);
+                OnBlockChangingEvent.Register(BlockChangingCallback, Priority.Low);
                 hookedEvents = true;
             }
             
-            this.p = p;
+            this.p   = p;
             p.ClearBlockchange();
             p.weapon = this;
             
@@ -50,29 +50,32 @@ namespace MCGalaxy.Games {
                 p.Message(Name + " engaged, click to fire at will");
             } else {                
                 p.Message(Name + " engaged, fire at will");
+                p.aiming = true;
                 aimer = new AimBox();
                 aimer.Hook(p);
             }
         }
 
-        public void Disable() {
+        public virtual void Disable() {
             p.aiming = false;
             p.Message(Name + " disabled");
             p.weapon = null;
         }
         
+        /// <summary> Called when the player fires this weapon. </summary>
+        /// <remarks> Activated by clicking through either PlayerClick or on a glass box around the player. </remarks>
         protected abstract void OnActivated(Vec3F32 dir, BlockID block);
 
         
-        static void BlockChangeCallback(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing) {
+        static void BlockChangingCallback(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing, ref bool cancel) {
             Weapon weapon = p.weapon;
             if (weapon == null) return;
             
-            // revert block back since client assumes changes always succeeds
+            // Revert block back since client assumes changes always succeeds
             p.RevertBlock(x, y, z);
-            p.cancelBlock = true;
+            cancel = true;
             
-            // defer to player click handler if used
+            // Defer to player click handler if PlayerClick supported
             if (weapon.aimer == null) return;
             
             if (!p.level.Config.Guns) { weapon.Disable(); return; }
@@ -91,7 +94,7 @@ namespace MCGalaxy.Games {
             if (!(btn == MouseButton.Left || btn == MouseButton.Right)) return;
             if (!p.level.Config.Guns) { weapon.Disable(); return; }
             
-            BlockID held = p.RawHeldBlock;
+            BlockID held = p.ClientHeldBlock;
             if (!CommandParser.IsBlockAllowed(p, "use", held)) return;
             
             Vec3F32 dir = DirUtils.GetDirVectorExt(yaw, pitch);
@@ -113,7 +116,18 @@ namespace MCGalaxy.Games {
             }
             return null;
         }
+        
+        public static WeaponType ParseType(string type) {
+            if (type.Length == 0) return WeaponType.Normal;
+            if (type.CaselessEq("destroy")) return WeaponType.Destroy;
+            if (type.CaselessEq("tp") || type.CaselessEq("teleport")) return WeaponType.Teleport;
+            if (type.CaselessEq("explode")) return WeaponType.Explode;
+            if (type.CaselessEq("laser"))   return WeaponType.Laser;
+            return WeaponType.Invalid;
+        }
     }
+    
+    public enum WeaponType { Invalid, Normal, Destroy, Teleport, Explode, Laser };
     
     public class AmmunitionData {
         public BlockID block;
@@ -133,6 +147,15 @@ namespace MCGalaxy.Games {
             target.Y = (ushort)Math.Round(start.Y + (double)(dir.Y * i));
             target.Z = (ushort)Math.Round(start.Z + (double)(dir.Z * i));
             return target;
+        }
+        
+        public void DoTeleport(Player p) {
+            int i = visible.Count - 3;
+            if (i >= 0 && i < visible.Count) {
+                Vec3U16 coords = visible[i];
+                Position pos   = new Position(coords.X * 32, coords.Y * 32 + 32, coords.Z * 32);
+                p.SendPos(Entities.SelfID, pos, p.Rot);
+            }
         }
     }
     

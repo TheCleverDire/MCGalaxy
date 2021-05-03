@@ -20,9 +20,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Threading;
 using MCGalaxy.Commands;
-using MCGalaxy.Commands.World;
 using MCGalaxy.Drawing;
 using MCGalaxy.Eco;
 using MCGalaxy.Events.ServerEvents;
@@ -44,7 +45,7 @@ namespace MCGalaxy {
             return cancelcommand;
         }
         
-        [Obsolete("Use Logger.LogError(Exception)")]
+        [Obsolete("Use Logger.LogError(Exception)", true)]
         public static void ErrorLog(Exception ex) { Logger.LogError(ex); }
         
         [Obsolete("Use Logger.Log(LogType, String)")]
@@ -75,8 +76,8 @@ namespace MCGalaxy {
         internal static ConfigElement[] serverConfig, levelConfig, zoneConfig;
         public static void Start() {
             serverConfig = ConfigElement.GetAll(typeof(ServerConfig));
-            levelConfig = ConfigElement.GetAll(typeof(LevelConfig));
-            zoneConfig = ConfigElement.GetAll(typeof(ZoneConfig));
+            levelConfig  = ConfigElement.GetAll(typeof(LevelConfig));
+            zoneConfig   = ConfigElement.GetAll(typeof(ZoneConfig));
             
             #pragma warning disable 0618
             Player.players = PlayerInfo.Online.list;
@@ -87,27 +88,24 @@ namespace MCGalaxy {
             shuttingDown = false;
             Logger.Log(LogType.SystemActivity, "Starting Server");
             ServicePointManager.Expect100Continue = false;
+            ForceEnableTLS();
             
             CheckFile("MySql.Data.dll");
             CheckFile("sqlite3_x32.dll");
             CheckFile("sqlite3_x64.dll");
-            CheckFile("LibNoise.dll");
 
             EnsureFilesExist();
             MoveSqliteDll();
             MoveOutdatedFiles();
 
+            GenerateSalt();
             LoadAllSettings();
-            SrvProperties.GenerateSalt();
-
             InitDatabase();
             Economy.LoadDatabase();
 
-            Background.QueueOnce(UpgradeTasks.CombineEnvFiles);
             Background.QueueOnce(LoadMainLevel);
             Plugin.LoadAll();
             Background.QueueOnce(LoadAutoloadMaps);
-            Background.QueueOnce(UpgradeTasks.MovePreviousLevelFiles);
             Background.QueueOnce(UpgradeTasks.UpgradeOldTempranks);
             Background.QueueOnce(UpgradeTasks.UpgradeDBTimeSpent);
             Background.QueueOnce(InitPlayerLists);
@@ -117,14 +115,16 @@ namespace MCGalaxy {
             Background.QueueOnce(InitTimers);
             Background.QueueOnce(InitRest);
             Background.QueueOnce(InitHeartbeat);
-            
-            Devs.Clear();
-            Mods.Clear();
-            Background.QueueOnce(InitTasks.UpdateStaffList);
 
             ServerTasks.QueueTasks();
             Background.QueueRepeat(ThreadSafeCache.DBCache.CleanupTask,
                                    null, TimeSpan.FromMinutes(5));
+        }
+        
+        static void ForceEnableTLS() {
+            // Force enable TLS 1.1/1.2, otherwise checking for updates on Github doesn't work
+            try { ServicePointManager.SecurityProtocol |= (SecurityProtocolType)0x300; } catch { }
+            try { ServicePointManager.SecurityProtocol |= (SecurityProtocolType)0xC00; } catch { }
         }
         
         static void MoveSqliteDll() {
@@ -151,7 +151,7 @@ namespace MCGalaxy {
             EnsureDirectoryExists(Paths.ImportsDir);
             EnsureDirectoryExists("blockdefs");
             EnsureDirectoryExists(IScripting.DllDir);
-            EnsureDirectoryExists(IScripting.SourceDir);
+            EnsureDirectoryExists(ICompiler.SourceDir);
         }
         
         static void EnsureDirectoryExists(string dir) {
@@ -182,7 +182,7 @@ namespace MCGalaxy {
             }
             
             ZSGame.Instance.infectMessages = ZSConfig.LoadInfectMessages();
-            Colors.LoadList();
+            Colors.Load();
             Alias.Load();
             BlockDefinition.LoadGlobal();
             ImagePalette.Load();
@@ -243,7 +243,7 @@ namespace MCGalaxy {
             byte[] kick = Packet.Kick(msg, false);
             try {
                 INetSocket[] pending = INetSocket.pending.Items;
-                foreach (INetSocket p in pending) { p.Send(kick, false); }
+                foreach (INetSocket p in pending) { p.Send(kick, SendFlags.None); }
             } catch (Exception ex) { Logger.LogError(ex); }
 
             Plugin.UnloadAll();
@@ -256,7 +256,7 @@ namespace MCGalaxy {
                     if (!lvl.SaveChanges) continue;
                     
                     autoload = autoload + lvl.name + "=" + lvl.physics + Environment.NewLine;
-                    lvl.Save(false, true);
+                    lvl.Save();
                     lvl.SaveBlockDBChanges();
                 }
                 
@@ -270,8 +270,52 @@ namespace MCGalaxy {
             } catch { }
             
             try { FileLogger.Flush(null); } catch { }
-            if (restarting) Process.Start(RestartPath);
+            
+            if (restarting) {
+                // first try to use excevp to restart in CLI mode under mono 
+                // - see detailed comment in Excvp_Hack for why this is required
+                if (HACK_TryExecvp()) HACK_Execvp();
+                Process.Start(RestartPath);
+            }
             Environment.Exit(0);
+        }
+        
+        [DllImport("libc", SetLastError = true)]
+        static extern int execvp(string path, string[] argv);
+        
+        static bool HACK_TryExecvp() {
+            return CLIMode && Environment.OSVersion.Platform == PlatformID.Unix 
+                && Type.GetType("Mono.Runtime") != null;
+        }
+        
+        static void HACK_Execvp() {
+            // With using normal Process.Start with mono, after Environment.Exit
+            //  is called, all FDs (including standard input) are also closed.
+            // Unfortunately, this causes the new server process to constantly error with
+            //   Type: IOException
+            //   Source: mscorlib
+            //   Message: Invalid handle to path "server_folder_path/[Unknown]"
+            //   Target: ReadData
+            //   Trace:   at System.IO.FileStream.ReadData (System.Runtime.InteropServices.SafeHandle safeHandle, System.Byte[] buf, System.Int32 offset, System.Int32 count) [0x0002d]
+            //     at System.IO.FileStream.ReadInternal (System.Byte[] dest, System.Int32 offset, System.Int32 count) [0x00026]
+            //     at System.IO.FileStream.Read (System.Byte[] array, System.Int32 offset, System.Int32 count) [0x000a1] 
+            //     at System.IO.StreamReader.ReadBuffer () [0x000b3]
+            //     at System.IO.StreamReader.Read () [0x00028]
+            //     at System.TermInfoDriver.GetCursorPosition () [0x0000d]
+            //     at System.TermInfoDriver.ReadUntilConditionInternal (System.Boolean haltOnNewLine) [0x0000e]
+            //     at System.TermInfoDriver.ReadLine () [0x00000]
+            //     at System.ConsoleDriver.ReadLine () [0x00000]
+            //     at System.Console.ReadLine () [0x00013]
+            //     at MCGalaxy.Cli.CLI.ConsoleLoop () [0x00002]
+            // (this errors multiple times a second and can quickly fill up tons of disk space)
+            // And also causes console to be spammed with '1R3;1R3;1R3;' or '363;1R;363;1R;'
+            //
+            // Note this issue does NOT happen with GUI mode for some reason - and also
+            // don't want to use excevp in GUI mode, otherwise the X socket FDs pile up
+            try {
+                execvp("mono", new string[] { "mono", RestartPath });
+            } catch {
+            }
         }
 
         public static void UpdateUrl(string url) {
@@ -303,10 +347,7 @@ namespace MCGalaxy {
         public static void SetMainLevel(Level lvl) {
             Level oldMain = mainLevel;
             mainLevel = lvl;
-            
-            mainLevel.Config.AutoUnload = false;
-            Server.Config.MainLevel = lvl.name;
-            
+            Server.Config.MainLevel = lvl.name;         
             oldMain.Config.AutoUnload = true;
             oldMain.AutoUnload();
         }
@@ -323,6 +364,39 @@ namespace MCGalaxy {
                 string delta = deltaKB.ToString("F2");
                 Logger.Log(LogType.BackgroundActivity, "GC performed (tracking {0} KB, freed {1} KB)", track, delta);
             }
+        }
+        
+        
+        // only want ASCII alphanumerical characters for salt
+        static bool AcceptableSaltChar(char c) {
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') 
+                || (c >= '0' && c <= '9');
+        }
+        
+        /// <summary> Generates a random salt that is used for calculating mppasses. </summary>
+        public static void GenerateSalt() {
+            RandomNumberGenerator rng = RandomNumberGenerator.Create();
+            char[] str = new char[32];
+            byte[] one = new byte[1];
+            
+            for (int i = 0; i < str.Length; ) {
+                rng.GetBytes(one);
+                if (!AcceptableSaltChar((char)one[0])) continue;
+                
+                str[i] = (char)one[0]; i++;
+            }
+            salt = new string(str);
+        }
+        
+        static System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
+        static MD5CryptoServiceProvider md5  = new MD5CryptoServiceProvider();
+        static object md5Lock = new object();
+        
+        /// <summary> Calculates mppass (verification token) for the given username. </summary>
+        public static string CalcMppass(string name) {
+            byte[] hash = null;
+            lock (md5Lock) hash = md5.ComputeHash(enc.GetBytes(salt + name));
+            return BitConverter.ToString(hash).Replace("-", "");
         }
     }
 }

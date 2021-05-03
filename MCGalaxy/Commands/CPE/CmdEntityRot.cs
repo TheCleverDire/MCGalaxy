@@ -34,7 +34,7 @@ namespace MCGalaxy.Commands.CPE {
                 message = "-own " + message;
                 message = message.TrimEnd();
             }
-            UseBotOrPlayer(p, data, message, "rotation");
+            UseBotOrOnline(p, data, message, "rotation");
         }
         
         protected override void SetBotData(Player p, PlayerBot bot, string args) {
@@ -42,9 +42,9 @@ namespace MCGalaxy.Commands.CPE {
             BotsFile.Save(p.level);
         }
         
-        protected override void SetPlayerData(Player p, Player who, string args) {
+        protected override void SetOnlineData(Player p, Player who, string args) {
             if (!ParseArgs(p, args, who)) return;
-            Server.rotations.AddOrReplace(who.name, who.Rot.RotX + " " + who.Rot.RotZ);
+            Server.rotations.Update(who.name, who.Rot.RotX + " " + who.Rot.RotZ);
             Server.rotations.Save();
         }
         
@@ -73,10 +73,10 @@ namespace MCGalaxy.Commands.CPE {
         }
 
         public override void Help(Player p) {
-            p.Message("%T/EntityRot [name] x/z [angle].");
-            p.Message("%HSets X or Z axis rotation (in degrees) of that player.");
-            p.Message("%T/EntityRot bot [name] x/z [angle]");
-            p.Message("%HSets the X or Z axis rotation (in degrees) of that bot.");
+            p.Message("&T/EntityRot [name] x/z [angle].");
+            p.Message("&HSets X or Z axis rotation (in degrees) of that player.");
+            p.Message("&T/EntityRot bot [name] x/z [angle]");
+            p.Message("&HSets the X or Z axis rotation (in degrees) of that bot.");
         }
     }
 }

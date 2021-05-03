@@ -16,7 +16,6 @@ http://www.gnu.org/licenses/gpl-3.0.html
  */
 
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -98,7 +97,7 @@ namespace MCGalaxy.Gui.Components {
             if (dateStamp) AppendColoredText(CurrentDate, Color.Gray);
             
             if (!Colorize) {
-                AppendText(text);
+                AppendText(Colors.StripUsed(text));
             } else {
                 AppendFormatted(text, color);
             }
@@ -130,15 +129,19 @@ namespace MCGalaxy.Gui.Components {
 
         void HandleLinkClicked(object sender, System.Windows.Forms.LinkClickedEventArgs e) {
             if (!Popup.OKCancel("Never open links from people that you don't trust!", "Warning!!")) return;
-            try { Process.Start(e.LinkText); }
-            catch { }
+            Program.OpenBrowser(e.LinkText);
         }
 
         /// <summary> Scrolls to the end of the log </summary>
         internal void ScrollToEnd(int startIndex) {
             int lines = GetLineFromCharIndex(TextLength - 1) - startIndex + 1;
-            for (int i = 0; i < lines; i++) {
-                SendMessage(Handle, 0xB5, (IntPtr)1, IntPtr.Zero);
+            try {
+                for (int i = 0; i < lines; i++) {
+                    SendMessage(Handle, 0xB5, (IntPtr)1, IntPtr.Zero);
+                }
+            } catch (DllNotFoundException) {
+                // mono throws this if you're missing libMonoSupportW
+                // TODO: Maybe we should cache this instead of catching all the time
             }
             Invalidate();
         }

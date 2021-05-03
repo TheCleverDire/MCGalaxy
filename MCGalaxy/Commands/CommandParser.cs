@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright 2015 MCGalaxy team
+    Copyright 2015 MCGalaxy
 
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -37,8 +37,8 @@ namespace MCGalaxy.Commands {
                 result = false; return true;
             }
             
-            p.Message("%W\"{0}\" is not a valid boolean.", input);
-            p.Message("%WValue must be either 1/yes/on or 0/no/off");
+            p.Message("&W\"{0}\" is not a valid boolean.", input);
+            p.Message("&WValue must be either 1/yes/on or 0/no/off");
             return false;
         }
         
@@ -65,11 +65,11 @@ namespace MCGalaxy.Commands {
                 DateTime.UtcNow.Add(span).AddYears(1);
                 return true;
             } catch (OverflowException) {
-                p.Message("%WTimespan given is too big");
+                p.Message("&WTimespan given is too big");
             } catch (ArgumentOutOfRangeException) {
-                p.Message("%WTimespan given is too big");
+                p.Message("&WTimespan given is too big");
             } catch (FormatException ex) {
-                p.Message("%W{0} is not a valid quantifier.", ex.Message);
+                p.Message("&W{0} is not a valid quantifier.", ex.Message);
                 p.Message(TimespanHelp, action);
             }
             return false;
@@ -77,26 +77,29 @@ namespace MCGalaxy.Commands {
         public const string TimespanHelp = "For example, to {0} 25 and a half hours, use \"1d1h30m\".";
         
         
+        public static bool CheckRange(Player p, int value, string argName, int min, int max) {
+            if (value >= min && value <= max) return true;
+            
+            // Try to provide more helpful range messages
+            if (max == int.MaxValue) {
+                p.Message("&W{0} must be {1} or greater", argName, min);
+            } else if (min == int.MinValue) {
+                p.Message("&W{0} must be {1} or less", argName, max);
+            } else {
+                p.Message("&W{0} must be between {1} and {2}", argName, min, max);
+            }
+            return false;
+        }
+        
         /// <summary> Attempts to parse the given argument as an integer. </summary>
         public static bool GetInt(Player p, string input, string argName, ref int result,
                                   int min = int.MinValue, int max = int.MaxValue) {
             int value;
             if (!int.TryParse(input, out value)) {
-                p.Message("%W\"{0}\" is not a valid integer.", input); return false;
+                p.Message("&W\"{0}\" is not a valid integer.", input); return false;
             }
             
-            if (value < min || value > max) {
-                // Try to provide more helpful range messages
-                if (max == int.MaxValue) {
-                    p.Message("%W{0} must be {1} or greater", argName, min);
-                } else if (min == int.MinValue) {
-                    p.Message("%W{0} must be {1} or less", argName, max);
-                } else {
-                    p.Message("%W{0} must be between {1} and {2}", argName, min, max);
-                }
-                return false;
-            }
-            
+            if (!CheckRange(p, value, argName, min, max)) return false;
             result = value; return true;
         }
         
@@ -105,11 +108,11 @@ namespace MCGalaxy.Commands {
                                    float min = float.NegativeInfinity, float max = float.MaxValue) {
             float value;
             if (!Utils.TryParseSingle(input, out value)) {
-                p.Message("%W\"{0}\" is not a valid number.", input); return false;
+                p.Message("&W\"{0}\" is not a valid number.", input); return false;
             }
             
             if (value < min || value > max) {
-                p.Message("%W{0} must be between {1} and {2}", argName, 
+                p.Message("&W{0} must be between {1} and {2}", argName, 
                                min.ToString("F4"), max.ToString("F4"));
                 return false;
             }
@@ -140,24 +143,27 @@ namespace MCGalaxy.Commands {
         public static bool GetHex(Player p, string input, ref ColorDesc col) {
             ColorDesc tmp;
             if (!Colors.TryParseHex(input, out tmp)) {
-                p.Message("%W\"#{0}\" is not a valid HEX color.", input); return false;
+                p.Message("&W\"#{0}\" is not a valid HEX color.", input); return false;
             }
             col = tmp; return true;
         }
         
-        internal static bool GetCoords(Player p, string[] args, int argsOffset, ref Vec3S32 P) {
+        /// <summary> Attempts to parse the 3 given arguments as coordinates. </summary>
+        public static bool GetCoords(Player p, string[] args, int argsOffset, ref Vec3S32 P) {
             return
-                GetCoord(p, args[argsOffset + 0], P.X, "X coordinate", out P.X) &&
-                GetCoord(p, args[argsOffset + 1], P.Y, "Y coordinate", out P.Y) &&
-                GetCoord(p, args[argsOffset + 2], P.Z, "Z coordinate", out P.Z);
+                GetCoord(p, args[argsOffset + 0], "X coordinate", ref P.X) &&
+                GetCoord(p, args[argsOffset + 1], "Y coordinate", ref P.Y) &&
+                GetCoord(p, args[argsOffset + 2], "Z coordinate", ref P.Z);
         }
         
-        static bool GetCoord(Player p, string arg, int cur, string axis, out int value) {
-            bool relative = arg[0] == '~';
+        static bool GetCoord(Player p, string arg, string axis, ref int value) {
+            bool relative = arg.Length > 0 && arg[0] == '~';
             if (relative) arg = arg.Substring(1);
-            value = 0;
             // ~ should work as ~0
-            if (relative && arg.Length == 0) { value += cur; return true; }
+            if (relative && arg.Length == 0) return true;
+            
+            int cur = value;
+            value   = 0;
             
             if (!GetInt(p, arg, axis, ref value)) return false;
             if (relative) value += cur;
@@ -165,25 +171,30 @@ namespace MCGalaxy.Commands {
         }
         
         
+        static bool IsSkipBlock(string input, out BlockID block) {
+            // Skip/None block for draw operations
+            if (input.CaselessEq("skip") || input.CaselessEq("none")) {
+                block = Block.Invalid; return true;
+            } else {
+                block = Block.Air; return false;
+            }
+        }
+        
         /// <summary> Attempts to parse the given argument as either a block name or a block ID. </summary>
         public static bool GetBlock(Player p, string input, out BlockID block, bool allowSkip = false) {
-            block = Block.Air;
-            // Skip/None block for draw operations
-            if (allowSkip && (input.CaselessEq("skip") || input.CaselessEq("none"))) {
-                block = Block.Invalid; return true;
-            }
+            if (allowSkip && IsSkipBlock(input, out block)) return true;
             
             block = Block.Parse(p, input);
-            if (block == Block.Invalid) p.Message("%WThere is no block \"{0}\".", input);
+            if (block == Block.Invalid) p.Message("&WThere is no block \"{0}\".", input);
             return block != Block.Invalid;
         }
 
         /// <summary> Attempts to parse the given argument as either a block name or a block ID. </summary>
         /// <remarks> Also ensures the player is allowed to place the given block. </remarks>
         public static bool GetBlockIfAllowed(Player p, string input, out BlockID block, bool allowSkip = false) {
-            if (!GetBlock(p, input, out block, allowSkip)) return false;
-            if (allowSkip && block == Block.Invalid) return true;
-            return IsBlockAllowed(p, "draw with", block);
+            if (allowSkip && IsSkipBlock(input, out block)) return true;
+            
+            return GetBlock(p, input, out block) && IsBlockAllowed(p, "draw with", block);
         }
         
         /// <summary> Returns whether the player is allowed to place/modify/delete the given block. </summary>

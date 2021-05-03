@@ -44,6 +44,8 @@ namespace MCGalaxy.Commands.CPE {
             
             // Work on current level by default
             if (cfg == null) {
+                if (p.IsSuper) { p.Message("&WWhen using &T/Env &Wfrom {0}, only &T/Env Global &Wis supported", p.SuperName); return; }
+            	
                 lvl = p.level; cfg = lvl.Config;
                 area = lvl.ColoredName;
                 if (!LevelInfo.Check(p, data.Rank, lvl, "set env settings of this level")) return;
@@ -66,7 +68,7 @@ namespace MCGalaxy.Commands.CPE {
                 cfg.LightColor  = preset.Sun;
             } else if (type.CaselessEq("normal")) {
                 cfg.ResetEnv();
-                p.Message("Reset environment for {0} %Sto normal", area);
+                p.Message("Reset environment for {0} &Sto normal", area);
             } else {
                 EnvOption opt = EnvOptions.Find(type);
                 if (opt == null) return false;
@@ -95,68 +97,50 @@ namespace MCGalaxy.Commands.CPE {
         }
         
         static EnvPreset FindPreset(string value) {
-            // fog, sky, clouds, sun, shadow
-            if (value.CaselessEq("cartoon"))  return new EnvPreset("00FFFF 1E90FF 00BFFF F5DEB3 F4A460");
-            if (value.CaselessEq("noir"))     return new EnvPreset("000000 1F1F1F 000000 696969 1F1F1F");
-            if (value.CaselessEq("trippy"))   return new EnvPreset("4B0082 FFD700 006400 7CFC00 B22222");
-            if (value.CaselessEq("watery"))   return new EnvPreset("5F9EA0 008080 008B8B E0FFFF 008B8B");
-            if (value.CaselessEq("gloomy"))   return new EnvPreset("6A80A5 405875 405875 444466 3B3B59");
-            if (value.CaselessEq("cloudy"))   return new EnvPreset("AFAFAF 8E8E8E 8E8E8E 9B9B9B 8C8C8C");
-            if (value.CaselessEq("sunset"))   return new EnvPreset("FFA322 836668 9A6551 7F6C60 46444C");
-            if (value.CaselessEq("midn-ight")) return new EnvPreset("131947 070A23 1E223A 181828 0F0F19");
+            EnvPreset preset = EnvPreset.Find(value);
+            if (preset != null) return preset;
             
-            if (value.CaselessEq("normal")) {
-                return new EnvPreset("    ");
-            } else if (File.Exists("presets/" + value.ToLower() + ".env")) {
+            if (File.Exists("presets/" + value.ToLower() + ".env")) {
                 string text = File.ReadAllText("presets/" + value.ToLower() + ".env");
                 return new EnvPreset(text);
             }
             return null;
         }
-        
-        class EnvPreset {
-            public string Fog, Sky, Clouds, Sun, Shadow;
-            
-            public EnvPreset(string raw) {
-                string[] args = raw.SplitSpaces();
-                Fog = args[0]; Sky = args[1]; Clouds = args[2]; Sun = args[3]; Shadow = args[4];
-            }
-        }
 
         static void MessagePresets(Player p) {
-            p.Message("%T/Env preset [type] %H- Applies an env preset on the map");
-            p.Message("%HPresets: &fCartoon/Midnight/Noir/Normal/Trippy/Watery/Sunset/Gloomy/Cloudy");
+            p.Message("&T/Env preset [type] &H- Applies an env preset on the map");
+            p.Message("&HPresets: &f{0}", EnvPreset.Presets.Join(pr => pr.Key));
             if (!Directory.Exists("presets")) return;
             
             string[] files = Directory.GetFiles("presets", "*.env");
             string all = files.Join(f => Path.GetFileNameWithoutExtension(f));
-            if (all.Length > 0) p.Message("%HCustom presets: &f" + all);
+            if (all.Length > 0) p.Message("&HCustom presets: &f" + all);
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Environment global/level [variable] [value]");
-            p.Message("%HChanges server default or current level's environment.");
-            p.Message("%HSee %T/Help env variables %Hfor list of variables");
-            p.Message("%T/Environment global/level normal");
-            p.Message("%HResets all environment variables to default");
+            p.Message("&T/Environment global/level [variable] [value]");
+            p.Message("&HChanges server default or current level's environment.");
+            p.Message("&HSee &T/Help env variables &Hfor list of variables");
+            p.Message("&T/Environment global/level normal");
+            p.Message("&HResets all environment variables to default");
         }
         
         public override void Help(Player p, string message) {
             if (message.CaselessEq("variable") || message.CaselessEq("variables")) {
-                p.Message("%HVariables: &f{0}", EnvOptions.Options.Join(o => o.Name));
-                p.Message("%HUse %T/Help env [variable] %Hto see details for that variable");
+                p.Message("&HVariables: &f{0}", EnvOptions.Options.Join(o => o.Name));
+                p.Message("&HUse &T/Help env [variable] &Hto see details for that variable");
                 return;
-        	} else if (message.CaselessEq("presets")) {
+            } else if (message.CaselessEq("presets")) {
                 MessagePresets(p); return;
-        	}
+            }
             
             EnvOption opt = EnvOptions.Find(message);
             if (opt != null) {
-                p.Message("%T/Env {0} [value]", opt.Name);
+                p.Message("&T/Env {0} [value]", opt.Name);
                 p.Message(opt.Help);
-                p.Message("%HUse 'normal' for [value] to reset to default");
+                p.Message("&HUse 'normal' for [value] to reset to default");
             } else {
-                p.Message("%WUnrecognised property \"{0}\"", message);
+                p.Message("&WUnrecognised property \"{0}\"", message);
             }
         }
     }

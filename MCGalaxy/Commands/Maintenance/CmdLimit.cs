@@ -59,18 +59,18 @@ namespace MCGalaxy.Commands.Maintenance {
             if (grp == null) return;
 
             switch (args[0].ToLower()) {
-                case "dl":
-                case "drawlimit":
-                    Chat.MessageAll(grp.ColoredName + "%S's draw limit set to &b" + limit);
+                case "draw":
+                    Chat.MessageAll(grp.ColoredName + "&S's draw limit set to &b" + limit);
                     grp.DrawLimit = limit; break;
-                case "mu":
                 case "maxundo":
-                    Chat.MessageAll(grp.ColoredName + "%S's undo limit set to &b" + limit);
+                    Chat.MessageAll(grp.ColoredName + "&S's undo limit set to &b" + limit);
                     grp.MaxUndo = TimeSpan.FromSeconds(limit); break;
                 case "gen":
-                case "genlimit":
-                    Chat.MessageAll(grp.ColoredName + "%S's map gen volume limit set to &b" + limit);
+                    Chat.MessageAll(grp.ColoredName + "&S's map gen volume limit set to &b" + limit);
                     grp.GenVolume = limit; break;
+                case "realms":
+                    Chat.MessageAll(grp.ColoredName + "&S's max realms set to &b" + limit);
+                    grp.OverseerMaps = limit; break;
                 default:
                     Help(p); return;
             }
@@ -101,11 +101,12 @@ namespace MCGalaxy.Commands.Maintenance {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Limit [type] [amount] <rank>");
-            p.Message("%HSets the limit for [type]");
-            p.Message("%HValid types: %Sreloadthreshold(rt), restartphysics(rp), " +
-                           "rpnormal, physicsundo(pu), drawlimit(dl), maxundo(mu), genlimit(gen)");
-            p.Message("%H<rank> is required for drawlimit, maxundo, gen types.");
+            p.Message("&T/Limit [type] [amount]");
+            p.Message("&HSets the general limit for [type]");
+            p.Message("  &HValid types: &freloadthreshold, restartphysics(rp), rpnormal, physicsundo(pu)");
+            p.Message("&T/Limit [type] [amount] [rank]");
+            p.Message("&HSets the limit for [type] for the given rank");
+            p.Message("  &HValid types: &fdraw, maxundo, gen, realms");
         }
     }
 }

@@ -46,9 +46,9 @@ namespace MCGalaxy.Commands.Info {
             }
             
             if (totalPlayers == 1) {
-                p.Message("There is &a1 %Splayer online.");
+                p.Message("There is &a1 &Splayer online.");
             } else {
-                p.Message("There are &a" + totalPlayers + " %Splayers online.");
+                p.Message("There are &a" + totalPlayers + " &Splayers online.");
             }
             
             for (int i = allPlayers.Count - 1; i >= 0; i--) {
@@ -64,28 +64,28 @@ namespace MCGalaxy.Commands.Info {
             
             Player[] online = PlayerInfo.Online.Items;
             foreach (Player pl in online) {
-                if (pl.group != group) continue;
-                if (p != pl && !Entities.CanSee(data, p, pl)) continue;
+                if (pl.group != group || !p.CanSee(pl, data.Rank)) continue;
                 
                 totalPlayers++;
-                Append(list, pl);
+                Append(p, list, pl);
             }
             return list;
         }
         
-        static void Append(GroupPlayers list, Player pl) {
+        static void Append(Player target, GroupPlayers list, Player p) {
             StringBuilder data = list.builder;
             data.Append(' ');
-            if (pl.voice) { data.Append("&f+").Append(list.group.Color); }
-            data.Append(Colors.Strip(pl.DisplayName));
+            if (p.voice) { data.Append("&f+").Append(list.group.Color); }
+            data.Append(Colors.StripUsed(target.FormatNick(p)));
             
-            if (pl.hidden)       data.Append("-hidden");
-            if (pl.muted)        data.Append("-muted");
-            if (pl.frozen)       data.Append("-frozen");
-            if (pl.Game.Referee) data.Append("-ref");
-            if (pl.IsAfk)        data.Append("-afk");
+            if (p.hidden)       data.Append("-hidden");
+            if (p.muted)        data.Append("-muted");
+            if (p.frozen)       data.Append("-frozen");
+            if (p.Game.Referee) data.Append("-ref");
+            if (p.IsAfk)        data.Append("-afk");
+            if (p.Unverified)   data.Append("-unverified");
             
-            string lvlName = Colors.Strip(pl.level.name); // for museums
+            string lvlName = Colors.Strip(p.level.name); // for museums
             data.Append(" (").Append(lvlName).Append("),");
         }
         
@@ -108,10 +108,10 @@ namespace MCGalaxy.Commands.Info {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Players");
-            p.Message("%HLists name and rank of all online players");
-            p.Message("%T/Players [rank]");
-            p.Message("%HLists all online players who have that rank");
+            p.Message("&T/Players");
+            p.Message("&HLists name and rank of all online players");
+            p.Message("&T/Players [rank]");
+            p.Message("&HLists all online players who have that rank");
         }
     }
 }

@@ -22,8 +22,7 @@ using BlockID = System.UInt16;
 
 namespace MCGalaxy.Games {
 
-    /// <summary> Represents a gun weapon which dies when it hits a block or a player. </summary>
-    /// <remarks> Fires in a straight line from where playing is looking. </remarks>
+    /// <summary> Represents a gun weapon that fires in a straight line from where player is looking. </remarks>
     public class Gun : Weapon {
         public override string Name { get { return "Gun"; } }
 
@@ -37,18 +36,21 @@ namespace MCGalaxy.Games {
             AmmunitionData args = new AmmunitionData();
             args.block  = block;
             
-            args.start = (Vec3U16)p.Pos.BlockCoords;
-            args.dir   = dir;
+            args.start  = (Vec3U16)p.Pos.BlockCoords;
+            args.dir    = dir;
             args.iterations = 4;
             return args;
         }
-        
+
+        /// <summary> Called when a bullet has collided with a block. </summary>
+        /// <returns> true if this block stops the bullet, false if it should continue moving. </returns>
         protected virtual bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
             return true;
         }
         
+        /// <summary> Called when a bullet has collided with a player. </summary>
         protected virtual void OnHitPlayer(AmmunitionData args, Player pl) {
-            pl.HandleDeath(Block.Cobblestone, "@p %Swas shot by " + p.ColoredName);
+            pl.HandleDeath(Block.Cobblestone, "@p &Swas shot by " + p.ColoredName);
         }
         
         protected virtual bool TickMove(AmmunitionData args) {
@@ -105,7 +107,7 @@ namespace MCGalaxy.Games {
         public override string Name { get { return "Penetrative gun"; } }
         
         protected override bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
-            if (p.level.physics < 2 || block == Block.Glass) return true;
+            if (p.level.physics < 2) return true;
             
             if (!p.level.Props[block].LavaKills) return true;
             // Penetrative gun goes through blocks lava can go through
@@ -118,15 +120,13 @@ namespace MCGalaxy.Games {
         public override string Name { get { return "Explosive gun"; } }
         
         protected override bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
-            if (p.level.physics >= 3 && block != Block.Glass) {
-                p.level.MakeExplosion(pos.X, pos.Y, pos.Z, 1);
-            }
+        	if (p.level.physics >= 3) p.level.MakeExplosion(pos.X, pos.Y, pos.Z, 1);
             return true;
         }
         
         protected override void OnHitPlayer(AmmunitionData args, Player pl) {
             if (pl.level.physics >= 3) {
-                pl.HandleDeath(Block.Cobblestone, "@p %Swas blown up by " + p.ColoredName, true);
+                pl.HandleDeath(Block.Cobblestone, "@p &Swas blown up by " + p.ColoredName, true);
             } else {
                 base.OnHitPlayer(args, pl);
             }
@@ -161,21 +161,12 @@ namespace MCGalaxy.Games {
     public class TeleportGun : Gun {
         public override string Name { get { return "Teleporter gun"; } }
         
-        void DoTeleport(AmmunitionData args) {
-            int i = args.visible.Count - 3;
-            if (i >= 0 && i < args.visible.Count) {
-                Vec3U16 coords = args.visible[i];
-                Position pos = new Position(coords.X * 32, coords.Y * 32 + 32, coords.Z * 32);
-                p.SendPos(Entities.SelfID, pos, p.Rot);
-            }
-        }
-        
         protected override void OnHitPlayer(AmmunitionData args, Player pl) {
-            DoTeleport(args);
+            args.DoTeleport(p);
         }
         
         protected override bool OnHitBlock(AmmunitionData args, Vec3U16 pos, BlockID block) {
-            DoTeleport(args);
+            args.DoTeleport(p);
             return true;
         }
     }

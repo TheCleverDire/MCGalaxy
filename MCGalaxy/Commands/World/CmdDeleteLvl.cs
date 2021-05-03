@@ -16,8 +16,6 @@
     permissions and limitations under the Licenses.
  */
 using System;
-using System.IO;
-using MCGalaxy.SQL;
 
 namespace MCGalaxy.Commands.World {
     public sealed class CmdDeleteLvl : Command2 {
@@ -31,22 +29,20 @@ namespace MCGalaxy.Commands.World {
         
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length == 0 || message.SplitSpaces().Length > 1) { Help(p); return; }
-            if (!Formatter.ValidMapName(p, message)) return;
             string map = Matcher.FindMaps(p, message);
-            if (map == null) return;
-
-            if (map.CaselessEq(Server.Config.MainLevel)) { p.Message("Cannot delete the main level."); return; }
-            if (!LevelInfo.Check(p, data.Rank, map, "delete this map")) return;
+            LevelConfig cfg;
             
-            p.Message("Created backup.");
-            if (LevelActions.Delete(map)) return;
-            p.Message(LevelActions.DeleteFailedMessage);
+            if (map == null) return;            
+            if (!LevelInfo.Check(p, data.Rank, map, "delete this map",out cfg)) return;
+
+            if (!LevelActions.Delete(p, map)) return;
+            Chat.MessageGlobal("Level {0} &Swas deleted", cfg.Color + map);
         }
         
         public override void Help(Player p) {
-            p.Message("%T/DeleteLvl [map]");
-            p.Message("%HCompletely deletes [map] (portals, MBs, everything)");
-            p.Message("%HA backup of the map will be placed in the levels/deleted folder");
+            p.Message("&T/DeleteLvl [level]");
+            p.Message("&HCompletely deletes [level] (portals, MBs, everything)");
+            p.Message("&HA backup of the level is made in the levels/deleted folder");
         }
     }
 }

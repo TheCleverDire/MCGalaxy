@@ -18,6 +18,7 @@ namespace MCGalaxy.Commands.Chatting {
         public override string shortcut { get { return "Admin"; } }
         public override string type { get { return CommandTypes.Chat; } }
         public override bool UseableWhenFrozen { get { return true; } }
+        public override bool UpdatesLastCmd { get { return false; } }
         public override CommandPerm[] ExtraPerms {
             get { return new[] { new CommandPerm(LevelPermission.Admin, "can read adminchat messages") }; }
         }
@@ -31,10 +32,10 @@ namespace MCGalaxy.Commands.Chatting {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/AdminChat [message]");
-            p.Message("%HSends a message to online Admins");
-            p.Message("%T/AdminChat");
-            p.Message("%HMakes all messages sent go to Admins by default");
+            p.Message("&T/AdminChat [message]");
+            p.Message("&HSends a message to online Admins");
+            p.Message("&T/AdminChat");
+            p.Message("&HMakes all messages sent go to Admins by default");
         }
     }
 }

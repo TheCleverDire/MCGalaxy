@@ -33,23 +33,23 @@ namespace MCGalaxy.Commands.Misc {
             get { return new[] { new CommandPerm(LevelPermission.Operator, "can summon all players") }; }
         }
 
-        public override void Use(Player p, string target, CommandData data) {
-            if (target.Length == 0) { Help(p); return; }
+        public override void Use(Player p, string message, CommandData data) {
+            if (message.Length == 0) { Help(p); return; }
             
-            if (!target.CaselessEq("all")) {
-                SummonPlayer(p, target, data);
+            if (!message.CaselessEq("all")) {
+                SummonPlayer(p, message, data);
             } else {
                 if (!CheckExtraPerm(p, data, 1)) return;
                 Player[] players = PlayerInfo.Online.Items;
                 
-                foreach (Player pl in players) {
-                    if (pl.level == p.level && pl != p && data.Rank > pl.Rank) {
-                        pl.AFKCooldown = DateTime.UtcNow.AddSeconds(2);
-                        pl.SendPos(Entities.SelfID, p.Pos, p.Rot);
-                        pl.Message("You were summoned by " + p.ColoredName + "%S.");
+                foreach (Player target in players) {
+                    if (target.level == p.level && target != p && data.Rank > target.Rank) {
+                        target.AFKCooldown = DateTime.UtcNow.AddSeconds(2);
+                        target.SendPos(Entities.SelfID, p.Pos, p.Rot);
+                        target.Message("You were summoned by {0}&S.", target.FormatNick(p));
                     }
                 }
-                Chat.MessageFromLevel(p, "λNICK %Ssummoned everyone");
+                Chat.MessageFromLevel(p, "λNICK &Ssummoned everyone");
             }
         }
         
@@ -57,56 +57,56 @@ namespace MCGalaxy.Commands.Misc {
             string[] args = message.SplitSpaces();
             bool confirmed = args.Length > 1 && args[1].CaselessEq("confirm");
             
-            Player who = PlayerInfo.FindMatches(p, args[0]);
-            if (who == null) return;
-            if (!CheckRank(p, data, who, "summon", true)) return;
+            Player target = PlayerInfo.FindMatches(p, args[0]);
+            if (target == null) return;
+            if (!CheckRank(p, data, target, "summon", true)) return;
             
-            if (p.level != who.level) {
-                if (!CheckVisitPerm(p, who, confirmed)) return;
-                p.Message(who.ColoredName + " %Sis in a different level, moving them..");
+            if (p.level != target.level) {
+                if (!CheckVisitPerm(p, target, confirmed)) return;
+                p.Message("{0} &Sis in a different level, moving them..", p.FormatNick(target));
                 
-                who.summonedMap = p.level.name;
-                PlayerActions.ChangeMap(who, p.level);
-                who.summonedMap = null;
+                target.summonedMap = p.level.name;
+                PlayerActions.ChangeMap(target, p.level);
+                target.summonedMap = null;
                 p.BlockUntilLoad(10); // wait for them to load
             }
 
-            if (p.level != who.level) return; // in case they were unable to move to this level
+            if (p.level != target.level) return; // in case they were unable to move to this level
             
-            who.AFKCooldown = DateTime.UtcNow.AddSeconds(2);
-            who.SendPos(Entities.SelfID, p.Pos, p.Rot);
-            who.Message("You were summoned by " + p.ColoredName + "%S.");
+            target.AFKCooldown = DateTime.UtcNow.AddSeconds(2);
+            target.SendPos(Entities.SelfID, p.Pos, p.Rot);
+            target.Message("You were summoned by {0}&S.", target.FormatNick(p));
         }
         
-        static bool CheckVisitPerm(Player p, Player who, bool confirmed) {
-            AccessResult result = p.level.VisitAccess.Check(who.name, who.Rank);
+        static bool CheckVisitPerm(Player p, Player target, bool confirmed) {
+            AccessResult result = p.level.VisitAccess.Check(target.name, target.Rank);
             if (result == AccessResult.Allowed) return true;
             if (result == AccessResult.Whitelisted) return true;
             if (result == AccessResult.AboveMaxRank && confirmed) return true;
             if (result == AccessResult.BelowMinRank && confirmed) return true;
             
             if (result == AccessResult.Blacklisted) {
-                p.Message("{0} %Sis blacklisted from visiting this map.", who.ColoredName);
+                p.Message("{0} &Sis blacklisted from visiting this map.", p.FormatNick(target));
                 return false;
             } else if (result == AccessResult.BelowMinRank) {
-                p.Message("Only {0}%S+ may normally visit this map. {1}%S is ranked {2}",
+                p.Message("Only {0}&S+ may normally visit this map. {1}&S is ranked {2}",
                           Group.GetColoredName(p.level.VisitAccess.Min),
-                          who.ColoredName, who.group.ColoredName);
+                          p.FormatNick(target), target.group.ColoredName);
             } else if (result == AccessResult.AboveMaxRank) {
-                p.Message("Only {0}%S and below may normally visit this map. {1}%S is ranked {2}",
+                p.Message("Only {0}&S and below may normally visit this map. {1}&S is ranked {2}",
                           Group.GetColoredName(p.level.VisitAccess.Max),
-                          who.ColoredName, who.group.ColoredName);
+                          p.FormatNick(target), target.group.ColoredName);
             }
             
-            p.Message("If you still want to summon them, type %T/Summon {0} confirm", who.name);
+            p.Message("If you still want to summon them, type &T/Summon {0} confirm", target.name);
             return false;
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Summon [player]");
-            p.Message("%HSummons [player] to your position.");
-            p.Message("%T/Summon all");
-            p.Message("%HSummons all players in your map");
+            p.Message("&T/Summon [player]");
+            p.Message("&HSummons [player] to your position.");
+            p.Message("&T/Summon all");
+            p.Message("&HSummons all players in your map");
         }
     }
 }

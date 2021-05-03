@@ -31,13 +31,16 @@ namespace MCGalaxy {
             return target != null ? target.group : Group.GroupIn(name);
         }
         
-        public static string GetColoredName(Player p, string name) {
-            Player target = FindExact(name);
-            // TODO: select color from database?
-            return target != null && Entities.CanSee(p, target) ? target.ColoredName
-                : Group.GroupIn(name).Color + name.RemoveLastPlus();
+        [Obsolete("Use p.FormatNick instead")]
+        public static string GetColoredName(Player p, string name) { return p.FormatNick(name); }
+        
+        /// <summary> Calculates default color for the given player. </summary>
+        public static string DefaultColor(Player p) {
+            string col = PlayerDB.FindColor(p);
+            return col.Length > 0 ? col : p.group.Color;
         }
         
+        /// <summary> Returns the number of non-hidden players that are currently online </summary>
         public static int NonHiddenCount() {
             Player[] players = Online.Items;
             int count = 0;
@@ -45,18 +48,36 @@ namespace MCGalaxy {
             return count;
         }
         
-        public static Player FindMatches(Player pl, string name, bool onlyCanSee = true) {
-            int matches; return FindMatches(pl, name, out matches, onlyCanSee);
+        public static int NonHiddenUniqueIPCount() {
+            Player[] players = Online.Items;
+            Dictionary<string, bool> uniqueIPs = new Dictionary<string, bool>();
+            
+            foreach (Player p in players) {
+                if (!p.hidden) uniqueIPs[p.ip] = true;
+            }
+            return uniqueIPs.Count;
+        }
+        // TODO: remove _useless parameter. but this breaks backwards compatibility with plugins
+        
+        /// <summary> Matches given name against the names of all online players that the given player can see </summary>
+        /// <returns> A Player instance if exactly one match was found </returns>
+        public static Player FindMatches(Player pl, string name, bool _useless = false) {
+            int matches; return FindMatches(pl, name, out matches);
         }
         
-        public static Player FindMatches(Player pl, string name,
-                                         out int matches, bool onlyCanSee = true) {
+        /// <summary> Matches given name against the names of all online players that the given player can see </summary>
+        /// <param name="matches"> Outputs the number of matching players </param>
+        /// <returns> A Player instance if exactly one match was found </returns>
+        public static Player FindMatches(Player pl, string name, out int matches, bool _useless = false) {
             matches = 0;
             if (!Formatter.ValidName(pl, name, "player")) return null;
             
+            // Try to exactly match name first (because names have + at end)
+            Player exact = FindExact(name);
+            if (exact != null && pl.CanSee(exact)) { matches = 1; return exact; }
+            
             return Matcher.Find(pl, name, out matches, Online.Items,
-                                p => Entities.CanSee(pl, p) || !onlyCanSee,
-                                p => p.name, "online players");
+                                p => pl.CanSee(p), p => p.name, "online players");
         }
         
         public static string FindMatchesPreferOnline(Player p, string name) {
@@ -74,38 +95,14 @@ namespace MCGalaxy {
         /// <returns> Player instance if an exact match is found, null if not. </returns>
         public static Player FindExact(string name) {
             Player[] players = PlayerInfo.Online.Items;
-
+            name = name.RemoveLastPlus();
+            
             foreach (Player p in players) {
-                if (p.name.CaselessEq(name)) return p;
+                if (p.truename.CaselessEq(name)) return p;
             }
             return null;
         }
-        
-        
-        public static PlayerData FindData(string name) {
-            string suffix = Database.Backend.CaselessWhereSuffix;
-            object raw = Database.Backend.ReadRows("Players", "*",
-                                                   null, PlayerData.Read,
-                                                   "WHERE Name=@0" + suffix, name);
-            return (PlayerData)raw;
-        }
 
-        public static string FindName(string name) {
-            string suffix = Database.Backend.CaselessWhereSuffix;
-            return Database.ReadString("Players", "Name", "WHERE Name=@0" + suffix, name);
-        }
-        
-        public static string FindIP(string name) {
-            string suffix = Database.Backend.CaselessWhereSuffix;
-            return Database.ReadString("Players", "IP", "WHERE Name=@0" + suffix, name);
-        }
-        
-        public static string FindOfflineIPMatches(Player p, string name, out string ip) {
-            string[] match = PlayerDB.MatchValues(p, name, "Name,IP");
-            ip   = match == null ? null : match[1];
-            return match == null ? null : match[0];
-        }
-        
         
         static object ReadAccounts(IDataRecord record, object arg) {
             List<string> names = (List<string>)arg;
@@ -119,7 +116,7 @@ namespace MCGalaxy {
         /// <remarks> This is current IP for online players, last IP for offline players from the database. </remarks>
         public static List<string> FindAccounts(string ip) {
             List<string> names = new List<string>();
-            Database.Backend.ReadRows("Players", "Name", names, ReadAccounts, "WHERE IP=@0", ip);
+            Database.ReadRows("Players", "Name", names, ReadAccounts, "WHERE IP=@0", ip);
             
             // TODO: should we instead do save() when the player logs in
             // by checking online players we avoid a DB write though
@@ -129,6 +126,16 @@ namespace MCGalaxy {
                 if (!names.CaselessContains(p.name)) names.Add(p.name);
             }
             return names;
+        }
+        
+        /// <summary> Filters input list to only players that the source player can see. </summary>
+        internal static List<Player> OnlyCanSee(Player p, LevelPermission plRank, 
+                                                IEnumerable<Player> players) {
+            List<Player> list = new List<Player>();
+            foreach (Player pl in players) {
+                if (p.CanSee(pl, plRank)) list.Add(pl);
+            }
+            return list;
         }
     }
 }

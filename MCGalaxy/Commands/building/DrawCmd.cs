@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright 2015 MCGalaxy team
+    Copyright 2015 MCGalaxy
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -31,17 +31,10 @@ namespace MCGalaxy.Commands.Building {
         protected virtual int MarksCount { get { return 2; } }
         protected virtual string SelectionType { get { return "region"; } }
         protected virtual string PlaceMessage { get { return "Place or break two blocks to determine the edges."; } }
-        protected const string BrushHelpLine = "   %HFor help about brushes, type %T/Help Brush";
+        protected const string BrushHelpLine = "   &HFor help about brushes, type &T/Help Brush";
         
         public override void Use(Player p, string message, CommandData data) {
-            message = message.ToLower();
-            string[] parts = message.SplitSpaces();
-            
-            DrawArgs dArgs = new DrawArgs();
-            dArgs.Message = message;
-            dArgs.Player = p;
-            dArgs.Mode = GetMode(parts);
-            dArgs.Op = GetDrawOp(dArgs);
+            DrawArgs dArgs = MakeArgs(p, message);
             if (dArgs.Op == null) return;
             
             // Validate the brush syntax is correct
@@ -50,7 +43,19 @@ namespace MCGalaxy.Commands.Building {
             if (!factory.Validate(bArgs)) return;
             
             p.Message(PlaceMessage);
-            p.MakeSelection(MarksCount, "Selecting " + SelectionType + " for %S" + dArgs.Op.Name, dArgs, DoDraw);
+            p.MakeSelection(MarksCount, "Selecting " + SelectionType + " for &S" + dArgs.Op.Name, dArgs, DoDraw);
+        }
+        
+        protected virtual DrawArgs MakeArgs(Player p, string message) {
+            DrawArgs dArgs = new DrawArgs();
+            message = message.ToLower();
+            string[] parts = message.SplitSpaces();
+            
+            dArgs.Message = message;
+            dArgs.Player  = p;
+            dArgs.Mode = GetMode(parts);
+            dArgs.Op   = GetDrawOp(dArgs);
+            return dArgs;
         }
         
         protected virtual bool DoDraw(Player p, Vec3S32[] marks, object state, BlockID block) {
@@ -68,8 +73,8 @@ namespace MCGalaxy.Commands.Building {
             return true;
         }
         
-        BrushFactory MakeBrush(DrawArgs args) {
-            args.BrushName = args.Player.BrushName; 
+        protected BrushFactory MakeBrush(DrawArgs args) {
+            args.BrushName = args.Player.BrushName;
             args.BrushArgs = "";
             GetBrush(args);
             

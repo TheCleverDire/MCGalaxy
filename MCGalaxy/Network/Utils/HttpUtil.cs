@@ -11,9 +11,13 @@ software distributed under the Licenses are distributed on an "AS IS"
 BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
 or implied. See the Licenses for the specific language governing
 permissions and limitations under the Licenses.
-*/
+ */
 using System;
+using System.IO;
 using System.Net;
+using System.Net.Security;
+using System.Net.Sockets;
+using System.Security.Authentication;
 
 namespace MCGalaxy.Network {
     /// <summary> Static class for assisting with making web requests. </summary>
@@ -49,6 +53,18 @@ namespace MCGalaxy.Network {
             // can only use same family for local bind IP
             if (remoteEndPoint.AddressFamily != localIP.AddressFamily) return null;
             return new IPEndPoint(localIP, 0);
+        }
+        
+        
+		// these do not exist in .NET 4.0 and cause a compilation failure
+		const SslProtocols tls_11 = (SslProtocols)768;
+		const SslProtocols tls_12 = (SslProtocols)3072;
+		
+        public static SslStream WrapSSLStream(Stream source, string host) {
+        	SslStream wrapped  = new SslStream(source);
+			SslProtocols flags = SslProtocols.Tls | tls_11 | tls_12;
+			wrapped.AuthenticateAsClient(host, null, flags, false);
+			return wrapped;
         }
         
         public static bool IsPrivateIP(string ip) {
@@ -96,13 +112,55 @@ namespace MCGalaxy.Network {
             url = url.Replace("dl.dropboxusercontent.com", "dl.dropbox.com");
         }
         
-        public static byte[] DownloadData(string url, Player p) {
-            FilterURL(ref url);
+        static bool CheckHttpOrHttps(Player p, string url) {
             Uri uri;
-            if (!Uri.TryCreate(url, UriKind.Absolute, out uri)) {
-                p.Message("%W{0} is not a valid URL.", url); return null;
-            }
+            // only check valid URLs here
+            if (!url.Contains("://")) return true;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out uri)) return true;
             
+            string scheme = uri.Scheme;
+            if (scheme.CaselessEq("http") || scheme.CaselessEq("https")) return true;
+            
+            p.Message("&WOnly http:// or https:// urls are supported, " +
+                      "{0} is a {1}:// url", url, scheme);
+            return false;
+        }
+        
+        /// <summary> Prefixes a URL by http:// if needed, and converts dropbox webpages to direct links. </summary>
+        /// <remarks> Ensures URL is a valid http/https URI. </remarks>
+        public static Uri GetUrl(Player p, ref string url) {
+            Uri uri;
+            if (!CheckHttpOrHttps(p, url)) return null;
+            FilterURL(ref url);
+            
+            if (!Uri.TryCreate(url, UriKind.Absolute, out uri)) {
+                p.Message("&W{0} is not a valid URL.", url); return null;
+            }
+            return uri;
+        }
+        
+        static string DescribeError(Exception ex) {
+            try {
+                WebException webEx = (WebException)ex;
+                // prefer explicit http status error codes if possible
+                try {
+                    int status = (int)((HttpWebResponse)webEx.Response).StatusCode;
+                    return "(" + status + " error) from ";
+                } catch {
+                    return "(" + webEx.Status + ") from ";
+                }
+            } catch {
+                return null;
+            }
+        }
+        
+        public static byte[] DownloadData(string url, Player p) {
+            Uri uri = GetUrl(p, ref url);
+            if (uri == null) return null;
+            return DownloadData(p, url, uri);
+        }
+        
+        static byte[] DownloadData(Player p, string url, Uri uri) {
             byte[] data = null;
             try {
                 using (WebClient client = CreateWebClient()) {
@@ -110,17 +168,31 @@ namespace MCGalaxy.Network {
                     data = client.DownloadData(uri);
                 }
                 p.Message("Finished downloading.");
-            } catch (Exception ex) {
-                Logger.LogError("Error downloading", ex);
-                p.Message("%WFailed to download from &f" + url);
+            } catch (Exception ex) {                
+                string msg = DescribeError(ex);
+                
+                if (msg == null) {
+                    // unexpected error, log full error details
+                    msg = "from ";
+                    Logger.LogError("Error downloading " + url, ex);
+                } else {
+                    // known error, so just log a warning
+                    string logMsg = msg + url + Environment.NewLine + ex.Message;
+                    Logger.Log(LogType.Warning, "Error downloading " + logMsg);
+                }
+                
+                p.Message("&WFailed to download {0}&f{1}", msg, url);
                 return null;
             }
             return data;
         }
         
         public static byte[] DownloadImage(string url, Player p) {
-            byte[] data = DownloadData(url, p);
-            if (data == null) p.Message("%WThe url may need to end with its extension (such as .jpg).");
+            Uri uri = GetUrl(p, ref url);
+            if (uri == null) return null;
+            
+            byte[] data = DownloadData(p, url, uri);
+            if (data == null) p.Message("&WThe url may need to end with its extension (such as .jpg).");
             return data;
         }
     }

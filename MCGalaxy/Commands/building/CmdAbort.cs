@@ -27,12 +27,13 @@ namespace MCGalaxy.Commands.Building {
         public override void Use(Player p, string message, CommandData data) {
             p.ClearBlockchange();
             p.painting = false;
+            p.checkingBotInfo = false;
             p.cmdTimer = false;
             p.staticCommands = false;
             p.deleteMode = false;
             p.ModeBlock = Block.Invalid;
-            p.onTrain = false;
-            p.isFlying = false;
+            p.onTrain   = false;
+            p.isFlying  = false;
             p.BrushName = "normal";
             p.DefaultBrushArgs = "";
             p.Transform = NoTransform.Instance;
@@ -43,8 +44,8 @@ namespace MCGalaxy.Commands.Building {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Abort");
-            p.Message("%HCancels an action.");
+            p.Message("&T/Abort");
+            p.Message("&HCancels an action.");
         }
     }
 }

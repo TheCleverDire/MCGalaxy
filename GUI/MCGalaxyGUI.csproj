@@ -46,19 +46,15 @@
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\CLI\CLI.cs">
-      <Link>CLI.cs</Link>
-    </Compile>
     <Compile Include="Controls\ColoredTextBox.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\HackyPropertyGrid.cs" />
     <Compile Include="Controls\TimespanUpDown.cs" />
-    <Compile Include="Descriptors.cs" />
     <Compile Include="GuiPerms.cs" />
     <Compile Include="Popups\ColorSelector.cs" />
     <Compile Include="Popups\ColorSelector.Designer.cs">
@@ -101,7 +97,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="PropertyWindow\PropertyWindow.General.cs" />
-    <Compile Include="PropertyWindow\PropertyWindow.IRCSql.cs" />
+    <Compile Include="PropertyWindow\PropertyWindow.Relay.cs" />
     <Compile Include="PropertyWindow\PropertyWindow.Misc.cs" />
     <Compile Include="PropertyWindow\PropertyWindow.Ranks.cs" />
     <Compile Include="PropertyWindow\PropertyWindow.Security.cs" />

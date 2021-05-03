@@ -29,19 +29,18 @@ namespace MCGalaxy.Gui.Popups {
         readonly BackgroundWorker worker;
         int port;
         
-        public PortTools(string portStr) {
+        public PortTools(int port) {
             InitializeComponent();
             worker = new BackgroundWorker { WorkerSupportsCancellation = true };
             worker.DoWork += mWorkerForwarder_DoWork;
             worker.RunWorkerCompleted += mWorkerForwarder_RunWorkerCompleted;
             
-            if (!int.TryParse(portStr, out port)) port = 25565;
+            this.port = port;
             btnForward.Text = "Forward " + port;
         }
 
         void linkManually_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            try { Process.Start("https://www.canyouseeme.org/"); }
-            catch { }
+            Program.OpenBrowser("https://www.canyouseeme.org/");
         }
 
         void PortChecker_FormClosing(object sender, FormClosingEventArgs e) {
@@ -49,8 +48,7 @@ namespace MCGalaxy.Gui.Popups {
         }
 
         void linkHelpForward_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
-            try { Process.Start("https://portforward.com"); }
-            catch { }
+            Program.OpenBrowser("https://portforward.com");
         }
 
         void btnForward_Click(object sender, EventArgs e) {

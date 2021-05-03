@@ -24,24 +24,23 @@ namespace MCGalaxy.Eco {
         
         public LoginMessageItem() {
             Aliases = new string[] { "login", "loginmsg", "loginmessage" };
-            AllowsNoArgs = true;
         }
         
         public override string Name { get { return "LoginMessage"; } }
         
-        protected override void DoPurchase(Player p, string message, string[] args) {
-            if (args.Length == 1) {
+        protected internal override void OnPurchase(Player p, string msg) {
+            if (msg.Length == 0) {
                 PlayerDB.SetLoginMessage(p.name, "");
                 p.Message("&aYour login message was removed for free.");
                 return;
             }
             
-            string msg = message.SplitSpaces(2)[1]; // keep spaces this way
+        	if (!CheckPrice(p)) return;
             if (msg == PlayerDB.GetLoginMessage(p)) {
-                p.Message("%WYou already have that login message."); return;
+                p.Message("&WYou already have that login message."); return;
             }
             if (msg.Length > NetUtils.StringSize) {
-                p.Message("%WLogin message must be 64 characters or less."); return;
+                p.Message("&WLogin message must be 64 characters or less."); return;
             }
             
             UseCommand(p, "LoginMessage", "-own " + msg);
@@ -53,24 +52,23 @@ namespace MCGalaxy.Eco {
         
         public LogoutMessageItem() {
             Aliases = new string[] { "logout", "logoutmsg", "logoutmessage" };
-            AllowsNoArgs = true;
         }
         
         public override string Name { get { return "LogoutMessage"; } }
 
-        protected override void DoPurchase(Player p, string message, string[] args) {
-            if (args.Length == 1) {
+        protected internal override void OnPurchase(Player p, string msg) {
+            if (msg.Length == 0) {
                 PlayerDB.SetLogoutMessage(p.name, "");
                 p.Message("&aYour logout message was removed for free.");
                 return;
-            }
+        	}
             
-            string msg = message.SplitSpaces(2)[1]; // keep spaces this way         
+        	if (!CheckPrice(p)) return;    
             if (msg == PlayerDB.GetLogoutMessage(p)) {
-                p.Message("%WYou already have that logout message."); return;
+                p.Message("&WYou already have that logout message."); return;
             }       
             if (msg.Length > NetUtils.StringSize) {
-                p.Message("%WLogin message must be 64 characters or less."); return;
+                p.Message("&WLogin message must be 64 characters or less."); return;
             }
             
             UseCommand(p, "LogoutMessage", "-own " + msg);

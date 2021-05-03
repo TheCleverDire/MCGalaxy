@@ -84,16 +84,17 @@ namespace MCGalaxy.Commands.Moderation {
             who.AllowBuild = who.level.BuildAccess.CheckAllowed(who);
             if (who.hidden && who.hideRank < who.Rank) who.hideRank = who.Rank;
             
-            // If player has explicit /color, don't change it
-            string dbCol = PlayerDB.FindColor(who);
-            if (dbCol.Length == 0) who.color = newRank.Color;
+            who.SetColor(PlayerInfo.DefaultColor(who));
             who.SetPrefix();
             
             Entities.DespawnEntities(who, false);
-            who.Send(Packet.UserType(who));
+            who.Send(Packet.UserType(who.UserType()));
+            
             who.SendCurrentBlockPermissions();
             Entities.SpawnEntities(who, false);
             CheckBlockBindings(who);
+            
+            who.CheckIsUnverified();
         }
         
         /// <summary> Changes the rank of the given player from the old to the new rank. </summary>
@@ -114,7 +115,7 @@ namespace MCGalaxy.Commands.Moderation {
             BlockID block = who.ModeBlock;
             if (block != Block.Invalid && !CommandParser.IsBlockAllowed(who, "place", block)) {
                 who.ModeBlock = Block.Invalid;
-                who.Message("   Hence, &b{0} %Smode was turned &cOFF",
+                who.Message("   Hence, &b{0} &Smode was turned &cOFF",
                             Block.GetName(who, block));
             }
             
@@ -124,7 +125,7 @@ namespace MCGalaxy.Commands.Moderation {
                 
                 if (!CommandParser.IsBlockAllowed(who, "place", block)) {
                     who.BlockBindings[b] = (BlockID)b;
-                    who.Message("   Hence, binding for &b{0} %Swas unbound",
+                    who.Message("   Hence, binding for &b{0} &Swas unbound",
                                 Block.GetName(who, (BlockID)b));
                 }
             }
@@ -136,8 +137,7 @@ namespace MCGalaxy.Commands.Moderation {
             }
             
             Group group = PlayerInfo.GetGroup(target);
-            if (p.IsConsole) return group;
-            if (!Command.CheckRank(p, data, group.Permission, action, false)) return null;
+            if (!Command.CheckRank(p, data, target, group.Permission, action, false)) return null;
             return group;
         }
         
@@ -159,7 +159,7 @@ namespace MCGalaxy.Commands.Moderation {
 
             if (confirmed != null) return name;
             string msgReason = String.IsNullOrEmpty(reason) ? "" : " " + reason;
-            p.Message("If you still want to {0} \"{1}\", use %T/{3} {1}{4}{2} confirm",
+            p.Message("If you still want to {0} \"{1}\", use &T/{3} {1}{4}{2} confirm",
                            action, name, msgReason, cmd, cmdSuffix);
             return null;
         }
@@ -195,11 +195,11 @@ namespace MCGalaxy.Commands.Moderation {
             // TryParse returns "0.0.0.123" for "123", we do not want that behaviour
             if (IPAddress.TryParse(message, out ip) && message.Split('.').Length == 4) {
                 string account = Server.Config.ClassicubeAccountPlus ? message + "+" : message;
-                if (PlayerInfo.FindName(account) == null) return message;
+                if (PlayerDB.FindName(account) == null) return message;
 
                 // Some classicube.net accounts can be parsed as valid IPs, so warn in this case.
                 p.Message("Note: \"{0}\" is both an IP and an account name. "
-                          + "If you meant the account, use %T/{1} @{0}", message, cmd);
+                          + "If you meant the account, use &T/{1} @{0}", message, cmd);
                 return message;
             }
             
@@ -209,7 +209,7 @@ namespace MCGalaxy.Commands.Moderation {
             
             p.Message("Searching PlayerDB..");
             string dbIP;
-            name = PlayerInfo.FindOfflineIPMatches(p, message, out dbIP);
+            name = PlayerDB.FindOfflineIPMatches(p, message, out dbIP);
             return dbIP;
         }
     }

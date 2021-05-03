@@ -21,7 +21,6 @@ using MCGalaxy.Bots;
 namespace MCGalaxy.Commands.CPE {
     public class CmdModel : EntityPropertyCmd {
         public override string name { get { return "Model"; } }
-        public override string shortcut { get { return "SetModel"; } }
         public override string type { get { return CommandTypes.Other; } }
         public override LevelPermission defaultRank { get { return LevelPermission.AdvBuilder; } }
         public override CommandPerm[] ExtraPerms {
@@ -37,94 +36,76 @@ namespace MCGalaxy.Commands.CPE {
                 message = "-own " + message;
                 message = message.TrimEnd();
             }
-            UseBotOrPlayer(p, data, message, "model");
+            UseBotOrOnline(p, data, message, "model");
         }
         
         protected override void SetBotData(Player p, PlayerBot bot, string model) {
-            bool changedAxisScale;
-            model = ParseModel(p, bot, model, out changedAxisScale);
-            Entities.UpdateModel(bot, model);
+            model = ParseModel(p, bot, model);
+            if (model == null) return;
+            bot.UpdateModel(model);
             
-            p.Message("You changed the model of bot " + bot.ColoredName + " %Sto a &c" + model);
+            p.Message("You changed the model of bot {0} &Sto a &c{1}", bot.ColoredName, model);
             BotsFile.Save(p.level);
         }
         
-        protected override void SetPlayerData(Player p, Player who, string model) {
-            bool changedAxisScale;
-            model = ParseModel(p, who, model, out changedAxisScale);
-            Entities.UpdateModel(who, model);
+        protected override void SetOnlineData(Player p, Player who, string model) {
+            string orig = model;
+            model = ParseModel(p, who, model);
+            if (model == null) return;
+            who.UpdateModel(model);
             
             if (p != who) {
-                Chat.MessageFrom(who, "λNICK %Shad their model change to a &c" + model);
+                Chat.MessageFrom(who, "λNICK &Shad their model changed to a &c" + model);
             } else {
                 who.Message("Changed your own model to a &c" + model);
             }
             
             if (!model.CaselessEq("humanoid")) {
-                Server.models.AddOrReplace(who.name, model);
+                Server.models.Update(who.name, model);
             } else {
                 Server.models.Remove(who.name);
             }
             Server.models.Save();
             
-            if (!changedAxisScale) return;
-            if (who.ScaleX != 0 || who.ScaleY != 0 || who.ScaleZ != 0) {
-                Server.modelScales.AddOrReplace(who.name, who.ScaleX + " " + who.ScaleY + " " + who.ScaleZ);
-            } else {
-                Server.modelScales.Remove(who.name);
-            }
-            Server.modelScales.Save();
+            // Remove model scale too when resetting model
+            if (orig.Length == 0) CmdModelScale.UpdateSavedScale(who);
         }
         
-        static string ParseModel(Player dst, Entity entity, string model, out bool changedAxisScale) {
+        static string ParseModel(Player dst, Entity e, string model) {
             // Reset entity's model
             if (model.Length == 0) {
-                changedAxisScale = true;
-                entity.ScaleX = 0; entity.ScaleY = 0; entity.ScaleZ = 0;
+                e.ScaleX = 0; e.ScaleY = 0; e.ScaleZ = 0;
                 return "humanoid";
             }
             
             model = model.ToLower();
-            model = model.Replace(':', '|'); // since many assume : is for scale instead of |.
-            changedAxisScale = false;  
+            model = model.Replace(':', '|'); // since users assume : is for scale instead of |.
             
-            if (model.CaselessStarts("x ")) {
-                changedAxisScale = true;
-                return ParseModelScale(dst, entity, model, "X scale", ref entity.ScaleX);
-            } else if (model.CaselessStarts("y ")) {
-                changedAxisScale = true;
-                return ParseModelScale(dst, entity, model, "Y scale", ref entity.ScaleY);
-            } else if (model.CaselessStarts("z ")) {
-                changedAxisScale = true;
-                return ParseModelScale(dst, entity, model, "Z scale", ref entity.ScaleZ);
+            float max = ModelInfo.MaxScale(e, model);
+            // restrict player model scale, but bots can have unlimited model scale
+            if (ModelInfo.GetRawScale(model) > max) {
+                dst.Message("&WScale must be {0} or less for {1} model",
+                            max, ModelInfo.GetRawModel(model));
+                return null;
             }
             return model;
         }
-        
-        static string ParseModelScale(Player dst, Entity entity, string model, string argName, ref float value) {
-            string[] bits = model.SplitSpaces();
-            CommandParser.GetReal(dst, bits[1], argName, ref value, 0, 3);
-            return entity.Model;
-        }
 
         public override void Help(Player p) {
-            p.Message("%T/Model [name] [model] %H- Sets the model of that player.");
-            p.Message("%T/Model bot [name] [model] %H- Sets the model of that bot.");
-            p.Message("%HUse %T/Help Model models %Hfor a list of models.");
-            p.Message("%HUse %T/Help Model scale %Hfor how to scale a model.");
+            p.Message("&T/Model [name] [model] &H- Sets the model of that player.");
+            p.Message("&T/Model bot [name] [model] &H- Sets the model of that bot.");
+            p.Message("&HUse &T/Help Model models &Hfor a list of models.");
+            p.Message("&HUse &T/Help Model scale &Hfor how to scale a model.");
         }
         
         public override void Help(Player p, string message) {
             if (message.CaselessEq("models")) {
-                p.Message("%HAvailable models: %SChibi, Chicken, Creeper, Giant, Humanoid, Pig, Sheep, Spider, Skeleton, Zombie, Head, Sit, Corpse");
-                p.Message("%HTo set a block model, use a block ID for the model name.");
-                p.Message("%HUse %T/Help Model scale %Hfor how to scale a model.");
+                p.Message("&HAvailable models: &SChibi, Chicken, Creeper, Giant, Humanoid, Pig, Sheep, Spider, Skeleton, Zombie, Head, Sit, Corpse");
+                p.Message("&HTo set a block model, use a block ID for the model name.");
+                p.Message("&HUse &T/Help Model scale &Hfor how to scale a model.");
             } else if (message.CaselessEq("scale")) {
-                p.Message("%HFor a scaled model, put \"|[scale]\" after the model name.");
-                p.Message("%H  e.g. pig|0.5, chibi|3");
-                p.Message("%HUse X/Y/Z [scale] for [model] to set scale on one axis.");
-                p.Message("%H  e.g. to set twice as tall, use 'Y 2' for [model]");
-                p.Message("%H  Use a [scale] of 0 to reset");
+                p.Message("&HFor a scaled model, put \"|[scale]\" after the model name.");
+                p.Message("&H  e.g. pig|0.5, chibi|3");
             } else {
                 Help(p);
             }

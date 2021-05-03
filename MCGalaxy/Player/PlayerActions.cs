@@ -25,14 +25,14 @@ namespace MCGalaxy {
     public static class PlayerActions {
         
         public static bool ChangeMap(Player p, string name) { return ChangeMap(p, null, name); }
-        public static bool ChangeMap(Player p, Level lvl) { return ChangeMap(p, lvl, null); }
+        public static bool ChangeMap(Player p, Level lvl)   { return ChangeMap(p, lvl, null); }
         
         static bool ChangeMap(Player p, Level lvl, string name) {
             if (Interlocked.CompareExchange(ref p.UsingGoto, 1, 0) == 1) {
                 p.Message("Cannot use /goto, already joining a map."); return false;
             }
             Level oldLevel = p.level;
-            bool didJoin = false;
+            bool didJoin   = false;
             
             try {
                 didJoin = name == null ? GotoLevel(p, lvl) : GotoMap(p, name);
@@ -75,7 +75,7 @@ namespace MCGalaxy {
             cfg.Load(propsPath);
             
             if (!cfg.LoadOnGoto) {
-                p.Message("Level \"{0}\" cannot be loaded using %T/Goto.", map);
+                p.Message("Level \"{0}\" cannot be loaded using &T/Goto.", map);
                 return false;
             }
             
@@ -93,7 +93,7 @@ namespace MCGalaxy {
         }
         
         static bool GotoLevel(Player p, Level lvl) {
-            if (p.level == lvl) { p.Message("You are already in {0}%S.", lvl.ColoredName); return false; }
+            if (p.level == lvl) { p.Message("You are already in {0}&S.", lvl.ColoredName); return false; }
             
             bool canJoin = lvl.CanJoin(p);
             OnJoiningLevelEvent.Call(p, lvl, ref canJoin);
@@ -135,13 +135,15 @@ namespace MCGalaxy {
             if (!announce || !Server.Config.ShowWorldChanges) return;
             
             announce = !p.hidden && Server.Config.IRCShowWorldChanges;
-            string msg = p.level.IsMuseum ? "λNICK %Swent to the " : "λNICK %Swent to ";
-            Chat.MessageFrom(ChatScope.Global, p, msg + lvl.ColoredName,
-                             null, FilterGoto(p), announce);
+            string msg = p.level.IsMuseum ? "λNICK &Swent to the " : "λNICK &Swent to ";
+            Chat.MessageFrom(ChatScope.All, p, msg + lvl.ColoredName,
+                             null, FilterGoto(p, prev, lvl), announce);
         }
         
-        static ChatMessageFilter FilterGoto(Player source) {
-            return (pl, obj) => Entities.CanSee(pl, source) && !pl.Ignores.WorldChanges;
+        static ChatMessageFilter FilterGoto(Player source, Level prev, Level lvl) {
+            return (pl, obj) => 
+                pl.CanSee(source) && !pl.Ignores.WorldChanges &&
+                (Chat.FilterGlobal(pl, obj) || Chat.FilterLevel(pl, prev) || Chat.FilterLevel(pl, lvl));
         }
         
         public static void Respawn(Player p) {

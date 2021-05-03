@@ -17,6 +17,7 @@
  */
 using System;
 using System.Threading;
+using MCGalaxy.Events.EntityEvents;
 using MCGalaxy.Maths;
 
 namespace MCGalaxy {
@@ -50,24 +51,35 @@ namespace MCGalaxy {
             Pos = pos; lastPos = pos;
         }
         
-        public void SetModel(string model, Level lvl) {
-            Model = model;
-            ModelBB = AABB.ModelAABB(this, lvl);
-        }
-        
         public void SetYawPitch(byte yaw, byte pitch) {
             Orientation rot = Rot;
             rot.RotY = yaw; rot.HeadX = pitch;
             Rot = rot;
         }
 
-        public abstract bool CanSeeEntity(Entity other);
+        /// <summary> Whether this player can see the given entity as an entity in the level. </summary>
+        public abstract bool CanSeeEntity(Entity other); 
         public abstract byte EntityID { get; }
+        /// <summary> The level this entity is currently on. </summary>
         public abstract Level Level { get; }
+        /// <summary> Whether maximum model scale is limited. </summary>
+        public abstract bool RestrictsScale { get; }
         
         protected virtual void OnSetPos() { }
         
         protected virtual void OnSetRot() { }
         
+        
+        /// <summary> Sets new model and updates internal state. </summary>  
+        public void SetModel(string model) {
+            Model   = model;
+            ModelBB = ModelInfo.CalcAABB(this);
+        }
+        
+        /// <summary> Calls SetModel, then broadcasts the new model to players. </summary>
+        public void UpdateModel(string model) {
+            SetModel(model);
+            Entities.BroadcastModel(this, model);
+        }
     }
 }

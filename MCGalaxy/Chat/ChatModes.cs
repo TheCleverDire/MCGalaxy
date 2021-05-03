@@ -61,14 +61,14 @@ namespace MCGalaxy {
                     MessageOps(p, text.Substring(2));
                     return true;
                 } else {
-                    p.Message("%HIf you meant to send this to opchat, use %T##" + text.Substring(1));
+                    p.Message("&HIf you meant to send this to opchat, use &T##" + text.Substring(1));
                 }
             } else if (text[0] == '+') {
                 if (text.Length > 1 && text[1] == '+') {
                     MessageAdmins(p, text.Substring(2));
                     return true;
                 } else {
-                    p.Message("%HIf you meant to send this to adminchat, use %T++" + text.Substring(1));
+                    p.Message("&HIf you meant to send this to adminchat, use &T++" + text.Substring(1));
                 }
             } else if (text[0] == '*') {
                 if (text.Length > 1 && text[1] == '*') {
@@ -102,15 +102,15 @@ namespace MCGalaxy {
             string chatMsg = "To " + group + " &f-λNICK&f- " + message;
             Chat.MessageChat(ChatScope.Perms, p, chatMsg, perms, null, true);
         }
-
-        static void DoPM(Player p, Player who, string message) {
+        
+        static void DoPM(Player p, Player target, string message) {
             if (message.Length == 0) { p.Message("No message entered"); return; }
-            Logger.Log(LogType.PrivateChat, "{0} @{1}: {2}", p.name, who.name, message);
+            Logger.Log(LogType.PrivateChat, "{0} @{1}: {2}", p.name, target.name, message);
             
             if (!p.IsConsole) {
-                p.Message("[<] {0}: &f{1}", who.ColoredName, message);
+                p.Message("[<] {0}: &f{1}", p.FormatNick(target), message);
             }
-            Chat.MessageChat(ChatScope.PM, p, "&9[>] λNICK: &f" + message, who, null);
+            Chat.MessageChat(ChatScope.PM, p, "&9[>] λNICK: &f" + message, target, null);
         }
     }
 }

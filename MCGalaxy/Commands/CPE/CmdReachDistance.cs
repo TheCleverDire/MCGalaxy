@@ -43,15 +43,15 @@ namespace MCGalaxy.Commands.CPE {
                 p.Send(Packet.ClickDistance((short)packedDist));
                 p.ReachDistance = dist;
                 p.Message("Set your reach distance to {0} blocks.", dist);
-                Server.reach.AddOrReplace(p.name, packedDist.ToString());
+                Server.reach.Update(p.name, packedDist.ToString());
                 Server.reach.Save();
             }
         }
         
         public override void Help(Player p) {
-            p.Message("%T/ReachDistance [distance]");
-            p.Message("%HSets the reach distance for how far away you can modify blocks.");
-            p.Message("%H  The default reach distance is 5.");
+            p.Message("&T/ReachDistance [distance]");
+            p.Message("&HSets the reach distance for how far away you can modify blocks.");
+            p.Message("&H  The default reach distance is 5.");
         }
     }
 }

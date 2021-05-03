@@ -20,7 +20,7 @@ using System.Data;
 
 namespace MCGalaxy.SQL {
     
-    /// <summary> Executes an SQL command or query, that takes named parameters/arguments. </summary>
+    /// <summary> Executes an SQL command or query using the given parameters/arguments. </summary>
     public static class SqlQuery {
 
         /// <summary> Executes an SQL command that does not return any results. </summary>
@@ -59,7 +59,8 @@ namespace MCGalaxy.SQL {
         }
         
         
-        internal static void FillParams(IDbCommand cmd, object[] parameters) {
+        /// <summary> Adds IDbDataParameter for each argument to the given command. </summary>
+        public static void FillParams(IDbCommand cmd, object[] parameters) {
             if (parameters == null || parameters.Length == 0) return;
             IDatabaseBackend db = Database.Backend;
             

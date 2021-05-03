@@ -34,7 +34,6 @@ namespace MCGalaxy {
             try {
                 mainLevel = LevelActions.Load(Player.Console, Server.Config.MainLevel, false);
                 if (mainLevel == null) GenerateMain();
-                mainLevel.Config.AutoUnload = false;
             } catch (Exception ex) {
                 Logger.LogError("Error loading main level", ex);
             }
@@ -46,6 +45,7 @@ namespace MCGalaxy {
             
             MapGen.Find("Flat").Generate(Player.Console, mainLevel, "");
             mainLevel.Save();
+            Level.LoadMetadata(mainLevel);
             LevelInfo.Add(mainLevel);
         }
         
@@ -82,9 +82,7 @@ namespace MCGalaxy {
             frozen = PlayerExtList.Load("ranks/frozen.txt");
             tempRanks = PlayerExtList.Load(Paths.TempRanksFile);
             tempBans  = PlayerExtList.Load(Paths.TempBansFile);
-            
-            if (Server.Config.WhitelistedOnly)
-                whiteList = PlayerList.Load("ranks/whitelist.txt");
+            whiteList = PlayerList.Load("ranks/whitelist.txt");
 	    }
         
         static void LoadAutoloadMaps(SchedulerTask task) {
@@ -118,7 +116,7 @@ namespace MCGalaxy {
         
         static void InitTimers(SchedulerTask task) {
             MainScheduler.QueueRepeat(RandomMessage, null, 
-                                      TimeSpan.FromMinutes(5));
+                                      Server.Config.AnnouncementInterval);
             Critical.QueueRepeat(ServerTasks.UpdateEntityPositions, null,
                                  TimeSpan.FromMilliseconds(Server.Config.PositionUpdateInterval));
         }

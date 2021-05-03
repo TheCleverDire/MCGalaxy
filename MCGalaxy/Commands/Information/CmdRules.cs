@@ -36,30 +36,30 @@ namespace MCGalaxy.Commands.Info {
             if (message.CaselessEq("agree")) { Agree(p); return; }
             if (message.CaselessEq("disagree")) { Disagree(p, data); return; }
             
-            Player who = p;
+            Player target = p;
             if (message.Length > 0) {
                 if (!CheckExtraPerm(p, data, 1)) return;
-                who = PlayerInfo.FindMatches(p, message);
-                if (who == null) return;
+                target = PlayerInfo.FindMatches(p, message);
+                if (target == null) return;
             }
-            if (who != null) who.hasreadrules = true;
+            if (target != null) target.hasreadrules = true;
 
             string[] rules = rulesFile.GetText();
-            who.Message("Server Rules:");
-            who.MessageLines(rules);
+            target.Message("Server Rules:");
+            target.MessageLines(rules);
             
-            if (who != null && p != who) {
-                p.Message("Sent the rules to {0}%S.", who.ColoredName);
-                who.Message(p.ColoredName + " %Ssent you the rules.");
+            if (target != null && p != target) {
+            	p.Message("Sent the rules to {0}&S.", p.FormatNick(target));
+            	target.Message("{0} &Ssent you the rules.", target.FormatNick(p));
             }
         }
         
         void Agree(Player p) {
             if (p.IsSuper) { p.Message("Only in-game players can agree to the rules."); return; }
             if (!Server.Config.AgreeToRulesOnEntry) { p.Message("agree-to-rules-on-entry is not enabled."); return; }
-            if (!p.hasreadrules) { p.Message("&9You must read %T/Rules &9before agreeing."); return; }
+            if (!p.hasreadrules) { p.Message("&9You must read &T/Rules &9before agreeing."); return; }
             
-            if (!Server.agreed.AddUnique(p.name)) {
+            if (!Server.agreed.Add(p.name)) {
                 p.Message("You have already agreed to the rules.");
             } else {                
                 p.agreed = true;
@@ -80,11 +80,11 @@ namespace MCGalaxy.Commands.Info {
 
         public override void Help(Player p) {
             if (HasExtraPerm(p, p.Rank, 1)) {
-                p.Message("%T/Rules [player] %H- Displays server rules to [player]");
+                p.Message("&T/Rules [player] &H- Displays server rules to [player]");
             }
-            p.Message("%T/Rules %H- Displays the server rules to you");
-            p.Message("%T/Rules agree %H- Agrees to the server's rules");
-            p.Message("%T/Rules disagree %H- Disagrees with the server's rules");
+            p.Message("&T/Rules &H- Displays the server rules to you");
+            p.Message("&T/Rules agree &H- Agrees to the server's rules");
+            p.Message("&T/Rules disagree &H- Disagrees with the server's rules");
         }
     }
 }

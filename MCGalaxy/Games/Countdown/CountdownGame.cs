@@ -27,16 +27,15 @@ using BlockID = System.UInt16;
 
 namespace MCGalaxy.Games {
 
-    class CountdownLevelPicker : LevelPicker {
-        public override List<string> GetCandidateMaps(RoundsGame game) { 
-            return new List<string>() { "countdown" }; 
-        }
-    }
-    
     public sealed class CountdownConfig : RoundsGameConfig {
         public override bool AllowAutoload { get { return true; } }
         protected override string GameName { get { return "Countdown"; } }
         protected override string PropsPath { get { return "properties/countdown.properties"; } }
+        
+        public override void Load() {
+            base.Load();
+            if (Maps.Count == 0) Maps.Add("countdown");
+        }
     }
     
     public sealed partial class CountdownGame : RoundsGame {
@@ -52,7 +51,7 @@ namespace MCGalaxy.Games {
         public string SpeedType;
         
         public static CountdownGame Instance = new CountdownGame();
-        public CountdownGame() { Picker = new CountdownLevelPicker(); }
+        public CountdownGame() { Picker = new LevelPicker(); }
         
         public override void UpdateMapConfig() { }
         
@@ -87,11 +86,8 @@ namespace MCGalaxy.Games {
             }
             return "countdown";
         }
-        
-        protected override void StartGame() {
-            bulk.level = Map;
-        }
 
+        protected override void StartGame() { }
         protected override void EndGame() {
             Players.Clear();
             Remaining.Clear();
@@ -110,57 +106,14 @@ namespace MCGalaxy.Games {
             const string format = "Generated map ({0}x{1}x{2}), sending you to it..";
             p.Message(format, width, height, length);
             PlayerActions.ChangeMap(p, "countdown");
-            
-            Position pos = Position.FromFeetBlockCoords(8, 23, 17);
-            p.SendPos(Entities.SelfID, pos, p.Rot);
         }
-        
-        void ResetBoard() {
-            SetBoardOpening(Block.Glass);
-            int maxX = Map.Width - 1, maxZ = Map.Length - 1;
-            Cuboid(4, 4, 4, maxX - 4, 4, maxZ - 4, Block.Glass);          
-            squaresLeft.Clear();
-            
-            for (int zz = 6; zz < Map.Length - 6; zz += 3)
-                for (int xx = 6; xx < Map.Width - 6; xx += 3)
-            {
-                Cuboid(xx, 4, zz, xx + 1, 4, zz + 1, Block.Green);
-                squaresLeft.Add(new SquarePos(xx, zz));
-            }
-            
-            bulk.Flush();
-        }        
-        
-        void SetBoardOpening(BlockID block) {
-            int midX = Map.Width / 2, midY = Map.Height / 2, midZ = Map.Length / 2;
-            Cuboid(midX - 1, midY, midZ - 1, midX, midY, midZ, block);
-            bulk.Flush();
-        }
-        
-        void Cuboid(int x1, int y1, int z1, int x2, int y2, int z2, BlockID block) {
-            for (int y = y1; y <= y2; y++)
-                for (int z = z1; z <= z2; z++)
-                    for (int x = x1; x <= x2; x++)
-            {
-                int index = Map.PosToInt((ushort)x, (ushort)y, (ushort)z);
-                if (Map.DoPhysicsBlockchange(index, block)) {
-                    bulk.Add(index, block);
-                }
-            }
-        }
-        
-        struct SquarePos {
-            public ushort X, Z;
-            public SquarePos(int x, int z) { X = (ushort)x; Z = (ushort)z; }
-        }
-        
         
         public override void PlayerJoinedGame(Player p) {
             if (!Players.Contains(p)) {
                 if (p.level != Map && !PlayerActions.ChangeMap(p, "countdown")) return;
                 Players.Add(p);
                 p.Message("You've joined countdown!");
-                Chat.MessageFrom(p, "λNICK %Sjoined countdown!");              
+                Chat.MessageFrom(p, "λNICK &Sjoined countdown!");              
             } else {
                 p.Message("You've already joined countdown. To leave, go to another map.");
             }
@@ -177,6 +130,11 @@ namespace MCGalaxy.Games {
         
         protected override string FormatStatus2(Player p) {
             return RoundInProgress ? Remaining.Count + " players left" : "";
+        }
+                
+        struct SquarePos {
+            public ushort X, Z;
+            public SquarePos(int x, int z) { X = (ushort)x; Z = (ushort)z; }
         }
     }
 }

@@ -30,8 +30,8 @@ namespace MCGalaxy.Bots {
         
         public override string[] Help { get { return help; } }
         static string[] help = new string[] { 
-            "%T/BotAI add [name] reset",
-            "%HCauses the bot to go back to the first instruction",
+            "&T/BotAI add [name] reset",
+            "&HCauses the bot to go back to the first instruction",
         };
     }
     
@@ -45,8 +45,8 @@ namespace MCGalaxy.Bots {
         
         public override string[] Help { get { return help; } }
         static string[] help = new string[] { 
-            "%T/BotAI add [name] remove",
-            "%HCauses the bot to be removed from the world",
+            "&T/BotAI add [name] remove",
+            "&HCauses the bot to be removed from the world",
         };
     }
     
@@ -69,7 +69,7 @@ namespace MCGalaxy.Bots {
             return data;
         }
         
-        public override void Output(Player p, string[] args, StreamWriter w) {
+        public override void Output(Player p, string[] args, TextWriter w) {
             string script = args.Length > 3 ? args[3] : "";
             if (script.Length == 0) {
                 p.Message("LinkScript requires a script name as a parameter");
@@ -80,8 +80,8 @@ namespace MCGalaxy.Bots {
         
         public override string[] Help { get { return help; } }
         static string[] help = new string[] { 
-            "%T/BotAI add [name] linkscript [ai name]",
-            "%HCauses the bot to switch to the given AI, and execute that AI's instructions instead.",
+            "&T/BotAI add [name] linkscript [ai name]",
+            "&HCauses the bot to switch to the given AI, and execute that AI's instructions instead.",
         };
     }
     
@@ -106,16 +106,16 @@ namespace MCGalaxy.Bots {
             return data;
         }
         
-        public override void Output(Player p, string[] args, StreamWriter w) {
+        public override void Output(Player p, string[] args, TextWriter w) {
             string time = args.Length > 3 ? args[3] : "10";
             w.WriteLine(Name + " " + short.Parse(time));
         }
         
         public override string[] Help { get { return help; } }
         static string[] help = new string[] { 
-            "%T/BotAI add [name] wait <interval>",
-            "%HCauses the bot to stay still for a period of time.",
-            "%H  <interval> is in tenths of a second, so an interval of 20 means " +
+            "&T/BotAI add [name] wait <interval>",
+            "&HCauses the bot to stay still for a period of time.",
+            "&H  <interval> is in tenths of a second, so an interval of 20 means " +
             "stay still for two seconds. (defaults to 1 second)",
         };
     }

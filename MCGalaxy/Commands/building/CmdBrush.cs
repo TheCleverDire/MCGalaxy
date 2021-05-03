@@ -49,17 +49,17 @@ namespace MCGalaxy.Commands.Building {
         }
         
         internal static void List(Player p) {
-            p.Message("%HAvailable brushes: &f" + BrushFactory.Brushes.Join(b => b.Name));
+            p.Message("&HAvailable brushes: &f" + BrushFactory.Brushes.Join(b => b.Name));
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Brush [name] <default brush args>");
-            p.Message("%HSets your current brush to the brush with that name.");
-            p.Message("%T/Help Brush [name]");
-            p.Message("%HOutputs the help for the brush with that name.");
+            p.Message("&T/Brush [name] <default brush args>");
+            p.Message("&HSets your current brush to the brush with that name.");
+            p.Message("&T/Help Brush [name]");
+            p.Message("&HOutputs the help for the brush with that name.");
             List(p);
-            p.Message("%H- If \"skip\" is used for a block name, " +
-                           "existing blocks in the map will not be replaced by this block.");
+            p.Message("&H- If \"skip\" is used for a block name, " +
+                      "existing blocks in the map will not be replaced by this block.");
         }
 
         public override void Help(Player p, string message) {

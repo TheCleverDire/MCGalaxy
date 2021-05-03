@@ -44,48 +44,55 @@ namespace MCGalaxy {
     public sealed partial class Level : IDisposable {
         
         public Level(string name, ushort width, ushort height, ushort length) {
+            Init(name, width, height, length);
+        }
+        
+        public Level(string name, ushort width, ushort height, ushort length, byte[] blocks) {
+            this.blocks = blocks;
+            Init(name, width, height, length);
+        }
+        
+        void Init(string name, ushort width, ushort height, ushort length) {
             if (width  < 1) width  = 1;
             if (height < 1) height = 1;
             if (length < 1) length = 1;
-            
             Width = width; Height = height; Length = length;
+            
             for (int i = 0; i < CustomBlockDefs.Length; i++) {
                 CustomBlockDefs[i] = BlockDefinition.GlobalDefs[i];
             }
+            if (blocks == null) blocks = new byte[width * height * length];
             
             LoadDefaultProps();
             for (int i = 0; i < blockAABBs.Length; i++) {
                 blockAABBs[i] = Block.BlockAABB((ushort)i, this);
             }
-            UpdateBlockHandlers();
+            UpdateAllBlockHandlers();
             
             this.name = name; MapName = name.ToLower();
-            BlockDB = new BlockDB(this);
+            BlockDB   = new BlockDB(this);
             
-            blocks = new byte[Width * Height * Length];
-            ChunksX = Utils.CeilDiv16(Width);
-            ChunksY = Utils.CeilDiv16(Height);
-            ChunksZ = Utils.CeilDiv16(Length);
+            ChunksX = Utils.CeilDiv16(width);
+            ChunksY = Utils.CeilDiv16(height);
+            ChunksZ = Utils.CeilDiv16(length);
             CustomBlocks = new byte[ChunksX * ChunksY * ChunksZ][];
 
-            spawnx = (ushort)(Width / 2);
-            spawny = (ushort)(Height * 0.75f);
-            spawnz = (ushort)(Length / 2);
+            spawnx = (ushort)(width / 2);
+            spawny = (ushort)(height * 0.75f);
+            spawnz = (ushort)(length / 2);
             rotx = 0; roty = 0;
             
             VisitAccess = new LevelAccessController(Config, name, true);
             BuildAccess = new LevelAccessController(Config, name, false);
-            listCheckExists = new SparseBitSet(Width, Height, Length);
-            listUpdateExists = new SparseBitSet(Width, Height, Length);
+            listCheckExists  = new SparseBitSet(width, height, length);
+            listUpdateExists = new SparseBitSet(width, height, length);
         }
 
         public List<Player> players { get { return getPlayers(); } }
 
         public void Dispose() {
             Extras.Clear();
-            leaves.Clear();
-            ListCheck.Clear(); listCheckExists.Clear();
-            ListUpdate.Clear(); listUpdateExists.Clear();
+            ClearPhysicsLists();
             UndoBuffer.Clear();
             BlockDB.Cache.Clear();
             Zones.Clear();
@@ -118,21 +125,41 @@ namespace MCGalaxy {
             return true;
         }
         
+        void Cleanup() {
+            Physicsint = 0;
+            try {
+                // Wake up physics thread from Thread.Sleep
+                physThread.Interrupt();
+                // Wait up to 1 second for physics thread to finish
+                physThread.Join(1000);
+            } catch {
+                // No physics thread at all
+            }
+            
+            Dispose();
+            Server.DoGC();
+        }
+        
+        /// <summary> Attempts to automatically unload this map. </summary>
         public bool AutoUnload() {
-            return Server.Config.AutoLoadMaps && Config.AutoUnload
-                && !IsMuseum && !HasPlayers() && Unload(true);
+            bool can = IsMuseum || (Server.Config.AutoLoadMaps && Config.AutoUnload && !HasPlayers());
+            return can && Unload(true);
         }
         
         public bool Unload(bool silent = false, bool save = true) {
-            if (Server.mainLevel == this || IsMuseum) return false;
-            OnLevelUnloadEvent.Call(this);
-            if (cancelunload) {
+            if (Server.mainLevel == this) return false;
+            // Still cleanup resources, even if this is not a true level
+            if (IsMuseum) { Cleanup(); return true; }
+            
+            bool cancel = false;
+            OnLevelUnloadEvent.Call(this, ref cancel);
+            if (cancel) {
                 Logger.Log(LogType.SystemActivity, "Unload canceled by Plugin! (Map: {0})", name);
-                cancelunload = false; return false;
+                return false;
             }
             MovePlayersToMain();
 
-            if (save && SaveChanges && Changed) Save(false, true);
+            if (save && SaveChanges && Changed) Save();
             if (save && SaveChanges) SaveBlockDBChanges();
             
             MovePlayersToMain();
@@ -148,16 +175,8 @@ namespace MCGalaxy {
                 Logger.LogError("Error saving bots", ex);
             }
 
-            try {
-                physThread.Abort();
-                physThread.Join();
-            } catch {
-            }
-            
-            Dispose();
-            Server.DoGC();
-
-            if (!silent) Chat.MessageOps(ColoredName + " %Swas unloaded.");
+            Cleanup();
+            if (!silent) Chat.MessageOps(ColoredName + " &Swas unloaded.");
             Logger.Log(LogType.SystemActivity, name + " was unloaded.");
             return true;
         }
@@ -166,15 +185,10 @@ namespace MCGalaxy {
             Player[] players = PlayerInfo.Online.Items;
             foreach (Player p in players) {
                 if (p.level == this) {
-                    p.Message("You were moved to the main level as " + ColoredName + " %Swas unloaded.");
+                    p.Message("You were moved to the main level as " + ColoredName + " &Swas unloaded.");
                     PlayerActions.ChangeMap(p, Server.mainLevel);
                 }
             }
-        }
-
-        /// <summary> Returns whether the given coordinates are insides the boundaries of this level. </summary>
-        public bool InBound(ushort x, ushort y, ushort z) {
-            return x >= 0 && y >= 0 && z >= 0 && x < Width && y < Height && z < Length;
         }
 
         public void SaveSettings() { if (!IsMuseum) Config.SaveFor(MapName); }
@@ -185,21 +199,24 @@ namespace MCGalaxy {
             return x >= Width || y >= Height || z >= Length || !listCheckExists.Get(x, y, z);
         }
 
-        public bool Save(bool force = false, bool clearPhysics = false) {
-            if (blocks == null || IsMuseum) return false; // museums do not save properties
+        /// <summary> Attempts to save this level (can be cancelled) </summary>
+        /// <param name="force"> Whether to save even if nothing changed since last save </param>
+        /// <returns> Whether this level was successfully saved to disc </returns>
+        public bool Save(bool force = false) {
+            if (blocks == null || IsMuseum) return false; // museums do not save changes
             
             string path = LevelInfo.MapPath(MapName);
-            OnLevelSaveEvent.Call(this);
-            if (cancelsave) { cancelsave = false; return false; }
+            bool cancel = false;
+            OnLevelSaveEvent.Call(this, ref cancel);
+            if (cancel) return false;
             
             try {
                 if (!Directory.Exists("levels")) Directory.CreateDirectory("levels");
                 if (!Directory.Exists("levels/level properties")) Directory.CreateDirectory("levels/level properties");
                 if (!Directory.Exists("levels/prev")) Directory.CreateDirectory("levels/prev");
                 
-                if (Changed || !File.Exists(path) || force || (physicschanged && clearPhysics)) {
+                if (Changed || force || !File.Exists(path)) {
                     lock (saveLock) SaveCore(path);
-                    if (clearPhysics) ClearPhysics();
                 } else {
                     Logger.Log(LogType.SystemActivity, "Skipping level save for " + name + ".");
                 }
@@ -216,7 +233,7 @@ namespace MCGalaxy {
         void SaveCore(string path) {
             if (blocks == null) return;
             if (File.Exists(path)) {
-                string prevPath = LevelInfo.PrevPath(name);
+                string prevPath = Paths.PrevMapFile(name);
                 if (File.Exists(prevPath)) File.Delete(prevPath);
                 File.Copy(path, prevPath, true);
                 File.Delete(path);
@@ -255,8 +272,9 @@ namespace MCGalaxy {
         public static Level Load(string name) { return Load(name, LevelInfo.MapPath(name)); }
 
         public static Level Load(string name, string path) {
-            OnLevelLoadEvent.Call(name);
-            if (cancelload) { cancelload = false; return null; }
+            bool cancel = false;
+            OnLevelLoadEvent.Call(name, path, ref cancel);
+            if (cancel) return null;
 
             if (!File.Exists(path)) {
                 Logger.Log(LogType.Warning, "Attempted to load level {0}, but {1} does not exist.", name, path);
@@ -294,30 +312,25 @@ namespace MCGalaxy {
             
             try {
                 string propsPath = LevelInfo.PropsPath(lvl.MapName);
-                bool propsExisted = lvl.Config.Load(propsPath);
-                
-                if (propsExisted) {
+                if (lvl.Config.Load(propsPath)) {
                     lvl.SetPhysics(lvl.Config.Physics);
                 } else {
                     Logger.Log(LogType.ConsoleMessage, ".properties file for level {0} was not found.", lvl.MapName);
                 }
-                
-                // Backwards compatibility for older levels which had .env files.
-                string envPath = "levels/level properties/" + lvl.MapName + ".env";
-                lvl.Config.Load(envPath);
             } catch (Exception e) {
                 Logger.LogError(e);
             }
             lvl.BlockDB.Cache.Enabled = lvl.Config.UseBlockDB;
             
-            BlockDefinition[] defs = BlockDefinition.Load(false, lvl.MapName);
+            string blockDefsPath   = Paths.MapBlockDefs(lvl.MapName);
+            BlockDefinition[] defs = BlockDefinition.Load(blockDefsPath);
             for (int b = 0; b < defs.Length; b++) {
                 if (defs[b] == null) continue;
                 lvl.UpdateCustomBlock((BlockID)b, defs[b]);
             }
             
             lvl.UpdateBlockProps();
-            lvl.UpdateBlockHandlers();
+            lvl.UpdateAllBlockHandlers();
         }
 
         public void Message(string message) {
@@ -381,13 +394,13 @@ namespace MCGalaxy {
         
         void LoadDefaultProps() {
             for (int b = 0; b < Props.Length; b++) {
-                Props[b] = BlockOptions.DefaultProps(Props, this, (BlockID)b);
+                Props[b] = BlockProps.MakeDefault(Props, this, (BlockID)b);
             }
         }
         
         public void UpdateBlockProps() {
             LoadDefaultProps();
-            string propsPath = BlockProps.PropsPath("_" + MapName);
+            string propsPath = Paths.BlockPropsPath("_" + MapName);
             
             // backwards compatibility with older versions
             if (!File.Exists(propsPath)) {
@@ -397,24 +410,25 @@ namespace MCGalaxy {
             }
         }
         
-        public void UpdateBlockHandlers() {
+        public void UpdateAllBlockHandlers() {
             for (int i = 0; i < Props.Length; i++) {
-                UpdateBlockHandler((BlockID)i);
+                UpdateBlockHandlers((BlockID)i);
             }
         }
         
-        public void UpdateBlockHandler(BlockID block) {
+        public void UpdateBlockHandlers(BlockID block) {
             bool nonSolid = !MCGalaxy.Blocks.CollideType.IsSolid(CollideType(block));
-            deleteHandlers[block]       = BlockBehaviour.GetDeleteHandler(block, Props);
-            placeHandlers[block]        = BlockBehaviour.GetPlaceHandler(block, Props);
-            walkthroughHandlers[block]  = BlockBehaviour.GetWalkthroughHandler(block, Props, nonSolid);
-            physicsHandlers[block]      = BlockBehaviour.GetPhysicsHandler(block, Props);
+            DeleteHandlers[block]       = BlockBehaviour.GetDeleteHandler(block, Props);
+            PlaceHandlers[block]        = BlockBehaviour.GetPlaceHandler(block, Props);
+            WalkthroughHandlers[block]  = BlockBehaviour.GetWalkthroughHandler(block, Props, nonSolid);
+            PhysicsHandlers[block]      = BlockBehaviour.GetPhysicsHandler(block, Props);
             physicsDoorsHandlers[block] = BlockBehaviour.GetPhysicsDoorsHandler(block, Props);
+            OnBlockHandlersUpdatedEvent.Call(this, block);
         }
         
         public void UpdateCustomBlock(BlockID block, BlockDefinition def) {
             CustomBlockDefs[block] = def;
-            UpdateBlockHandler(block);
+            UpdateBlockHandlers(block);
             blockAABBs[block] = Block.BlockAABB(block, this);
         }
     }

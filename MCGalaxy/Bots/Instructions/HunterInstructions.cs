@@ -64,9 +64,11 @@ namespace MCGalaxy.Bots {
             Orientation rot = bot.Rot;
             DirUtils.GetYawPitch(dir, out rot.RotY, out rot.HeadX);
             
+            dx = Math.Abs(dx); dy = Math.Abs(dy); dz = Math.Abs(dz);
+            
             // If we are very close to a player, switch from trying to look
             // at them to just facing the opposite direction to them
-            if (Math.Abs(dx) < 4 && Math.Abs(dz) < 4) {
+            if (dx < 4 && dz < 4) {
                 rot.RotY = (byte)(p.Rot.RotY + 128);
             }
             bot.Rot = rot;
@@ -81,7 +83,7 @@ namespace MCGalaxy.Bots {
             return data;
         }
         
-        public override void Output(Player p, string[] args, StreamWriter w) {
+        public override void Output(Player p, string[] args, TextWriter w) {
             if (args.Length > 3) {
                 w.WriteLine(Name + " " + ushort.Parse(args[3]));
             } else {
@@ -91,9 +93,9 @@ namespace MCGalaxy.Bots {
         
         public override string[] Help { get { return help; } }
         static string[] help = new string[] { 
-            "%T/BotAI add [name] hunt <radius>",
-            "%HCauses the bot to move towards the closest player in the search radius.",
-            "%H  <radius> defaults to 75 blocks.",
+            "&T/BotAI add [name] hunt <radius>",
+            "&HCauses the bot to move towards the closest player in the search radius.",
+            "&H  <radius> defaults to 75 blocks.",
         };
     }
     
@@ -104,13 +106,15 @@ namespace MCGalaxy.Bots {
         public override bool Execute(PlayerBot bot, InstructionData data) {
             Player[] players = PlayerInfo.Online.Items;
             foreach (Player p in players) {
+                if (p.level != bot.level || p.invincible) continue;
+                
                 int dx = Math.Abs(bot.Pos.X - p.Pos.X);
                 int dy = Math.Abs(bot.Pos.Y - p.Pos.Y);
                 int dz = Math.Abs(bot.Pos.Z - p.Pos.Z);
                 
                 if (dx <= 8 && dy <= 16 && dz <= 8) {
                     string msg = bot.DeathMessage;
-                    if (msg == null) msg = "@p %Swas &cterminated.";
+                    if (msg == null) msg = "@p &Swas &cterminated.";
                     p.HandleDeath(Block.Cobblestone, msg);
                 }
             }
@@ -119,8 +123,8 @@ namespace MCGalaxy.Bots {
         
         public override string[] Help { get { return help; } }
         static string[] help = new string[] {
-            "%T/BotAI add [name] kill",
-            "%HCauses the bot to kill any players it is touching.",
+            "&T/BotAI add [name] kill",
+            "&HCauses the bot to kill any players it is touching.",
         };
     }
     
@@ -144,7 +148,7 @@ namespace MCGalaxy.Bots {
             return data;
         }
         
-        public override void Output(Player p, string[] args, StreamWriter w) {
+        public override void Output(Player p, string[] args, TextWriter w) {
             if (args.Length > 3) {
                 w.WriteLine(Name + " " + ushort.Parse(args[3]));
             } else {
@@ -153,7 +157,10 @@ namespace MCGalaxy.Bots {
         }
         
         static void FaceTowards(PlayerBot bot, Player p) {
-            int dx = p.Pos.X - bot.Pos.X, dy = p.Pos.Y - bot.Pos.Y, dz = p.Pos.Z - bot.Pos.Z;
+            int srcHeight = ModelInfo.CalcEyeHeight(p);
+            int dstHeight = ModelInfo.CalcEyeHeight(bot);
+            
+            int dx = p.Pos.X - bot.Pos.X, dy = (p.Pos.Y + srcHeight) - (bot.Pos.Y + dstHeight), dz = p.Pos.Z - bot.Pos.Z;
             Vec3F32 dir = new Vec3F32(dx, dy, dz);
             dir = Vec3F32.Normalise(dir);
             
@@ -164,9 +171,9 @@ namespace MCGalaxy.Bots {
         
         public override string[] Help { get { return help; } }
         static string[] help = new string[] { 
-            "%T/BotAI add [name] stare <radius>",
-            "%HCauses the bot to stare at the closest player in the search radius.",
-            "%H  <radius> defaults to 20000 blocks.",
+            "&T/BotAI add [name] stare <radius>",
+            "&HCauses the bot to stare at the closest player in the search radius.",
+            "&H  <radius> defaults to 20000 blocks.",
         };
     }
 }

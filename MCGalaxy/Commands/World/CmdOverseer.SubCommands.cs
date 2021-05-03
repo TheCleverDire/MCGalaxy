@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.IO;
 using MCGalaxy.Commands.CPE;
 using MCGalaxy.Commands.Moderation;
+using MCGalaxy.Generator;
 
 namespace MCGalaxy.Commands.World {
     public sealed partial class CmdOverseer : Command2 {
@@ -37,15 +38,12 @@ namespace MCGalaxy.Commands.World {
 
         static void HandleGoto(Player p, string map, string ignored) {
             byte mapNum = 0;
-            if (map.Length == 0 || map == "1") {
-                map = FirstMapName(p);
-            } else {
-                if (!byte.TryParse(map, out mapNum)) {
-                    p.MessageLines(gotoHelp);
-                    return;
-                }
-                map = p.name.ToLower() + map;
+            if (map.Length == 0) map = "1";
+            
+            if (!byte.TryParse(map, out mapNum)) {
+                p.MessageLines(gotoHelp); return;
             }
+            map = GetLevelName(p, mapNum);
             
             if (LevelInfo.FindExact(map) == null)
                 LevelActions.Load(p, map, !Server.Config.AutoLoadMaps);
@@ -82,7 +80,7 @@ namespace MCGalaxy.Commands.World {
         static void HandleMap(Player p, string cmd, string value) {
             cmd = cmd.ToUpper();
             bool mapOnly = !(cmd.Length == 0 || IsCreateCommand(cmd));
-            if (mapOnly && !LevelInfo.IsRealmOwner(p.name, p.level.name)) {
+            if (mapOnly && !LevelInfo.IsRealmOwner(p.level, p.name)) {
                 p.Message("You may only perform that action on your own map."); return;
             }
             
@@ -109,7 +107,7 @@ namespace MCGalaxy.Commands.World {
                 if (CmdResizeLvl.DoResize(p, args, p.DefaultCmdData, out needConfirm)) return;
                 
                 if (!needConfirm) return;
-                p.Message("Type %T/os map resize {0} {1} {2} confirm %Sif you're sure.",
+                p.Message("Type &T/os map resize {0} {1} {2} confirm &Sif you're sure.",
                           args[1], args[2], args[3]);
             } else if (cmd == "PERVISIT") {
                 // Older realm maps didn't put you on visit whitelist, so make sure we put the owner here
@@ -117,8 +115,11 @@ namespace MCGalaxy.Commands.World {
                 if (!access.Whitelisted.CaselessContains(p.name)) {
                     access.Whitelist(Player.Console, LevelPermission.Nobody, p.level, p.name);
                 }
+                
+                if (value.Length > 0) value = p.level.name + " " + value;
                 UseCommand(p, "PerVisit", value);
             } else if (cmd == "PERBUILD") {
+                if (value.Length > 0) value = p.level.name + " " + value;
                 UseCommand(p, "PerBuild", value);
             } else if (cmd == "TEXTURE" || cmd == "TEXTUREZIP" || cmd == "TEXTUREPACK") {
                 if (value.Length == 0) value = "normal";
@@ -128,7 +129,7 @@ namespace MCGalaxy.Commands.World {
                 if (opt == null) {
                     p.MessageLines(mapHelp);
                 } else if (DisallowedMapOption(opt.Name)) {
-                    p.Message("%WYou cannot change that map option via /os map."); return;
+                    p.Message("&WYou cannot change that map option via /os map."); return;
                 } else {
                     opt.SetFunc(p, p.level, value);
                     p.level.SaveSettings();
@@ -159,8 +160,8 @@ namespace MCGalaxy.Commands.World {
             Level lvl = newLvl.GenerateMap(p, args, p.DefaultCmdData);
             if (lvl == null) return;
             
-            SetPerms(p, lvl);
-            p.Message("Use %T/os zone add [name] %Sto allow other players to build in the map.");
+            MapGen.SetRealmPerms(p, lvl);
+            p.Message("Use &T/os zone add [name] &Sto allow other players to build in the map.");
             
             try {
                 lvl.Save(true);
@@ -170,31 +171,12 @@ namespace MCGalaxy.Commands.World {
             }
         }
         
-        internal static void SetPerms(Player p, Level lvl) {
-            lvl.Config.RealmOwner = p.name;
-            const LevelPermission rank = LevelPermission.Nobody;
-            lvl.BuildAccess.Whitelist(Player.Console, rank, lvl, p.name);
-            lvl.VisitAccess.Whitelist(Player.Console, rank, lvl, p.name);
-
-            Group grp = Group.Find(Server.Config.OSPerbuildDefault);
-            if (grp == null) return;
-            
-            lvl.BuildAccess.SetMin(Player.Console, rank, lvl, grp);
-        }
-        
         static void DeleteMap(Player p, string value) {
             if (value.Length > 0) {
-                p.Message("To delete your current map, type %T/os map delete");
+                p.Message("To delete your current map, type &T/os map delete");
                 return;
             }
-            
-            string map = p.level.name;
-            p.Message("Created backup.");
-            if (LevelActions.Delete(map)) {
-                p.Message("Map " + map + " was removed.");
-            } else {
-                p.Message(LevelActions.DeleteFailedMessage);
-            }
+            UseCommand(p, "DeleteLvl", p.level.name);
         }
 
 
@@ -232,7 +214,7 @@ namespace MCGalaxy.Commands.World {
         }
         static void HandleZones(Player p, string cmd, string args) {
             if (args.Length == 0) {
-                p.Message("Arguments required. See %T/Help zone");
+                p.Message("Arguments required. See &T/Help zone");
             } else {
                 UseCommand(p, "Zone", cmd + " " + args);
             }

@@ -38,8 +38,10 @@ namespace MCGalaxy.Games {
         protected override void HookEventHandlers() {
             OnPlayerChatEvent.Register(HandlePlayerChat, Priority.High);
             OnPlayerSpawningEvent.Register(HandlePlayerSpawning, Priority.High);
+            OnSentMapEvent.Register(HandleSentMap, Priority.High);
             OnJoinedLevelEvent.Register(HandleJoinedLevel, Priority.High);
             OnTabListEntryAddedEvent.Register(HandleTabListEntryAdded, Priority.High);
+            OnSettingColorEvent.Register(HandleSettingColor, Priority.High);
             
             base.HookEventHandlers();
         }
@@ -47,8 +49,10 @@ namespace MCGalaxy.Games {
         protected override void UnhookEventHandlers() {
             OnPlayerChatEvent.Unregister(HandlePlayerChat);
             OnPlayerSpawningEvent.Unregister(HandlePlayerSpawning);
+            OnSentMapEvent.Unregister(HandleSentMap);
             OnJoinedLevelEvent.Unregister(HandleJoinedLevel);
             OnTabListEntryAddedEvent.Unregister(HandleTabListEntryAdded);
+            OnSettingColorEvent.Unregister(HandleSettingColor);
             
             base.UnhookEventHandlers();
         }
@@ -61,7 +65,7 @@ namespace MCGalaxy.Games {
             if (team == null || Config.Mode != TWGameMode.TDM) return;
             message = message.Substring(1);
             
-            // "To Team &c-" + ColoredName + "&c- %S" + message);
+            // "To Team &c-" + ColoredName + "&c- &S" + message);
             string prefix = team.Color + " - to " + team.Name;
             Chat.MessageChat(ChatScope.Level, p, prefix + " - λNICK: &f" + message,
                              Map, (pl, arg) => pl.Game.Referee || TeamOf(pl) == team);
@@ -99,16 +103,22 @@ namespace MCGalaxy.Games {
                 tabGroup = "&7Spectators";
             }
         }
+		
+        void HandleSettingColor(Player p, ref string color) {
+            if (p.level != Map) return;
+            TWTeam team = TeamOf(p);
+            if (team != null) color = team.Color;
+        }
+		
+        void HandleSentMap(Player p, Level prevLevel, Level level) {
+            if (level != Map) return;
+            MessageMapInfo(p);
+            if (TeamOf(p) == null) AutoAssignTeam(p);
+        }
         
         void HandleJoinedLevel(Player p, Level prevLevel, Level level, ref bool announce) {
             HandleJoinedCommon(p, prevLevel, level, ref announce);
-            
-            if (level != Map) return;
-            MessageMapInfo(p);
-            allPlayers.Add(p);
-            
-            if (TeamOf(p) != null) return;
-            AutoAssignTeam(p);
+            if (level == Map) allPlayers.Add(p);
         }
         
         bool CheckTNTPlace(Player p, TWData data, ushort x, ushort y, ushort z) {
@@ -126,24 +136,25 @@ namespace MCGalaxy.Games {
             return true;
         }
         
-        void HandleTNTPlace(Player p, BlockID newBlock, ushort x, ushort y, ushort z) {
+        ChangeResult HandleTNTPlace(Player p, BlockID newBlock, ushort x, ushort y, ushort z) {
             TWData data = Get(p);
-            if (CheckTNTPlace(p, data, x, y, z)) {
-                data.TNTCounter++;
-                int delay = 1250;
-                
-                switch (Config.Difficulty) {
-                        case TWDifficulty.Easy: delay = 3250; break;
-                        case TWDifficulty.Normal: delay = 2250; break;
-                }
-
-                AddTntCheck(Map.PosToInt(x, y, z), p);
-                Server.MainScheduler.QueueOnce(AllowMoreTntTask, data,
-                                               TimeSpan.FromMilliseconds(delay));
-                p.ChangeBlock(x, y, z, Block.TNT);
-            } else {
+            if (!CheckTNTPlace(p, data, x, y, z)) {
                 p.RevertBlock(x, y, z);
+                return ChangeResult.Modified;
             }
+            
+            data.TNTCounter++;
+            int delay = 1250;
+            
+            switch (Config.Difficulty) {
+                    case TWDifficulty.Easy:   delay = 3250; break;
+                    case TWDifficulty.Normal: delay = 2250; break;
+            }
+
+            AddTntCheck(Map.PosToInt(x, y, z), p);
+            Server.MainScheduler.QueueOnce(AllowMoreTntTask, data,
+                                           TimeSpan.FromMilliseconds(delay));
+            return p.ChangeBlock(x, y, z, Block.TNT);
         }
 
         void AddTntCheck(int b, Player p) {
@@ -236,7 +247,7 @@ namespace MCGalaxy.Games {
                 
                 if (plData.HarmedBy != null && plData.HarmedBy != killer) {
                     Player assistant = plData.HarmedBy;
-                    suffix = " %S(with help from " + assistant.ColoredName + ")";
+                    suffix = " &S(with help from " + assistant.ColoredName + ")";
                     
                     if (TeamKill(assistant, pl)) {
                         assistant.Message("TNT Wars: - " + cfg.AssistScore + " points for team kill assist!");
@@ -248,10 +259,10 @@ namespace MCGalaxy.Games {
                 }
                 
                 if (TeamKill(killer, pl)) {
-                    Map.Message("TNT Wars: " + killer.ColoredName + " %Steam killed " + pl.ColoredName + suffix);
+                    Map.Message("TNT Wars: " + killer.ColoredName + " &Steam killed " + pl.ColoredName + suffix);
                     penalty += cfg.ScorePerKill;
                 } else {
-                    Map.Message("TNT Wars: " + killer.ColoredName + " %Skilled " + pl.ColoredName + suffix);
+                    Map.Message("TNT Wars: " + killer.ColoredName + " &Skilled " + pl.ColoredName + suffix);
                     kills += 1;
                 }
                 
@@ -266,21 +277,21 @@ namespace MCGalaxy.Games {
                 if (data.KillStreak >= cfg.StreakOneAmount && data.KillStreak < cfg.StreakTwoAmount && data.LastKillStreakAnnounced != cfg.StreakOneAmount)
                 {
                     killer.Message("TNT Wars: Kill streak of " + data.KillStreak + " (Multiplier of " + cfg.StreakOneMultiplier + ")");
-                    Map.Message(killer.ColoredName + " %Shas a kill streak of " + data.KillStreak);
+                    Map.Message(killer.ColoredName + " &Shas a kill streak of " + data.KillStreak);
                     data.ScoreMultiplier = cfg.StreakOneMultiplier;
                     data.LastKillStreakAnnounced = cfg.StreakOneAmount;
                 }
                 else if (data.KillStreak >= cfg.StreakTwoAmount && data.KillStreak < cfg.StreakThreeAmount && data.LastKillStreakAnnounced != cfg.StreakTwoAmount)
                 {
                     killer.Message("TNT Wars: Kill streak of " + data.KillStreak + " (Multiplier of " + cfg.StreakTwoMultiplier + " and a bigger explosion!)");
-                    Map.Message(killer.ColoredName + " %Shas a kill streak of " + data.KillStreak + " and now has a bigger explosion for their TNT!");
+                    Map.Message(killer.ColoredName + " &Shas a kill streak of " + data.KillStreak + " and now has a bigger explosion for their TNT!");
                     data.ScoreMultiplier = cfg.StreakTwoMultiplier;
                     data.LastKillStreakAnnounced = cfg.StreakTwoAmount;
                 }
                 else if (data.KillStreak >= cfg.StreakThreeAmount && data.LastKillStreakAnnounced != cfg.StreakThreeAmount)
                 {
                     killer.Message("TNT Wars: Kill streak of " + data.KillStreak + " (Multiplier of " + cfg.StreakThreeMultiplier + " and you now have 1 extra health!)");
-                    Map.Message(killer.ColoredName + " %Shas a kill streak of " + data.KillStreak + " and now has 1 extra health!");
+                    Map.Message(killer.ColoredName + " &Shas a kill streak of " + data.KillStreak + " and now has 1 extra health!");
                     data.ScoreMultiplier = cfg.StreakThreeMultiplier;
                     data.LastKillStreakAnnounced = cfg.StreakThreeAmount;
                     

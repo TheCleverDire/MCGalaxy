@@ -26,7 +26,7 @@ namespace MCGalaxy.Commands {
         public string CmdName;
         public override string ItemName { get { return CmdName; } }
         
-        public CommandPerms(string cmd, LevelPermission min, List<LevelPermission> allowed, 
+        public CommandPerms(string cmd, LevelPermission min, List<LevelPermission> allowed,
                             List<LevelPermission> disallowed) : base(min, allowed, disallowed) {
             CmdName = cmd;
         }
@@ -39,6 +39,7 @@ namespace MCGalaxy.Commands {
         public static List<CommandPerms> List = new List<CommandPerms>();
         
         
+        /// <summary> Find the permissions for the given command. (case insensitive) </summary>
         public static CommandPerms Find(string cmd) {
             foreach (CommandPerms perms in List) {
                 if (perms.CmdName.CaselessEq(cmd)) return perms;
@@ -46,35 +47,51 @@ namespace MCGalaxy.Commands {
             return null;
         }
 
+        /// <summary> Returns the minimum rank required to use the given command. </summary>
+        /// <remarks> This should NOT be used to determine if a rank can use the command,
+        /// because ranks can specifically be allowed to or denied from using a command. </remarks>
         public static LevelPermission MinPerm(Command cmd) {
             CommandPerms perms = Find(cmd.name);
             return perms == null ? cmd.defaultRank : perms.MinRank;
         }
 
 
-        public static void Set(string cmd, LevelPermission min,
+        static CommandPerms Add(string cmd, LevelPermission min, 
+                                List<LevelPermission> allowed, List<LevelPermission> disallowed) {
+            CommandPerms perms = new CommandPerms(cmd, min, allowed, disallowed);
+            List.Add(perms);
+            return perms;
+        }
+        
+        /// <summary> Sets the permissions for the given command. </summary>
+        public static void Set(string cmd, LevelPermission min, 
                                List<LevelPermission> allowed, List<LevelPermission> disallowed) {
-            CommandPerms perms = Find(cmd);            
+            CommandPerms perms = Find(cmd);
             if (perms == null) {
-                perms = new CommandPerms(cmd, min, allowed, disallowed);
-                List.Add(perms);
+                Add(cmd, min, allowed, disallowed);
             } else {
                 perms.CmdName = cmd;
                 perms.Init(min, allowed, disallowed);
             }
         }
         
+        /// <summary> Gets or adds permissions for the given command. </summary>
+        public static CommandPerms GetOrAdd(string cmd, LevelPermission min) {
+            return Find(cmd) ?? Add(cmd, min, null, null);
+        }
+        
         public void MessageCannotUse(Player p) {
-            p.Message("Only {0} can use %T/{1}", Describe(), CmdName);
+            p.Message("Only {0} can use &T/{1}", Describe(), CmdName);
         }
 
 
-        static readonly object saveLock = new object();
+        static readonly object ioLock = new object();
+        /// <summary> Saves list of command permissions to disc. </summary>
         public static void Save() {
             try {
-                lock (saveLock) SaveCore();
-            } catch (Exception ex) { 
-                Logger.LogError("Error saving " + Paths.CmdPermsFile, ex); 
+                lock (ioLock) SaveCore();
+            } catch (Exception ex) {
+                Logger.LogError("Error saving " + Paths.CmdPermsFile, ex);
             }
         }
         
@@ -89,21 +106,27 @@ namespace MCGalaxy.Commands {
         }
         
 
+        /// <summary> Loads list of command permissions from disc. </summary>
         public static void Load() {
+            lock (ioLock) LoadCore();
+            ApplyChanges();
+        }
+
+        /// <summary> Applies new command permissions to server state. </summary>
+        public static void ApplyChanges() {
+            foreach (Group grp in Group.GroupList) {
+                grp.SetUsableCommands();
+            }
+        }
+        
+        static void LoadCore() {
             foreach (Command cmd in Command.CopyAll()) {
                 Set(cmd.name, cmd.defaultRank, null, null);
             }
-
-            if (File.Exists(Paths.CmdPermsFile)) {
-                using (StreamReader r = new StreamReader(Paths.CmdPermsFile)) {
-                    ProcessLines(r);
-                }
-            } else {
-                Save();
-            }
-
-            foreach (Group grp in Group.GroupList) {
-                grp.SetUsableCommands();
+            if (!File.Exists(Paths.CmdPermsFile)) { Save(); return; }
+            
+            using (StreamReader r = new StreamReader(Paths.CmdPermsFile)) {
+                 ProcessLines(r);
             }
         }
         
@@ -112,7 +135,7 @@ namespace MCGalaxy.Commands {
             string line;
             
             while ((line = r.ReadLine()) != null) {
-                if (line.Length == 0 || line[0] == '#') continue;
+                if (line.IsCommentLine()) continue;
                 // Format - Name : Lowest : Disallow : Allow
                 line.Replace(" ", "").FixedSplit(args, ':');
                 

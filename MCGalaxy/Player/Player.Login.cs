@@ -55,12 +55,12 @@ namespace MCGalaxy {
         }
         
         void SendCpeExtensions() {
-            Send(Packet.ExtInfo((byte)(extensions.Length + 1)));
+            Send(Packet.ExtInfo((byte)(Extensions.Length + 1)));
             // fix for classicube java client, doesn't reply if only send EnvMapAppearance with version 2
             Send(Packet.ExtEntry(CpeExt.EnvMapAppearance, 1));
             
-            foreach (ExtEntry ext in extensions) {
-                Send(Packet.ExtEntry(ext.ExtName, ext.ServerExtVersion));
+            foreach (CpeExtension ext in Extensions) {
+                Send(Packet.ExtEntry(ext.Name, ext.ServerVersion));
             }
         }
 
@@ -104,12 +104,11 @@ namespace MCGalaxy {
             
             if (!Directory.Exists("players"))
                 Directory.CreateDirectory("players");
-            PlayerDB.Load(this);
+            PlayerDB.LoadNick(this);
             Game.Team = Team.TeamIn(this);
             SetPrefix();
             LoadCpeData();
             
-            if (Server.Config.verifyadmins && Rank >= Server.Config.VerifyAdminsRank) adminpen = true;
             if (Server.noEmotes.Contains(name)) { parseEmotes = !Server.Config.ParseEmotes; }
 
             hideRank = Rank;
@@ -119,11 +118,11 @@ namespace MCGalaxy {
             if (Chat.AdminchatPerms.UsableBy(Rank) && Server.Config.AdminsJoinSilently) {
                 hidden = true; adminchat = true;                
             }
-            
+
             OnPlayerConnectEvent.Call(this);
             if (cancellogin) { cancellogin = false; return; }
             
-            string joinMsg = "&a+ λFULL %S" + PlayerDB.GetLoginMessage(this);
+            string joinMsg = "&a+ λFULL &S" + PlayerDB.GetLoginMessage(this);
             if (hidden) joinMsg = "&8(hidden)" + joinMsg;
             
             if (Server.Config.GuestJoinsNotify || Rank > LevelPermission.Guest) {
@@ -134,18 +133,13 @@ namespace MCGalaxy {
                 Message("&9You must read the &c/Rules &9and &c/Agree &9to them before you can build and use commands!");
                 agreed = false;
             }
-
-            if (Server.Config.verifyadmins && Rank >= Server.Config.VerifyAdminsRank) {
-                if (!Directory.Exists("extra/passwords") || !File.Exists("extra/passwords/" + name + ".dat"))
-                    Message("%WPlease set your admin verification password with %T/SetPass [password]!");
-                else
-                    Message("%WPlease complete admin verification with %T/Pass [password]!");
-            }
+            
+            CheckIsUnverified();
             
             if (CanUse("Inbox") && Database.TableExists("Inbox" + name)) {
                 int count = Database.CountRows("Inbox" + name);
                 if (count > 0) {
-                    Message("You have &a" + count + " %Smessages in %T/Inbox");
+                    Message("You have &a" + count + " &Smessages in &T/Inbox");
                 }
             }
             
@@ -158,6 +152,9 @@ namespace MCGalaxy {
             } else {
                 Logger.Log(LogType.UserActivity, "{0} [{1}] connected using {2}.", name, ip, appName);
                 Chat.MessageFrom(ChatScope.All, this, name + " connected using " + appName + ".", null, Chat.FilterVisible(this), !hidden);
+                Logger.Log(LogType.UserActivity, "{0} [{1}] connected.", truename, ip);
+            } else {
+                Logger.Log(LogType.UserActivity, "{0} [{1}] connected using {2}.", truename, ip, appName);
             }
             
             PlayerActions.PostSentMap(this, null, level, false);
@@ -215,20 +212,19 @@ namespace MCGalaxy {
                 byte.TryParse(bits[1], out rot.RotZ);
                 Rot = rot;
             }            
-            SetModel(Model, level);
+            SetModel(Model);
         }
         
         void GetPlayerStats() {
-            object raw = Database.Backend.ReadRows("Players", "*",
-                                                   null, PlayerData.Read,
-                                                   "WHERE Name=@0", name);
+            object raw = Database.ReadRows("Players", "*", null, PlayerData.Read,
+			                               "WHERE Name=@0", name);
             if (raw == null) {
                 PlayerData.Create(this);
-                Chat.MessageFrom(this, "λNICK %Shas connected for the first time!");
-                Message("Welcome " + ColoredName + "%S! This is your first visit.");
+                Chat.MessageFrom(this, "λNICK &Shas connected for the first time!");
+                Message("Welcome " + ColoredName + "&S! This is your first visit.");
             } else {
-                PlayerData.Apply((PlayerData)raw, this);
-                Message("Welcome back " + FullName + "%S! You've been here " + TimesVisited + " times!");
+                ((PlayerData)raw).ApplyTo(this);
+                Message("Welcome back " + FullName + "&S! You've been here " + TimesVisited + " times!");
             }
             gotSQLData = true;
         }
@@ -236,12 +232,12 @@ namespace MCGalaxy {
         void CheckState() {
             if (Server.muted.Contains(name)) {
                 muted = true;
-                Chat.MessageFrom(this, "λNICK %Wis still muted from previously.");
+                Chat.MessageFrom(this, "λNICK &Wis still muted from previously.");
             }
             
             if (Server.frozen.Contains(name)) {
                 frozen = true;
-                Chat.MessageFrom(this, "λNICK %Wis still frozen from previously.");
+                Chat.MessageFrom(this, "λNICK &Wis still frozen from previously.");
             }
         }
         
@@ -256,10 +252,10 @@ namespace MCGalaxy {
             if (alts.Count == 0) return;
             
             ItemPerms opchat = Chat.OpchatPerms;
-            string altsMsg = "λNICK %Sis lately known as: " + alts.Join();
+            string altsMsg = "λNICK &Sis lately known as: " + alts.Join();
 
             Chat.MessageFrom(p, altsMsg,
-                             (pl, obj) => Entities.CanSee(pl, p) && opchat.UsableBy(pl.Rank));
+                             (pl, obj) => pl.CanSee(p) && opchat.UsableBy(pl.Rank));
                          
             //IRCBot.Say(temp, true); //Tells people in op channel on IRC
             altsMsg = altsMsg.Replace("λNICK", name);

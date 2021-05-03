@@ -23,13 +23,11 @@ using MCGalaxy.Config;
 namespace MCGalaxy {
     public sealed class ServerConfig : EnvConfig {
 
-        [ConfigString("server-name", "General", "[MCGalaxy] Default", false, " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")]
+        [ConfigString("server-name", "Server", "[MCGalaxy] Default", false, " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~")]
         public string Name = "[MCGalaxy] Default";
-        [ConfigString("motd", "General", "Welcome", false)]
+        [ConfigString("motd", "Server", "Welcome", false)]
         public string MOTD = "Welcome!";
-        [ConfigString("HeartbeatURL", "Other", "http://www.classicube.net/heartbeat.jsp", false, ":/.")]
-        public string HeartbeatURL = "http://www.classicube.net/heartbeat.jsp";
-        [ConfigInt("max-players", "Server", 12, 1, 900)]
+        [ConfigInt("max-players", "Server", 12, 1, 128)]
         public int MaxPlayers = 12;
         [ConfigInt("max-guests", "Server", 10, 1, 128)]
         public int MaxGuests = 10;
@@ -43,23 +41,28 @@ namespace MCGalaxy {
         public bool VerifyNames = true;
         [ConfigBool("support-web-client", "Server", true)]
         public bool WebClient = true;
+        [ConfigString("default-rank", "Server", "guest")]
+        public string DefaultRankName = "guest";
         
-        [ConfigBool("autoload", "Server", true)]
+        [ConfigBool("autoload", "Level", true)]
         public bool AutoLoadMaps = true;        
         /// <summary> true if maps sees server-wide chat, false if maps have level-only/isolated chat </summary>
-        [ConfigBool("world-chat", "Server", true)]
+        [ConfigBool("world-chat", "Level", true)]
         public bool ServerWideChat = true;
-        [ConfigString("main-name", "General", "main", false, "._+")]
+        [ConfigString("main-name", "Level", "main", false, "()._+,-")]
         public string MainLevel = "main";
-        [ConfigString("xjail-map-name", "Other", "(main)", false, "()._+")]
-        public string XJailLevel = "(main)";
-        [ConfigString("default-texture-url", "General", "", true)]
+        [ConfigString("default-texture-url", "Level", "", true)]
         public string DefaultTerrain = "";
-        [ConfigString("default-texture-pack-url", "General", "", true)]
+        [ConfigString("default-texture-pack-url", "Level", "", true)]
         public string DefaultTexture = "";
         
-        [ConfigBool("report-back", "Error handling", true)]
-        public bool reportBack = true;
+        [ConfigString("ssl-certificate-path", "Other", "", true)]
+        public string SslCertPath = "";
+        [ConfigString("ssl-certificate-password", "Other", "", true)]
+        public string SslCertPass = "";
+        [ConfigString("HeartbeatURL", "Other", "http://www.classicube.net/heartbeat.jsp", false, ":/.")]
+        public string HeartbeatURL = "http://www.classicube.net/heartbeat.jsp";
+        
         [ConfigBool("core-secret-commands", "Other", true)]
         public bool CoreSecretCommands = true;
         [ConfigBool("restart-on-error", "Error handling", true)]
@@ -67,7 +70,7 @@ namespace MCGalaxy {
         [ConfigBool("software-staff-prefixes", "Other", true)]
         public bool SoftwareStaffPrefixes = true;
         
-        [ConfigInt("position-interval", "Server", 100, 20, 2000)]
+        [ConfigInt("position-interval", "Other", 100, 20, 2000)]
         public int PositionUpdateInterval = 100;
         [ConfigBool("classicube-account-plus", "Server", true)]
         public bool ClassicubeAccountPlus = true;
@@ -97,12 +100,10 @@ namespace MCGalaxy {
         [ConfigTimespan("blockdb-backup-time", "Backup", 60, false)]
         public TimeSpan BlockDBSaveInterval = TimeSpan.FromSeconds(60);
         [ConfigString("backup-location", "Backup", "")]
-        public string BackupDirectory = Path.Combine(Utils.FolderPath, "levels/backups");
+        public string BackupDirectory = "levels/backups";
         
         [ConfigTimespan("afk-minutes", "Other", 10, true)]
         public TimeSpan AutoAfkTime = TimeSpan.FromMinutes(10);
-        [ConfigString("default-rank", "General", "guest")]
-        public string DefaultRankName = "guest";
 
         [ConfigInt("max-bots-per-level", "Other", 192, 0, 256)]
         public int MaxBotsPerLevel = 192;
@@ -110,10 +111,10 @@ namespace MCGalaxy {
         public bool AnnounceDeathCount = true;
         [ConfigBool("use-whitelist", "Other", false)]
         public bool WhitelistedOnly = false;
-        [ConfigBool("force-cuboid", "Other", false)]
-        public bool forceCuboid = false;
         [ConfigBool("repeat-messages", "Other", false)]
         public bool RepeatMBs = false;
+        [ConfigTimespan("announcement-interval", "Other", 5, true)]
+        public TimeSpan AnnouncementInterval = TimeSpan.FromMinutes(5);
         [ConfigString("money-name", "Other", "moneys")]
         public string Currency = "moneys";
         [ConfigString("server-owner", "Other", "the owner")]
@@ -162,6 +163,8 @@ namespace MCGalaxy {
         public string IRCNickServName = "NickServ";
         [ConfigString("irc-password", "IRC bot", "", true)]
         public string IRCPassword = "";
+        [ConfigBool("irc-ssl", "IRC bot", false)]
+        public bool IRCSSL = false;
 
         [ConfigBool("UseMySQL", "Database", false)]
         public bool UseMySQL = false;
@@ -188,8 +191,8 @@ namespace MCGalaxy {
         public string IRCCommandPrefix = ".x";
         [ConfigEnum("irc-controller-verify", "IRC bot", IRCControllerVerify.HalfOp, typeof(IRCControllerVerify))]
         public IRCControllerVerify IRCVerify = IRCControllerVerify.HalfOp;
-        [ConfigPerm("irc-controller-rank", "IRC bot", LevelPermission.Nobody)]
-        public LevelPermission IRCControllerRank = LevelPermission.Nobody;       
+        [ConfigPerm("irc-controller-rank", "IRC bot", LevelPermission.Admin)]
+        public LevelPermission IRCControllerRank = LevelPermission.Admin;
         
         [ConfigBool("tablist-rank-sorted", "Tablist", true)]
         public bool TablistRankSorted = true;

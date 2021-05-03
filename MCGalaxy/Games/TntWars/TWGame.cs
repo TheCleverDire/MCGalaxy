@@ -48,7 +48,6 @@ namespace MCGalaxy.Games {
         public float ScoreMultiplier = 1f;
         public int LastKillStreakAnnounced;
         public Player HarmedBy; // For Assists
-        public string OrigCol;
         
         public void Reset(TWDifficulty diff) {
             bool easyish = diff == TWDifficulty.Easy || diff == TWDifficulty.Normal;
@@ -94,9 +93,7 @@ namespace MCGalaxy.Games {
             data = new TWData();
             
             // TODO: Is this even thread-safe
-            data.OrigCol = p.color;
-            
-            p.Extras.Put(twExtrasKey, data);
+            p.Extras[twExtrasKey] = data;
             return data;
         }
         
@@ -132,7 +129,7 @@ namespace MCGalaxy.Games {
                 p.Message("{0} team score: &f{1}/{2} points",
                                Blue.ColoredName, Blue.Score, cfg.ScoreRequired);
             }
-            p.Message("Your score: &f{0}/{1} %Spoints, health: &f{2} %SHP",
+            p.Message("Your score: &f{0}/{1} &Spoints, health: &f{2} &SHP",
                            Get(p).Score, cfg.ScoreRequired, Get(p).Health);
         }
 
@@ -145,7 +142,7 @@ namespace MCGalaxy.Games {
             ResetTeams();
             
             // Reset block handlers
-            Map.UpdateBlockHandlers();
+            Map.UpdateAllBlockHandlers();
             Map.UpdateBlockProps();
         }
         
@@ -163,6 +160,7 @@ namespace MCGalaxy.Games {
         
         public override void PlayerJoinedGame(Player p) {
             bool announce = false;
+            HandleSentMap(p, Map, Map);
             HandleJoinedLevel(p, Map, Map, ref announce);
         }
         
@@ -180,18 +178,15 @@ namespace MCGalaxy.Games {
             // TODO: p.Socket.Disconnected check should be elsewhere
             if (data == null || p.Socket.Disconnected) return;
             
-            p.color = data.OrigCol;
-            p.SetPrefix();
+            p.UpdateColor(PlayerInfo.DefaultColor(p));
             TabList.Update(p, true);
         }
         
         void JoinTeam(Player p, TWTeam team) {
             team.Members.Add(p);
-            Map.Message(p.ColoredName + " %Sjoined the " + team.ColoredName + " %Steam");
+            Map.Message(p.ColoredName + " &Sjoined the " + team.ColoredName + " &Steam");
             
-            p.color = team.Color;
-            p.SetPrefix();
-            
+            p.UpdateColor(team.Color);
             p.Message("You are now on the " + team.ColoredName + " team!");
             TabList.Update(p, true);
         }
@@ -210,7 +205,7 @@ namespace MCGalaxy.Games {
             Player[] players = allPlayers.Items;
             
             foreach (Player pl in players) {
-                string msg = pl.ColoredName + " %Sis now on the ";
+                string msg = pl.ColoredName + " &Sis now on the ";
                 AutoAssignTeam(pl);
                 
                 // assigning team changed colour of player
@@ -241,7 +236,26 @@ namespace MCGalaxy.Games {
             cfg.Save(Map.name);
         }
         
-        public class TWZone { public ushort MinX, MinY, MinZ, MaxX, MaxY, MaxZ; }       
+        public class TWZone {
+            public ushort MinX, MinY, MinZ, MaxX, MaxY, MaxZ;
+            
+            public TWZone(Vec3U16 p1, Vec3U16 p2) {
+                MinX = Math.Min(p1.X, p2.X);
+                MinY = Math.Min(p1.Y, p2.Y);
+                MinZ = Math.Min(p1.Z, p2.Z);
+                
+                MaxX = Math.Max(p1.X, p2.X);
+                MaxY = Math.Max(p1.Y, p2.Y);
+                MaxZ = Math.Max(p1.Z, p2.Z);
+            }
+            
+            public string DescribeBounds() {
+                return
+                    " &b- (" + MinX + ", " + MinY + ", " + MinZ + 
+                    ") to (" + MaxX + ", " + MaxY + ", " + MaxZ + ")";
+            }
+        }
+        
         public bool InZone(ushort x, ushort y, ushort z, List<TWZone> zones) {
             foreach (TWZone Zn in zones) {
                 if (x >= Zn.MinX && y >= Zn.MinY && z >= Zn.MinZ
@@ -311,7 +325,7 @@ namespace MCGalaxy.Games {
         protected override string FormatStatus1(Player p) {
             if (Config.Mode != TWGameMode.TDM) return "";
             
-            return Red.ColoredName + ": &f" + Red.Score + "/" + cfg.ScoreRequired + ", "
+            return Red.ColoredName + ": &f" + Red.Score  + "/" + cfg.ScoreRequired + ", "
                 + Blue.ColoredName + ": &f" + Blue.Score + "/" + cfg.ScoreRequired;
         }
         

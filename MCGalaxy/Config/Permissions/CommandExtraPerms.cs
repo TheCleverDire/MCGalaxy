@@ -58,13 +58,19 @@ namespace MCGalaxy.Commands {
         }
         
 
-        /// <summary> Sets the nth extra permission for a given command. </summary>
+        static CommandExtraPerms Add(string cmd, int num, string desc, LevelPermission min, 
+                                     List<LevelPermission> allowed, List<LevelPermission> disallowed) {
+            CommandExtraPerms perms = new CommandExtraPerms(cmd, num, desc, min, allowed, disallowed);
+            list.Add(perms);
+            return perms;
+        }
+        
+        /// <summary> Sets the nth extra permission for the given command. </summary>
         public static void Set(string cmd, int num, string desc, LevelPermission min,
                                List<LevelPermission> allowed, List<LevelPermission> disallowed) {
             CommandExtraPerms perms = Find(cmd, num);
             if (perms == null) {
-                perms = new CommandExtraPerms(cmd, num, desc, min, allowed, disallowed);
-                list.Add(perms);
+                Add(cmd, num, desc, min, allowed, disallowed);
             } else {
                 perms.CmdName = cmd; perms.Num = num;
                 if (!String.IsNullOrEmpty(desc)) perms.Desc = desc;
@@ -72,24 +78,25 @@ namespace MCGalaxy.Commands {
             }
         }
         
+        /// <summary> Gets or adds the nth extra permission for the given command. </summary>
+        public static CommandExtraPerms GetOrAdd(string cmd, int num, LevelPermission min) {
+            return Find(cmd, num) ?? Add(cmd, num, "", min, null, null);
+        }
+        
         public void MessageCannotUse(Player p) {
             p.Message("Only {0} {1}", Describe(), Desc);
         }
         
 
-        static readonly object ioLock = new object();
-        
-        /// <summary> Saves the list of all extra permissions. </summary>
+        static readonly object ioLock = new object();      
+        /// <summary> Saves list of extra permissions to disc. </summary>
         public static void Save() {
-            lock (ioLock) {
-                try {
-                    SaveCore();
-                } catch (Exception ex) {
-                    Logger.LogError("Error saving " + Paths.CmdExtraPermsFile, ex);
-                }
+            try {
+                lock (ioLock) SaveCore();
+            } catch (Exception ex) {
+                Logger.LogError("Error saving " + Paths.CmdExtraPermsFile, ex);
             }
-        }
-        
+        }        
         
         static void SaveCore() {
             using (StreamWriter w = new StreamWriter(Paths.CmdExtraPermsFile)) {
@@ -103,7 +110,7 @@ namespace MCGalaxy.Commands {
         }
         
 
-        /// <summary> Loads the list of all extra permissions. </summary>
+        /// <summary> Loads list of extra permissions to disc. </summary>
         public static void Load() {
             lock (ioLock) {
                 if (!File.Exists(Paths.CmdExtraPermsFile)) Save();
@@ -119,7 +126,7 @@ namespace MCGalaxy.Commands {
             string line;
             
             while ((line = r.ReadLine()) != null) {
-                if (line.Length == 0 || line[0] == '#' || line.IndexOf(':') == -1) continue;
+                if (line.IsCommentLine() || line.IndexOf(':') == -1) continue;
                 // Format - Name:Num : Lowest : Disallow : Allow
                 line.Replace(" ", "").FixedSplit(args, ':');
                 
@@ -153,8 +160,6 @@ namespace MCGalaxy.Commands {
         static void LoadExtraPerm(string[] args) {
             string cmdName = args[0];
             int num = int.Parse(args[1]), minPerm = int.Parse(args[2]);
-            string desc = args[3] == null ? "" : args[3];
-            
             Set(cmdName, num, "", (LevelPermission)minPerm, null, null);
         }
     }

@@ -29,12 +29,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
-#if SSL
-using Org.Mentalis.Security.Ssl;
-#endif
-
-[assembly:CLSCompliant(false)]
-[assembly:ComVisible(false)]
 namespace Sharkbite.Irc
 {
 	/// <summary>
@@ -54,36 +48,28 @@ namespace Sharkbite.Irc
 		public event RawMessageSentEventHandler OnRawMessageSent;
 
 
-		#if SSL
-		private SecureTcpClient client;
-		#else
-		private TcpClient client;
-		#endif
-		
-		private readonly Regex propertiesRegex;
-		private Listener listener;
-		private Sender sender;
-		private Thread socketListenThread;
-		private StreamReader reader;
-		private DateTime timeLastSent;
+		TcpClient client;
+		Listener listener;
+		Sender sender;
+		Thread socketListenThread;
+		StreamReader reader;
+		StreamWriter writer;
 		//Connected and registered with IRC server
-		private bool registered;
+		bool registered;
 		//TCP/IP connection established with IRC server
-		private bool connected;
-		private bool handleNickFailure;
-		private ServerProperties properties;
-		private Encoding encoding;
+		bool connected;
+		bool handleNickFailure;
+		Encoding encoding;
 
-		internal StreamWriter writer; //Access is internal for testing
 		internal ConnectionArgs connectionArgs;
 
 		/// <summary>
 		/// Prepare a connection to an IRC server but do not open it. This sets the text Encoding to Default.
 		/// </summary>
 		/// <param name="args">The set of information need to connect to an IRC server</param>
-		public Connection( ConnectionArgs args )
+		/// <param name="textEncoding">The text encoding for the incoming stream.</param>
+		public Connection( Encoding textEncoding, ConnectionArgs args )
 		{
-			propertiesRegex = new Regex("([A-Z]+)=([^\\s]+)", RegexOptions.Compiled | RegexOptions.Singleline);
 			registered = false;
 			connected = false;
 			handleNickFailure = true;
@@ -91,18 +77,6 @@ namespace Sharkbite.Irc
 			sender = new Sender( this );
 			listener = new Listener( );
 			RegisterDelegates();
-			timeLastSent = DateTime.UtcNow;
-			TextEncoding = Encoding.Default;
-		}
-
-		
-		/// <summary>
-		/// Prepare a connection to an IRC server but do not open it.
-		/// </summary>
-		/// <param name="args">The set of information need to connect to an IRC server</param>
-		/// <param name="textEncoding">The text encoding for the incoming stream.</param>
-		public Connection( Encoding textEncoding, ConnectionArgs args ) : this( args )
-		{
 			TextEncoding = textEncoding;
 		}
 
@@ -158,12 +132,6 @@ namespace Sharkbite.Irc
 		}
 
 		/// <summary>
-		/// The amount of time that has passed since the client
-		/// sent a command to the IRC server.
-		/// </summary>
-		/// <value>Read only TimeSpan</value>
-		public TimeSpan IdleTime { get { return DateTime.UtcNow - timeLastSent; } }
-		/// <summary>
 		/// The object used to send commands to the IRC server.
 		/// </summary>
 		/// <value>Read-only Sender.</value>
@@ -173,20 +141,6 @@ namespace Sharkbite.Irc
 		/// </summary>
 		/// <value>Read only Listener.</value>
 		public Listener Listener { get { return listener; } }
-
-		/// <summary>
-		/// The collection of data used to establish this connection.
-		/// </summary>
-		/// <value>Read only ConnectionArgs.</value>
-		public ConnectionArgs ConnectionData { get { return connectionArgs; } }
-		
-		/// <summary>
-		/// A read-only collection of string key/value pairs
-		/// representing IRC server proprties.
-		/// </summary>
-		/// <value>This connection's ServerProperties obejct or null if it
-		/// has not been created.</value>
-		public ServerProperties ServerProperties { get { return properties; } }
 
 		/// <summary>
 		/// Respond to IRC keep-alives.
@@ -235,91 +189,13 @@ namespace Sharkbite.Irc
 				Sender.Register(nick);
 			}
 		}
-		/// <summary>
-		/// Listen for the 005 info messages sent during registration so that the maximum lengths
-		/// of certain items (Nick, Away, Topic) can be determined dynamically.
-		/// </summary>
-		/// <param name="code">Reply code enum</param>
-		/// <param name="info">An info line</param>
-		private void OnReply( ReplyCode code, string info)
-		{
-			if( code == ReplyCode.RPL_BOUNCE ) //Code 005
-			{
-				//Lazy instantiation
-				if( properties == null )
-				{
-					properties = new ServerProperties();
-				}
-				//Populate properties from name/value matches
-				MatchCollection matches = propertiesRegex.Matches( info );
-				if( matches.Count > 0 )
-				{
-					foreach( Match match in matches )
-					{
-						properties.SetProperty(match.Groups[1].ToString(), match.Groups[2].ToString() );
-					}
-				}
-				//Extract ones we are interested in
-				ExtractProperties();
-			}
-		}
-		private void ExtractProperties()
-		{
-			//For the moment the only one we care about is NickLen
-			//In fact we don't cae about any but keep here as an example
-			/*
-			if( properties.ContainsKey("NICKLEN") )
-			{
-				try
-				{
-					maxNickLength = int.Parse( properties[ "NICKLEN" ] );
-				}
-				catch( Exception e )
-				{
-				}
-			}
-			 */
-		}
 		private void RegisterDelegates()
 		{
 			listener.OnPing += new PingEventHandler( KeepAlive );
 			listener.OnNick += new NickEventHandler( MyNickChanged );
 			listener.OnNickError += new NickErrorEventHandler( OnNickError );
-			listener.OnReply += new ReplyEventHandler( OnReply );
 			listener.OnRegistered += new RegisteredEventHandler( OnRegistered );
 		}
-
-		#if SSL
-		private void ConnectClient( SecureProtocol protocol )
-		{
-			lock ( this )
-			{
-				if( connected )
-				{
-					throw new Exception("Connection with IRC server already opened.");
-				}
-				Debug.WriteLineIf( Rfc2812Util.IrcTrace.TraceInfo,"[" + Thread.CurrentThread.Name +"] Connection::Connect()");
-				
-				SecurityOptions options = new SecurityOptions( protocol );
-				options.Certificate = null;
-				options.Entity = ConnectionEnd.Client;
-				options.VerificationType = CredentialVerification.None;
-				options.Flags = SecurityFlags.Default;
-				options.AllowedAlgorithms = SslAlgorithms.SECURE_CIPHERS;
-				client = new SecureTcpClient( options );
-				client.Connect( connectionArgs.Hostname, connectionArgs.Port );
-				
-				connected = true;
-				writer = new StreamWriter( client.GetStream(), TextEncoding );
-				writer.AutoFlush = true;
-				reader = new StreamReader( client.GetStream(), TextEncoding );
-				socketListenThread = new Thread(new ThreadStart( ReceiveIRCMessages ) );
-				socketListenThread.Name = Name;
-				socketListenThread.Start();
-				sender.RegisterConnection( connectionArgs );
-			}
-		}
-		#endif
 
 		/// <summary>
 		/// Read in message lines from the IRC server
@@ -378,7 +254,6 @@ namespace Sharkbite.Irc
 			try
 			{
 				writer.WriteLine( command.ToString() );
-				timeLastSent = DateTime.UtcNow;
 			}
 			catch( Exception )
 			{
@@ -406,31 +281,13 @@ namespace Sharkbite.Irc
 			command.Remove(0, command.Length );
 		}
 
-
-		#if SSL
-		///<summary>
-		/// Connect to the IRC server and start listening for messages
-		/// on a new thread.
-		/// </summary>
-		/// <exception cref="SocketException">If a connection cannot be established with the IRC server</exception>
-		public void Connect()
+		Stream MakeDataStream() 
 		{
-			Debug.WriteLineIf( Rfc2812Util.IrcTrace.TraceInfo,"Connecting over clear socket");
-			ConnectClient( SecureProtocol.None );
+			Stream raw = client.GetStream();
+			if (!connectionArgs.UseSSL) return raw;
+			return MCGalaxy.Network.HttpUtil.WrapSSLStream( raw, connectionArgs.Hostname );
 		}
-
-		///<summary>
-		/// Connect to the IRC server over an encrypted connection using TLS.
-		/// </summary>
-		/// <exception cref="SocketException">If a connection cannot be established with the IRC server</exception>
-		public void SecureConnect()
-		{
-			Debug.WriteLineIf( Rfc2812Util.IrcTrace.TraceInfo,"Connecting over encrypted socket");
-			ConnectClient( SecureProtocol.Tls1 );
-		}
-
 		
-		#else
 		/// <summary>
 		/// Connect to the IRC server and start listening for messages
 		/// on a new thread.
@@ -443,17 +300,19 @@ namespace Sharkbite.Irc
 				if( connected ) throw new InvalidOperationException("Connection with IRC server already opened.");
 				client = new TcpClient();
 				client.Connect( connectionArgs.Hostname, connectionArgs.Port );
+				Stream s  = MakeDataStream();
 				connected = true;
-				writer = new StreamWriter( client.GetStream(), TextEncoding );
+				
+				writer = new StreamWriter( s, TextEncoding );
 				writer.AutoFlush = true;
-				reader = new StreamReader( client.GetStream(), TextEncoding );
+				reader = new StreamReader( s, TextEncoding );
 				socketListenThread = new Thread(new ThreadStart( ReceiveIRCMessages ) );
 				socketListenThread.Name = Name;
 				socketListenThread.Start();
 				sender.RegisterConnection( connectionArgs );
 			}
 		}
-		#endif
+
 		/// <summary>
 		/// Sends a 'Quit' message to the server, closes the connection,
 		/// and stops the listening thread.

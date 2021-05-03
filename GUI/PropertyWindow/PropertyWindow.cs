@@ -13,10 +13,7 @@ or implied. See the Licenses for the specific language governing
 permissions and limitations under the Licenses.
  */
 using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Windows.Forms;
-using MCGalaxy.Blocks;
 using MCGalaxy.Commands;
 using MCGalaxy.Eco;
 using MCGalaxy.Events.GameEvents;
@@ -66,7 +63,8 @@ namespace MCGalaxy.Gui {
             SrvProperties.Load();
             LoadGeneralProps();
             LoadChatProps();
-            LoadIrcSqlProps();
+            LoadRelayProps();
+            LoadSqlProps();
             LoadEcoProps();
             LoadMiscProps();
             LoadRankProps();
@@ -78,19 +76,21 @@ namespace MCGalaxy.Gui {
             try {
                 ApplyGeneralProps();
                 ApplyChatProps();
-                ApplyIrcSqlProps();
+                ApplyRelayProps();
+                ApplySqlProps();
                 ApplyEcoProps();
                 ApplyMiscProps();
                 ApplyRankProps();
                 ApplySecurityProps();
-                zsSettings.ApplyToServer();
                 
+                zsSettings.ApplyToServer();
                 SrvProperties.Save();
-                Economy.Save();
+                Economy.Save();                
             } catch (Exception ex) {
                 Logger.LogError(ex);
                 Logger.Log(LogType.Warning, "SAVE FAILED! properties/server.properties");
             }
+            SaveDiscordProps();
         }
 
         void btnSave_Click(object sender, EventArgs e) { SaveChanges(); Dispose(); }
@@ -113,22 +113,23 @@ namespace MCGalaxy.Gui {
         void btnDiscard_Click(object sender, EventArgs e) { Dispose(); }
 
         void GetHelp(string toHelp) {
-            ConsoleHelpPlayer player = new ConsoleHelpPlayer();
-            Command.Find("Help").Use(player, toHelp);
-            Popup.Message(Colors.Strip(player.HelpOutput), "Help for /" + toHelp);
+            ConsoleHelpPlayer p = new ConsoleHelpPlayer();
+            Command.Find("Help").Use(p, toHelp);
+            Popup.Message(Colors.StripUsed(p.Messages), "Help for /" + toHelp);
         }
-        
-        sealed class ConsoleHelpPlayer : Player {
-            public string HelpOutput = "";
+    }
+	
+	sealed class ConsoleHelpPlayer : Player {
+        public string Messages = "";
             
-            public ConsoleHelpPlayer() : base("(console)") {
-                group = Group.NobodyRank;
-                SuperName = "Console";
-            }
+        public ConsoleHelpPlayer() : base("(console)") {
+            group = Group.NobodyRank;
+            SuperName = "Console";
+        }
             
-            public override void Message(byte id, string message) {
-                HelpOutput += message + "\r\n";
-            }
+        public override void Message(byte type, string message) {
+            message = Chat.Format(message, this);
+            Messages += message + "\r\n";
         }
     }
 }

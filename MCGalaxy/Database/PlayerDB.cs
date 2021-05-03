@@ -30,12 +30,12 @@ namespace MCGalaxy.DB {
         static string LogoutPath(string name) { return "text/logout/" + name.ToLower() + ".txt"; }
         
         static char[] trimChars = new char[] {'='};
-        public static bool Load(Player p) {
-            if (!File.Exists("players/" + p.name + "DB.txt")) return false;
+        public static void LoadNick(Player p) {
+            if (!File.Exists("players/" + p.name + "DB.txt")) return;
             
             string[] lines = File.ReadAllLines("players/" + p.name + "DB.txt");
             foreach (string line in lines) {
-                if (line.Length == 0 || line[0] == '#') continue;
+                if (line.IsCommentLine()) continue;
                 string[] parts = line.Split(trimChars, 2);
                 if (parts.Length < 2) continue;
                 string key = parts[0].Trim(), value = parts[1].Trim();
@@ -44,12 +44,11 @@ namespace MCGalaxy.DB {
                     p.DisplayName = value;
             }
             p.SetPrefix();
-            return true;
         }
 
-        public static void Save(Player p) {
-            using (StreamWriter sw = new StreamWriter("players/" + p.name + "DB.txt", false))
-                sw.WriteLine("Nick = " + p.DisplayName);
+        public static void SetNick(string name, string nick) {
+            using (StreamWriter sw = new StreamWriter("players/" + name + "DB.txt", false))
+                sw.WriteLine("Nick = " + nick);
         }
         
         
@@ -93,14 +92,38 @@ namespace MCGalaxy.DB {
         }
         
         
+        public static PlayerData FindData(string name) {
+            string suffix = Database.Backend.CaselessWhereSuffix;
+            object raw = Database.ReadRows("Players", "*", null, PlayerData.Read,
+                                           "WHERE Name=@0" + suffix, name);
+            return (PlayerData)raw;
+        }
+
+        public static string FindName(string name) {
+            string suffix = Database.Backend.CaselessWhereSuffix;
+            return Database.ReadString("Players", "Name", "WHERE Name=@0" + suffix, name);
+        }
+        
+        public static string FindIP(string name) {
+            string suffix = Database.Backend.CaselessWhereSuffix;
+            return Database.ReadString("Players", "IP", "WHERE Name=@0" + suffix, name);
+        }
+        
+        public static string FindOfflineIPMatches(Player p, string name, out string ip) {
+            string[] match = PlayerDB.MatchValues(p, name, "Name,IP");
+            ip   = match == null ? null : match[1];
+            return match == null ? null : match[0];
+        }
+        
+        
         public static void Update(string name, string column, string value) {
-            Database.Backend.UpdateRows("Players", column + "=@1", "WHERE Name=@0", name, value);
+            Database.UpdateRows("Players", column + "=@1", "WHERE Name=@0", name, value);
         }
         
         public static string FindColor(Player p) {
             string raw = Database.ReadString("Players", "Color", "WHERE ID=@0", p.DatabaseID);
             if (raw == null) return "";
-            return PlayerData.ParseCol(raw);
+            return PlayerData.ParseColor(raw);
         }
         
         
@@ -138,9 +161,9 @@ namespace MCGalaxy.DB {
         
         static void MatchMulti(string name, string columns, object arg, ReaderCallback callback) {
             string suffix = Database.Backend.CaselessLikeSuffix;
-            Database.Backend.ReadRows("Players", columns, arg, callback,
-                                      "WHERE Name LIKE @0 ESCAPE '#' LIMIT 21" + suffix,
-                                      "%" + name.Replace("_", "#_") + "%");
+            Database.ReadRows("Players", columns, arg, callback,
+                              "WHERE Name LIKE @0 ESCAPE '#' LIMIT 101" + suffix,
+                              "%" + name.Replace("_", "#_") + "%");
         }
     }
 }

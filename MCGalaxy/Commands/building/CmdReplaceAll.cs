@@ -39,7 +39,7 @@ namespace MCGalaxy.Commands.Building {
             Vec3S32[] marks = new Vec3S32[] { Vec3S32.Zero, max };
             
             MeasureDrawOp measure = new MeasureDrawOp();
-            DrawOpPerformer.Setup(measure, p, marks);
+            measure.Setup(p, p.level, marks);
             measure.Perform(marks, brush, null);
             
             if (measure.Total > p.group.DrawLimit) {
@@ -73,10 +73,10 @@ namespace MCGalaxy.Commands.Building {
         }
 
         public override void Help(Player p) {
-            p.Message("%T/ReplaceAll [block] [block2].. [new]");
-            p.Message("%HReplaces [block] with [new] for the entire map.");
-            p.Message("%H  If more than one [block] is given, they are all replaced.");
-            p.Message("%H  If only [block] is given, replaces with your held block.");
+            p.Message("&T/ReplaceAll [block] [block2].. [new]");
+            p.Message("&HReplaces [block] with [new] for the entire map.");
+            p.Message("&H  If more than one [block] is given, they are all replaced.");
+            p.Message("&H  If only [block] is given, replaces with your held block.");
         }
     }
 }

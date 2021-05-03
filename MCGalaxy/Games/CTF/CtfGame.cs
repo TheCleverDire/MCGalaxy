@@ -71,7 +71,7 @@ namespace MCGalaxy.Games {
             CtfStats s = LoadStats(p.name);
             data.Captures = s.Captures; data.Points = s.Points; data.Tags = s.Tags;
             
-            p.Extras.Put(ctfExtrasKey, data);
+            p.Extras[ctfExtrasKey] = data;
             return data;
         }
         
@@ -104,8 +104,8 @@ namespace MCGalaxy.Games {
         
         // TODO: Actually make this show something
         public override void OutputStatus(Player p) {
-            p.Message("{0} %Steam: {1} captures", Blue.ColoredName, Blue.Captures);
-            p.Message("{0} %Steam: {1} captures", Red.ColoredName,  Red.Captures);
+            p.Message("{0} &Steam: {1} captures", Blue.ColoredName, Blue.Captures);
+            p.Message("{0} &Steam: {1} captures", Red.ColoredName,  Red.Captures);
         }
 
         protected override void StartGame() {
@@ -113,7 +113,7 @@ namespace MCGalaxy.Games {
             Red.RespawnFlag(Map);
             ResetTeams();
 
-            Database.Backend.CreateTable("CTF", createSyntax);
+            Database.CreateTable("CTF", ctfTable);
         }
         
         protected override void EndGame() {
@@ -145,6 +145,7 @@ namespace MCGalaxy.Games {
         
         public override void PlayerJoinedGame(Player p) {
             bool announce = false;
+            HandleSentMap(p, Map, Map);
             HandleJoinedLevel(p, Map, Map, ref announce);
         }
 
@@ -156,10 +157,21 @@ namespace MCGalaxy.Games {
             DropFlag(p, team);          
         }
         
+        void AutoAssignTeam(Player p) {     
+            if (Blue.Members.Count > Red.Members.Count) {
+                JoinTeam(p, Red);
+            } else if (Red.Members.Count > Blue.Members.Count) {
+                JoinTeam(p, Blue);
+            } else {
+                bool red = new Random().Next(2) == 0;
+                JoinTeam(p, red ? Red : Blue);
+            }
+        }
+        
         void JoinTeam(Player p, CtfTeam team) {
             Get(p).HasFlag = false;
             team.Members.Add(p);
-            Map.Message(p.ColoredName + " %Sjoined the " + team.ColoredName + " %Steam");
+            Map.Message(p.ColoredName + " &Sjoined the " + team.ColoredName + " &Steam");
             p.Message("You are now on the " + team.ColoredName + " team!");
             TabList.Update(p, true);
         }

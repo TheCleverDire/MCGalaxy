@@ -50,15 +50,9 @@ namespace MCGalaxy.Commands.Info {
         
         static void SearchBlocks(Player p, string keyword, string modifier) {
             List<BlockID> blocks = new List<BlockID>();
-            BlockDefinition[] defs = p.IsSuper ? BlockDefinition.GlobalDefs : p.level.CustomBlockDefs;
-            
             for (int b = 0; b < Block.ExtendedCount; b++) {
                 BlockID block = (BlockID)b;
-                if (Block.IsPhysicsType(block)) {
-                    if (!Block.Undefined(block)) blocks.Add(block);
-                } else {
-                    if (defs[block] != null) blocks.Add(block);
-                }
+                if (Block.ExistsFor(p, block)) blocks.Add(block);
             }
 
             List<string> blockNames = FilterList(blocks, keyword, 
@@ -92,7 +86,7 @@ namespace MCGalaxy.Commands.Info {
         static void SearchPlayers(Player p, string keyword, string modifier) {
             Player[] online = PlayerInfo.Online.Items;
             List<string> players = FilterList(online, keyword, pl => pl.name,
-                                              pl => Entities.CanSee(p, pl), pl => pl.ColoredName);
+                                              pl => p.CanSee(pl), pl => pl.ColoredName);
             OutputList(p, keyword, "search players", "players", modifier, players);
         }
         
@@ -108,7 +102,7 @@ namespace MCGalaxy.Commands.Info {
             OutputList(p, keyword, "search levels", "maps", modifier, maps);
         }
         
-        internal static List<string> FilterList<T>(IList<T> input, string keyword, StringFormatter<T> formatter,
+        internal static List<string> FilterList<T>(IList<T> input, string keyword, StringFormatter<T> nameGetter,
                                           Predicate<T> filter = null, StringFormatter<T> listFormatter = null) {
             List<string> matches = new List<string>();
             Regex regex = null;
@@ -120,10 +114,10 @@ namespace MCGalaxy.Commands.Info {
             
             foreach (T item in input) {
                 if (filter != null && !filter(item)) continue;
-                string name = formatter(item);
+                string name = nameGetter(item);
                 
-                if (regex != null) { if (!regex.IsMatch(name))  continue; }
-                else { if (!name.CaselessContains(keyword))     continue; }
+                if (regex != null) { if (!regex.IsMatch(name)) continue; }
+                else { if (!name.CaselessContains(keyword))    continue; }
                 
                 // format this item for display
                 if (listFormatter != null) name = listFormatter(item);
@@ -141,12 +135,12 @@ namespace MCGalaxy.Commands.Info {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Search [list] [keyword]");
-            p.Message("%HFinds entries in a list that match the given keyword");
-            p.Message("%H  keyword can also include wildcard characters:");
-            p.Message("%H    * - placeholder for zero or more characters");
-            p.Message("%H    ? - placeholder for exactly one character");
-            p.Message("%HLists available: &fblocks/commands/ranks/players/loaded/maps");
+            p.Message("&T/Search [list] [keyword]");
+            p.Message("&HFinds entries in a list that match the given keyword");
+            p.Message("&H  keyword can also include wildcard characters:");
+            p.Message("&H    * - placeholder for zero or more characters");
+            p.Message("&H    ? - placeholder for exactly one character");
+            p.Message("&HLists available: &fblocks/commands/ranks/players/loaded/maps");
         }
     }
 }

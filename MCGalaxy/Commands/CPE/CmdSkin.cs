@@ -38,43 +38,41 @@ namespace MCGalaxy.Commands.CPE {
         }
 
         protected override void SetBotData(Player p, PlayerBot bot, string skin) {
-            skin = GetSkin(skin, bot.name);
-            if (skin.Length > NetUtils.StringSize) {
-                p.Message("The skin must be " + NetUtils.StringSize + " characters or less."); return;
-            }
+            skin = ParseSkin(p, skin, bot.name);
+            if (skin == null) return;
             
             bot.SkinName = skin;
-            p.Message("You changed the skin of bot " + bot.ColoredName + " %Sto &c" + skin);
+            p.Message("You changed the skin of bot " + bot.ColoredName + " &Sto &c" + skin);
             
             bot.GlobalDespawn();
             bot.GlobalSpawn();
             BotsFile.Save(p.level);
         }
         
-        protected override void SetPlayerData(Player p, Player who, string skin) {
-            skin = GetSkin(skin, who.truename);
-            if (skin.Length > NetUtils.StringSize) {
-                p.Message("The skin must be " + NetUtils.StringSize + " characters or less."); return;
+        protected override void SetPlayerData(Player p, string target, string skin) {
+            string rawName = target.RemoveLastPlus();
+            skin = ParseSkin(p, skin, rawName);    
+            if (skin == null) return;
+            
+            Player who = PlayerInfo.FindExact(target);
+            if (p == who) {
+                p.Message("Changed your own skin to &c" + skin);
+            } else {
+                MessageFrom(target, who, "had their skin changed to &c" + skin);
             }
             
-            who.SkinName = skin;
-            Entities.GlobalRespawn(who);
+            if (who != null) who.SkinName = skin;
+            if (who != null) Entities.GlobalRespawn(who);
             
-            if (p != who) {
-                Chat.MessageFrom(who,"λNICK %Shad their skin changed to &c" + skin);
+            if (skin == rawName) {
+                Server.skins.Remove(target);
             } else {
-                who.Message("Changed your own skin to &c" + skin);
-            }
-            
-            if (skin == who.truename) {
-                Server.skins.Remove(who.name);
-            } else {
-                Server.skins.AddOrReplace(who.name, skin);
+                Server.skins.Update(target, skin);
             }
             Server.skins.Save();
         }
         
-        static string GetSkin(string skin, string defSkin) {
+        static string ParseSkin(Player p, string skin, string defSkin) {
             if (skin.Length == 0) skin = defSkin;
             if (skin[0] == '+')
                 skin = "https://minotar.net/skin/" + skin.Substring(1) + ".png";
@@ -82,17 +80,22 @@ namespace MCGalaxy.Commands.CPE {
             if (skin.CaselessStarts("http://") || skin.CaselessStarts("https")) {
                 HttpUtil.FilterURL(ref skin);
             }
+            
+            if (skin.Length > NetUtils.StringSize) {
+                p.Message("&WThe skin must be " + NetUtils.StringSize + " characters or less."); 
+                return null;
+            }
             return skin;
         }
 
         public override void Help(Player p) {
-            p.Message("%T/Skin [name] [skin] %H- Sets the skin of that player.");
-            p.Message("%T/Skin bot [name] [skin] %H- Sets the skin of that bot.");
-            p.Message("%H[skin] can be:");
-            p.Message("%H - a ClassiCube player's name (e.g Hetal)");
-            p.Message("%H - a Minecraft player's name, if you put a + (e.g +Hypixel)");
-            p.Message("%H - a direct url to a skin");
-            p.Message("%HDirect url skins also apply to non human models (e.g pig)");
+            p.Message("&T/Skin [name] [skin] &H- Sets the skin of that player.");
+            p.Message("&T/Skin bot [name] [skin] &H- Sets the skin of that bot.");
+            p.Message("&H[skin] can be:");
+            p.Message("&H - a ClassiCube player's name (e.g Hetal)");
+            p.Message("&H - a Minecraft player's name, if you put a + (e.g +Hypixel)");
+            p.Message("&H - a direct url to a skin");
+            p.Message("&HDirect url skins also apply to non human models (e.g pig)");
         }
     }
 }

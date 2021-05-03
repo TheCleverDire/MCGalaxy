@@ -20,6 +20,7 @@
 using System;
 using MCGalaxy.Commands.World;
 using MCGalaxy.Games;
+using MCGalaxy.Generator;
 
 namespace MCGalaxy.Commands.Fun {
     
@@ -61,7 +62,7 @@ namespace MCGalaxy.Commands.Fun {
             }
             
             ushort x = 0, y = 0, z = 0;
-            if (!CmdNewLvl.GetDimensions(p, args, 1, ref x, ref y, ref z)) return;
+            if (!MapGen.GetDimensions(p, args, 1, ref x, ref y, ref z)) return;
             
             CountdownGame game = (CountdownGame)game_;
             game.GenerateMap(p, x, y, z);
@@ -92,15 +93,15 @@ namespace MCGalaxy.Commands.Fun {
         }       
         
         public override void Help(Player p) {
-            p.Message("%T/CD set [width] [height] [length]");
-            p.Message("%HRe-generates the countdown map (default is 32x32x32)");
-            p.Message("%T/CD start <speed> <mode> %H- Starts Countdown");
-            p.Message("%H  speed can be: slow, normal, fast, extreme or ultimate");
-            p.Message("%H  mode can be: normal or freeze");
-            p.Message("%T/CD stop %H- Stops Countdown"); 
-            p.Message("%T/CD end %H- Ends current round of Countdown");
-            p.Message("%T/CD join %H- joins the game");
-            p.Message("%T/CD status %H- lists players currently playing");
+            p.Message("&T/CD set [width] [height] [length]");
+            p.Message("&HRe-generates the countdown map (default is 32x32x32)");
+            p.Message("&T/CD start <speed> <mode> &H- Starts Countdown");
+            p.Message("&H  speed can be: slow, normal, fast, extreme or ultimate");
+            p.Message("&H  mode can be: normal or freeze");
+            p.Message("&T/CD stop &H- Stops Countdown"); 
+            p.Message("&T/CD end &H- Ends current round of Countdown");
+            p.Message("&T/CD join &H- joins the game");
+            p.Message("&T/CD status &H- lists players currently playing");
         }
     }
 }

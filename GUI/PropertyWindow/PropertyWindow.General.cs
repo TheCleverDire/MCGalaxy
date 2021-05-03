@@ -21,6 +21,7 @@ using MCGalaxy.Gui.Popups;
 namespace MCGalaxy.Gui {
 
     public partial class PropertyWindow : Form {
+        bool warnDisabledVerification = true;
         
         void LoadGeneralProps() {
             srv_txtName.Text = Server.Config.Name;
@@ -38,7 +39,9 @@ namespace MCGalaxy.Gui {
             lvl_chkAutoload.Checked = Server.Config.AutoLoadMaps;
             lvl_chkWorld.Checked = Server.Config.ServerWideChat;
             
-            adv_chkVerify.Checked = Server.Config.VerifyNames;
+            warnDisabledVerification = false;
+            adv_chkVerify.Checked    = Server.Config.VerifyNames;
+            warnDisabledVerification = true;
             adv_chkCPE.Checked = Server.Config.EnableCPE;       
             chkUpdates.Checked = Server.Config.CheckForUpdates;
         }
@@ -65,6 +68,14 @@ namespace MCGalaxy.Gui {
         }        
         
         
+        const string warnMsg = "Disabling name verification means players\ncan login as anyone, including YOU\n\n" +
+            "Are you sure you want to disable name verification?";
+        void chkVerify_CheckedChanged(object sender, EventArgs e) {
+            if (!warnDisabledVerification || adv_chkVerify.Checked) return;            
+            if (Popup.OKCancel(warnMsg, "Security warning")) return;
+            adv_chkVerify.Checked = true;
+        }
+        
         void numPlayers_ValueChanged(object sender, EventArgs e) {
             // Ensure that number of guests is never more than number of players
             if (srv_numGuests.Value > srv_numPlayers.Value) {
@@ -74,7 +85,8 @@ namespace MCGalaxy.Gui {
         }
         
         void ChkPort_Click(object sender, EventArgs e) {
-            using (PortTools form = new PortTools(srv_numPort.Text)) {
+            int port = (int)srv_numPort.Value;
+            using (PortTools form = new PortTools(port)) {
                 form.ShowDialog();
             }
         }

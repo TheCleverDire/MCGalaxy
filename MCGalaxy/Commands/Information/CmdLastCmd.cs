@@ -23,38 +23,36 @@ namespace MCGalaxy.Commands.Info {
         public override string shortcut { get { return "Last"; } }
         public override string type { get { return CommandTypes.Information; } }
         public override LevelPermission defaultRank { get { return LevelPermission.Operator; } }
-        public override bool LogUsage { get { return false; } }
+        public override bool UpdatesLastCmd { get { return false; } }
 
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length == 0) {
                 Player[] players = PlayerInfo.Online.Items;
                 foreach (Player pl in players) {
-                    if (Entities.CanSee(data, p, pl))
-                        ShowLastCommand(p, pl);
+                    if (p.CanSee(pl, data.Rank)) ShowLastCommand(p, pl);
                 }
             } else {
                 Player who = PlayerInfo.FindMatches(p, message);
-                if (who != null)
-                    ShowLastCommand(p, who);
+                if (who != null) ShowLastCommand(p, who);
             }
         }
         
-        static void ShowLastCommand(Player p, Player who) {
-            if (who.lastCMD.Length == 0) {
-                p.Message("{0} %Shas not used any commands yet.", 
-                               who.ColoredName);
+        static void ShowLastCommand(Player p, Player target) {
+            if (target.lastCMD.Length == 0) {
+        		p.Message("{0} &Shas not used any commands yet.", 
+        		          p.FormatNick(target));
             } else {
-                TimeSpan delta = DateTime.UtcNow - who.lastCmdTime;
-                p.Message("{0} %Slast used \"{1}\" {2} ago", 
-                               who.ColoredName, who.lastCMD, delta.Shorten(true));
+                TimeSpan delta = DateTime.UtcNow - target.lastCmdTime;
+                p.Message("{0} &Slast used \"{1}\" {2} ago", 
+                          p.FormatNick(target), target.lastCMD, delta.Shorten(true));
             }
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Last [user]");
-            p.Message("%H Shows last command used by [user]");
-            p.Message("%T/Last");
-            p.Message("%HShows last commands for all users (SPAMMY)");
+            p.Message("&T/Last [user]");
+            p.Message("&H Shows last command used by [user]");
+            p.Message("&T/Last");
+            p.Message("&HShows last commands for all users (SPAMMY)");
         }
     }
 }

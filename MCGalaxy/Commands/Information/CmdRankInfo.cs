@@ -35,12 +35,12 @@ namespace MCGalaxy.Commands.Info {
             if (name == null) return;
             
             List<string> rankings = Server.RankInfo.FindAllExact(name);
-            string target = PlayerInfo.GetColoredName(p, name);
+            string nick = p.FormatNick(name);
             
             if (rankings.Count == 0) {
-                p.Message("{0} %Shas no rankings.", target); return;
+                p.Message("{0} &Shas no rankings.", nick); return;
             } else {
-                p.Message("  Rankings for {0}:", target);
+                p.Message("  Rankings for {0}:", nick);
             }
             
             foreach (string line in rankings) {
@@ -67,14 +67,13 @@ namespace MCGalaxy.Commands.Info {
                 p.Message("&aFrom {0} &ato {1} &a{2} ago", 
                                Group.GetColoredName(oldRank), Group.GetColoredName(newRank), 
                                delta.Shorten(true, false));
-                p.Message("&aBy %S{0}&a, reason: %S{1}", 
-                               PlayerInfo.GetColoredName(p, args[1]), reason);
+                p.Message("&aBy &S{0}&a, reason: &S{1}", p.FormatNick(args[1]), reason);
             }
         }
         
         public override void Help(Player p) {
-            p.Message("%T/RankInfo [player]");
-            p.Message("%HReturns details about that person's rankings.");
+            p.Message("&T/RankInfo [player]");
+            p.Message("&HReturns details about that person's rankings.");
         }
     }
 }

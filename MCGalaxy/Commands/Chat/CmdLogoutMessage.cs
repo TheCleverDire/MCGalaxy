@@ -32,20 +32,18 @@ namespace MCGalaxy.Commands.Chatting {
             UsePlayer(p, data, message, "logout message");
         }
         
-        protected override void SetPlayerData(Player p, Player who, string msg) {
-            PlayerDB.SetLogoutMessage(who.name, msg);
+        protected override void SetPlayerData(Player p, string target, string msg) {
+            PlayerDB.SetLogoutMessage(target, msg);
             if (msg.Length == 0) {
-                p.Message("Logout message of {0} %Swas removed.",
-                               who.ColoredName);
+                p.Message("Logout message of {0} &Swas removed.", p.FormatNick(target));
             } else {                
-                p.Message("Logout message of {0} %Swas changed to: {1}",
-                               who.ColoredName, msg);
+                p.Message("Logout message of {0} &Swas changed to: {1}", p.FormatNick(target), msg);
             }
         }
         
         public override void Help(Player p) {
-            p.Message("%T/LogoutMessage [player] [message]");
-            p.Message("%HSets the logout message shown for that player.");
+            p.Message("&T/LogoutMessage [player] [message]");
+            p.Message("&HSets the logout message shown for that player.");
         }
     }
 }

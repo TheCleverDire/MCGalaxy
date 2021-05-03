@@ -48,11 +48,11 @@ namespace MCGalaxy.Commands.Moderation {
             name = PlayerInfo.FindMatchesPreferOnline(p, name);
             if (name == null) return;
             
-            if (!Server.vip.AddUnique(name)) {
-                p.Message(PlayerInfo.GetColoredName(p, name) + " %Sis already a VIP.");
+            if (!Server.vip.Add(name)) {
+                p.Message("{0} &Sis already a VIP.", p.FormatNick(name));
             } else {
                 Server.vip.Save();
-                p.Message(PlayerInfo.GetColoredName(p, name) + " %Sis now a VIP.");
+                p.Message("{0} &Sis now a VIP.", p.FormatNick(name));
                 
                 Player vip = PlayerInfo.FindExact(name);
                 if (vip != null) vip.Message("You are now a VIP!");
@@ -64,10 +64,10 @@ namespace MCGalaxy.Commands.Moderation {
             if (name == null) return;
             
             if (!Server.vip.Remove(name)) {
-                p.Message(PlayerInfo.GetColoredName(p, name) + " %Sis not a VIP.");
+                p.Message("{0} &Sis not a VIP.", p.FormatNick(name));
             } else {
                 Server.vip.Save();
-                p.Message(PlayerInfo.GetColoredName(p, name) + " %Sis no longer a VIP.");
+                p.Message("{0} &Sis no longer a VIP.", p.FormatNick(name));
                 
                 Player vip = PlayerInfo.FindExact(name);
                 if (vip != null) vip.Message("You are no longer a VIP!");
@@ -79,11 +79,11 @@ namespace MCGalaxy.Commands.Moderation {
         }
 
         public override void Help(Player p) {
-            p.Message("%T/VIP add/remove [player]");
-            p.Message("%HAdds or removes [player] from the VIP list.");
-            p.Message("%T/VIP list");
-            p.Message("%HLists all players who are on the VIP list.");
-            p.Message("%H  VIPs can join regardless of the player limit.");
+            p.Message("&T/VIP add/remove [player]");
+            p.Message("&HAdds or removes [player] from the VIP list.");
+            p.Message("&T/VIP list");
+            p.Message("&HLists all players who are on the VIP list.");
+            p.Message("&H  VIPs can join regardless of the player limit.");
         }
     }
 }
