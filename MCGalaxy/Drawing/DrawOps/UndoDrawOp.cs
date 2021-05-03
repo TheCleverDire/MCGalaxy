@@ -62,22 +62,33 @@ namespace MCGalaxy.Drawing.Ops {
         }
         
         void PerformUndo() {
-            if (ids.Length > 0) {
-                // can't use "using" as it creates a local var, and read lock reference may be changed by DrawOpPerformer class
-                try {
-                    BlockDBReadLock = Level.BlockDB.Locker.AccquireRead();
-                    if (Level.BlockDB.FindChangesBy(ids, Start, End, out dims, UndoBlock)) return;
-                } finally {
-                    if (BlockDBReadLock != null) BlockDBReadLock.Dispose();
-                }
+            if (ids.Length == 0) return;
+            
+            // can't use "using" as it creates a local var, and read lock reference may be changed by DrawOpPerformer class
+            try {
+                BlockDBReadLock = Level.BlockDB.Locker.AccquireRead();
+                Level.BlockDB.FindChangesBy(ids, Start, End, out dims, UndoBlock);
+            } finally {
+                if (BlockDBReadLock != null) BlockDBReadLock.Dispose();
+                BlockDBReadLock = null;
             }
             
-            UndoFormatArgs args = new UndoFormatArgs(Level.name, Start, End, OldUndoBlock);
-            PerformOldUndo(args);
+            if (oldest == null) return;
+            foreach (var kvp in oldest) {
+                int index = kvp.Key;
+                
+                int x = index % dims.X;
+                int y = (index / dims.X) / dims.Z;
+                int z = (index / dims.X) % dims.Z;
+
+                output(Place((ushort)x, (ushort)y, (ushort)z, kvp.Value));
+            }
         }
         
         DrawOpOutput output;
         Vec3U16 dims;
+        bool conservative;
+        Dictionary<int, BlockID> oldest;
         
         void UndoBlock(BlockDBEntry e) {
             BlockID block = e.OldBlock;
@@ -89,35 +100,26 @@ namespace MCGalaxy.Drawing.Ops {
             
             if (x < Min.X || y < Min.Y || z < Min.Z) return;
             if (x > Max.X || y > Max.Y || z > Max.Z) return;
+            
+            if (conservative) {
+                oldest[e.Index] = block;
+                return;
+            }
+            
+            const int flags = BlockDBFlags.UndoOther | BlockDBFlags.UndoSelf;
+            if ((e.Flags & flags) != 0) {
+                Player.Message("&WThis undo overlaps with previous undos, " +
+                               "so undoing may take longer..");
+                oldest = new Dictionary<int, BlockID>();
+                oldest[e.Index] = block;
+                
+                conservative = true;
+                found        = true;
+                return;
+            }
+            
             output(Place((ushort)x, (ushort)y, (ushort)z, block));
             found = true;
-        }
-        
-        
-        void PerformOldUndo(UndoFormatArgs args) {
-            List<string> files = UndoFormat.GetUndoFiles(who.ToLower());
-            if (files.Count == 0) return;
-            found = true;
-            
-            foreach (string file in files) {
-                using (Stream s = File.OpenRead(file)) {
-                    UndoFormat.GetFormat(file).EnumerateEntries(s, args);
-                    if (args.Finished) break;
-                }
-            }
-        }
-        
-        void OldUndoBlock(UndoFormatEntry P) {            
-            if (P.X < Min.X || P.Y < Min.Y || P.Z < Min.Z) return;
-            if (P.X > Max.X || P.Y > Max.Y || P.Z > Max.Z) return;
-            
-            BlockID cur = Level.GetBlock(P.X, P.Y, P.Z);
-            if (cur == P.NewBlock || Block.Convert(cur) == Block.Water || Block.Convert(cur) == Block.Lava || cur == Block.Grass) {                
-                DrawOpBlock block;
-                block.X = P.X; block.Y = P.Y; block.Z = P.Z;
-                block.Block = P.Block;
-                output(block);
-            }
         }
     }
 }

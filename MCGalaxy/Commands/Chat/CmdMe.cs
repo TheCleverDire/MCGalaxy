@@ -23,16 +23,14 @@ namespace MCGalaxy.Commands.Chatting {
         public override string name { get { return "Me"; } }
         public override string type { get { return CommandTypes.Chat; } }
         public override bool MessageBlockRestricted { get { return true; } }
-        public override bool SuperUseable { get { return false; } }
         public override bool UseableWhenFrozen { get { return true; } }
         
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length == 0) { p.Message("You"); return; }
             if (p.joker) { p.Message("Cannot use /me while jokered."); return; }
             
-            string msg = p.color + "*" + Colors.Strip(p.DisplayName) + " " + message;
-            if (TryMessage(p, msg))
-                OnPlayerActionEvent.Call(p, PlayerAction.Me, message);
+            string msg = p.color + "*" + Colors.StripUsed(p.DisplayName) + " " + message;
+            TryMessage(p, msg, true);
         }
         
         public override void Help(Player p) {

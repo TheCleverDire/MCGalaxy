@@ -14,7 +14,8 @@ namespace MCGalaxy.Generator {
     /// <summary> Map generator template. Templates define landscape shapes and features. </summary>
     public enum MapGenTheme {
         Archipelago, Atoll, Bay, Dunes, Hills, Ice, Island2,
-        Lake, Mountains2, Peninsula, Random, River, Streams
+        Lake, Mountains2, Peninsula, Random, River, Streams,
+        Count
     }
 
 
@@ -23,7 +24,8 @@ namespace MCGalaxy.Generator {
         readonly fCraftMapGenArgs args;
         readonly Random rand;
         readonly Noise noise;
-        float[,] heightmap, slopemap;
+        float[] heightmap, slopemap;
+        int _width, _length;
 
         // theme-dependent vars
         internal byte bWaterSurface, bGroundSurface, bWater, bGround, bSeaFloor, bBedrock, bDeepWaterSurface, bCliff;
@@ -32,21 +34,22 @@ namespace MCGalaxy.Generator {
         const int SeaFloorThickness = 3;
 
         public fCraftMapGen( fCraftMapGenArgs generatorArgs ) {
-            if( generatorArgs == null ) throw new ArgumentNullException( "generatorArgs" );
-            args = generatorArgs;
-            rand = new Random( args.Seed );
+            args  = generatorArgs;
+            rand  = new Random( args.Seed );
             noise = new Noise( args.Seed, NoiseInterpolationMode.Bicubic );
             args.ApplyTheme( this );
         }
 
 
         public void Generate(Level map) {
+            _width  = map.Width;
+            _length = map.Length;
             GenerateHeightmap(map);
             GenerateMap(map);
         }
 
-        void ReportProgress( int relativeIncrease, string message ) {
-            Logger.Log(LogType.SystemActivity, message );
+        void ReportProgress(int relativeIncrease, string message) {
+            Logger.Log(LogType.SystemActivity, message);
         }
         
 
@@ -54,9 +57,10 @@ namespace MCGalaxy.Generator {
 
         void GenerateHeightmap(Level map) {
             ReportProgress( 10, "Heightmap: Priming" );
-            heightmap = new float[map.Width, map.Length];
+            heightmap = new float[_width * _length];
 
-            noise.PerlinNoise( heightmap, args.FeatureScale, args.DetailScale, args.Roughness, 0, 0 );
+            noise.PerlinNoise( heightmap, _width, _length, 
+                              args.FeatureScale, args.DetailScale, args.Roughness );
 
             if( args.UseBias && !args.DelayBias ) {
                 ReportProgress( 2, "Heightmap: Biasing" );
@@ -103,7 +107,8 @@ namespace MCGalaxy.Generator {
             Array.Sort(keys, corners);
 
             // overlay the bias
-            Noise.ApplyBias( heightmap, corners[0], corners[1], corners[2], corners[3], midpoint );
+            Noise.ApplyBias( heightmap, _width, _length,
+                            corners[0], corners[1], corners[2], corners[3], midpoint );
         }
 
         #endregion
@@ -127,19 +132,23 @@ namespace MCGalaxy.Generator {
             }
 
             // Calculate the slope
+            float[] blurred;
             if( args.CliffSmoothing ) {
                 ReportProgress( 2, "Heightmap Processing: Smoothing" );
-                slopemap = Noise.CalculateSlope( Noise.GaussianBlur5X5( heightmap ) );
+                blurred  = Noise.GaussianBlur5X5( heightmap, _width, _length );
+                slopemap = Noise.CalculateSlope( blurred, _width, _length );
             } else {
-                slopemap = Noise.CalculateSlope( heightmap );
+                slopemap = Noise.CalculateSlope( heightmap, _width, _length );
             }
 
-            float[,] altmap = null;
+            float[] altmap = null;
             if( args.MaxHeightVariation != 0 || args.MaxDepthVariation != 0 ) {
                 ReportProgress( 5, "Heightmap Processing: Randomizing" );
-                altmap = new float[map.Width, map.Length];
-                int blendmapDetailSize = (int)Math.Log( Math.Max( map.Width, map.Length ), 2 ) - 2;
-                new Noise( rand.Next(), NoiseInterpolationMode.Cosine ).PerlinNoise( altmap, 3, blendmapDetailSize, 0.5f, 0, 0 );
+                altmap = new float[_width * _length];
+                int blendmapDetailSize = (int)Math.Log( Math.Max( _width, _length ), 2 ) - 2;
+                
+                new Noise( rand.Next(), NoiseInterpolationMode.Cosine )
+                    .PerlinNoise( altmap, _width, _length, 3, blendmapDetailSize, 0.5f );
                 Noise.Normalize( altmap, -1, 1 );
             }
 
@@ -160,23 +169,23 @@ namespace MCGalaxy.Generator {
             ReportProgress( 0, "Generation complete" );
         }
         
-        void Fill( Level map, float desiredWaterLevel, float aboveWaterMultiplier, float[,] altmap ) {
+        void Fill( Level map, float desiredWaterLevel, float aboveWaterMultiplier, float[] altmap ) {
             int width = map.Width, length = map.Length, mapHeight = map.Height;
             int snowStartThreshold = args.SnowAltitude - args.SnowTransition;
             int snowThreshold = args.SnowAltitude;
             
-            for( int x = 0; x < heightmap.GetLength( 0 ); x++ )
-                for( int z = 0; z < heightmap.GetLength( 1 ); z++ )
+            for( int x = 0, i = 0; x < width; x++ )
+                for( int z = 0; z < length; z++, i++ )
             {
                 int level;
                 float slope;
-                if( heightmap[x, z] < desiredWaterLevel ) {
+                if( heightmap[i] < desiredWaterLevel ) {
                     float depth = args.MaxDepth;
                     if( altmap != null ) {
-                        depth += altmap[x, z] * args.MaxDepthVariation;
+                        depth += altmap[i] * args.MaxDepthVariation;
                     }
-                    slope = slopemap[x, z] * depth;
-                    level = args.WaterLevel - (int)Math.Round( Math.Pow( 1 - heightmap[x, z] / desiredWaterLevel, args.BelowFuncExponent ) * depth );
+                    slope = slopemap[i] * depth;
+                    level = args.WaterLevel - (int)Math.Round( Math.Pow( 1 - heightmap[i] / desiredWaterLevel, args.BelowFuncExponent ) * depth );
 
                     if( args.AddWater ) {
                         int index = (args.WaterLevel * length + z) * width + x;
@@ -233,13 +242,13 @@ namespace MCGalaxy.Generator {
                 } else {
                     float height;
                     if( altmap != null ) {
-                        height = args.MaxHeight + altmap[x, z] * args.MaxHeightVariation;
+                        height = args.MaxHeight + altmap[i] * args.MaxHeightVariation;
                     } else {
                         height = args.MaxHeight;
                     }
-                    slope = slopemap[x, z] * height;
+                    slope = slopemap[i] * height;
                     if( height != 0 ) {
-                        level = args.WaterLevel + (int)Math.Round( Math.Pow( heightmap[x, z] - desiredWaterLevel, args.AboveFuncExponent ) * aboveWaterMultiplier / args.MaxHeight * height );
+                        level = args.WaterLevel + (int)Math.Round( Math.Pow( heightmap[i] - desiredWaterLevel, args.AboveFuncExponent ) * aboveWaterMultiplier / args.MaxHeight * height );
                     } else {
                         level = args.WaterLevel;
                     }
@@ -281,7 +290,6 @@ namespace MCGalaxy.Generator {
 
 
         void AddBeaches( Level map ) {
-            if( map == null ) throw new ArgumentNullException( "map" );
             int beachExtentSqr = (args.BeachExtent + 1) * (args.BeachExtent + 1);
             for( int x = 0; x < map.Width; x++ )
                 for( int z = 0; z < map.Length; z++ )
@@ -315,7 +323,6 @@ namespace MCGalaxy.Generator {
 
 
         void GenerateTrees( Level map ) {
-            if( map == null ) throw new ArgumentNullException( "map" );
             int minHeight = args.TreeHeightMin;
             int maxHeight = args.TreeHeightMax;
             int minTrunkPadding = args.TreeSpacingMin;
@@ -325,15 +332,16 @@ namespace MCGalaxy.Generator {
 
             Random rn = new Random();
             short[,] shadows = ComputeHeightmap( map );
+            int width = _width, length = _length;
 
-            for( int x = 0; x < map.Width; x += rn.Next( minTrunkPadding, maxTrunkPadding + 1 ) ) {
-                for( int z = 0; z < map.Length; z += rn.Next( minTrunkPadding, maxTrunkPadding + 1 ) ) {
+            for( int x = 0; x < width; x += rn.Next( minTrunkPadding, maxTrunkPadding + 1 ) ) {
+                for( int z = 0; z < length; z += rn.Next( minTrunkPadding, maxTrunkPadding + 1 ) ) {
                     int nx = x + rn.Next( -(minTrunkPadding / 2), (maxTrunkPadding / 2) + 1 );
                     int nz = z + rn.Next( -(minTrunkPadding / 2), (maxTrunkPadding / 2) + 1 );
-                    if( nx < 0 || nx >= map.Width || nz < 0 || nz >= map.Length ) continue;
+                    if( nx < 0 || nx >= width || nz < 0 || nz >= length ) continue;
                     int ny = shadows[nx, nz];
 
-                    if( (map.GetBlock( (ushort)nx, (ushort)ny, (ushort)nz ) == bGroundSurface) && slopemap[nx, nz] < .5 ) {
+                    if( (map.GetBlock( (ushort)nx, (ushort)ny, (ushort)nz ) == bGroundSurface) && slopemap[nx * length + nz] < .5 ) {
                         // Pick a random height for the tree between Min and Max,
                         // discarding this tree if it would breach the top of the map
                         int nh;
@@ -399,12 +407,19 @@ namespace MCGalaxy.Generator {
         
         public static void RegisterGenerators() {
             string[] names = Enum.GetNames(typeof(MapGenBiome));
-            string desc = "%HSeed specifies biome of the map. " +
+            string desc = "&HSeed specifies biome of the map. " +
                  "It must be one of the following: &f" + names.Join();
                                                                                    
-            foreach (MapGenTheme theme in Enum.GetValues(typeof(MapGenTheme))) {
-                MapGen.Register(theme.ToString(), GenType.fCraft,
-                                (p, lvl, seed) => Gen(p, lvl, seed, theme), desc);
+            for (MapGenTheme theme = 0; theme < MapGenTheme.Count; theme++) {
+                // Because of the way C# implements for loop closures, '=> Gen(p, lvl, seed, theme_)'
+                //  captures the variable from the LAST iteration, not the current one
+                // Hence this causes an error to get thrown later, because 'Gen' is always executed 
+                //  with 'MapGenTheme.Count' theme instead of the expected theme
+                // Using a local variable copy fixes this
+                MapGenTheme theme_ = theme;
+            	
+                MapGen.Register(theme_.ToString(), GenType.fCraft,
+                                (p, lvl, seed) => Gen(p, lvl, seed, theme_), desc);
             }
         }
         

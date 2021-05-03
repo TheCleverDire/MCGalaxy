@@ -24,19 +24,16 @@ namespace MCGalaxy.Bots {
 
     /// <summary> Maintains persistent data for in-game bots. </summary>
     public static class BotsFile {
-
-        public static string BotsPath(string map) { return "extra/bots/" + map + ".json"; }
         static ConfigElement[] elems;
         
         public static void Load(Level lvl) { lock (lvl.botsIOLock) { LoadCore(lvl); } }
         static void LoadCore(Level lvl) {
-            string path = BotsPath(lvl.MapName);
+            string path = Paths.BotsPath(lvl.MapName);
             if (!File.Exists(path)) return;
-            string json = File.ReadAllText(path);
             List<BotProperties> props = null;
             
             try {
-                props = ReadAll(json);
+                props = ReadAll(path);
             } catch (Exception ex) {
                 Logger.LogError("Reading bots file", ex); return;
             }
@@ -45,27 +42,31 @@ namespace MCGalaxy.Bots {
                 PlayerBot bot = new PlayerBot(data.Name, lvl);
                 data.ApplyTo(bot);
                 
-                bot.SetModel(bot.Model, lvl);
+                bot.SetModel(bot.Model);
                 LoadAi(data, bot);
                 PlayerBot.Add(bot, false);
             }
         }
         
-        internal static List<BotProperties> ReadAll(string json) {
+        internal static List<BotProperties> ReadAll(string path) {
             List<BotProperties> props = new List<BotProperties>();
             if (elems == null) elems = ConfigElement.GetAll(typeof(BotProperties));
+            string json = File.ReadAllText(path);
             
-            JsonContext ctx = new JsonContext(); ctx.Val = json;
-            JsonArray array = (JsonArray)Json.ParseStream(ctx);
+            JsonReader reader = new JsonReader(json);
+            reader.OnMember   = (obj, key, value) => {
+                if (obj.Meta == null) obj.Meta = new BotProperties();
+                ConfigElement.Parse(elems, obj.Meta, key, (string)value);
+            };
+            
+            JsonArray array = (JsonArray)reader.Parse();
             if (array == null) return props;
             
             foreach (object raw in array) {
                 JsonObject obj = (JsonObject)raw;
-                if (obj == null) continue;
+                if (obj == null || obj.Meta == null) continue;
                 
-                BotProperties data = new BotProperties();
-                obj.Deserialise(elems, data);
-                
+                BotProperties data = (BotProperties)obj.Meta;
                 if (String.IsNullOrEmpty(data.DisplayName)) data.DisplayName = data.Name;
                 props.Add(data);
             }
@@ -75,7 +76,7 @@ namespace MCGalaxy.Bots {
         public static void Save(Level lvl) { lock (lvl.botsIOLock) { SaveCore(lvl); } }
         static void SaveCore(Level lvl) {
             PlayerBot[] bots = lvl.Bots.Items;
-            string path = BotsPath(lvl.MapName);
+            string path = Paths.BotsPath(lvl.MapName);
             if (!File.Exists(path) && bots.Length == 0) return;
             
             List<BotProperties> props = new List<BotProperties>(bots.Length);
@@ -91,18 +92,12 @@ namespace MCGalaxy.Bots {
                 Logger.LogError("Error saving bots to " + path, ex);
             }
         }
-        
-        internal static void WriteAll(StreamWriter w, List<BotProperties> props) {
-            w.WriteLine("[");
+
+        internal static void WriteAll(TextWriter dst, List<BotProperties> props) {
             if (elems == null) elems = ConfigElement.GetAll(typeof(BotProperties));
-            string separator = null;
-            
-            for (int i = 0; i < props.Count; i++) {
-                w.Write(separator);
-                Json.Serialise(w, elems, props[i]);
-                separator = ",\r\n";
-            }
-            w.WriteLine("]");
+
+            JsonConfigWriter w = new JsonConfigWriter(dst, elems);
+            w.WriteArray(props);
         }
         
         internal static void LoadAi(BotProperties props, PlayerBot bot) {
@@ -134,6 +129,7 @@ namespace MCGalaxy.Bots {
         [ConfigBool] public bool Hunt;
         [ConfigInt] public int CurInstruction;
         [ConfigInt] public int CurJump;
+        [ConfigInt] public int CurSpeed;
         
         [ConfigInt] public int X;
         [ConfigInt] public int Y;
@@ -154,7 +150,7 @@ namespace MCGalaxy.Bots {
             Model = bot.Model; Color = bot.color;
             Kill = bot.kill; Hunt = bot.hunt;
             DisplayName = bot.DisplayName;
-            CurInstruction = bot.cur; CurJump = bot.curJump;
+            CurInstruction = bot.cur; CurJump = bot.curJump; CurSpeed = bot.movementSpeed;
             ClickedOnText = bot.ClickedOnText; DeathMessage = bot.DeathMessage;
             
             X = bot.Pos.X; Y = bot.Pos.Y; Z = bot.Pos.Z;
@@ -176,6 +172,8 @@ namespace MCGalaxy.Bots {
             bot.DisplayName = DisplayName;
             
             bot.cur = CurInstruction; bot.curJump = CurJump;
+            // NOTE: This field wasn't in old json 
+            if (CurSpeed != 0) bot.movementSpeed = CurSpeed;
             bot.ClickedOnText = ClickedOnText; bot.DeathMessage = DeathMessage;
             bot.ScaleX = ScaleX; bot.ScaleY = ScaleY; bot.ScaleZ = ScaleZ;
         }

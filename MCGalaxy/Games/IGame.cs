@@ -46,12 +46,14 @@ namespace MCGalaxy.Games {
         public abstract void EndRound();
         
         
+        /// <summary> Resets all CPE status messages to blank. </summary>
         protected void ResetStatus(Player p) {
             p.SendCpeMessage(CpeMessageType.Status1, "");
             p.SendCpeMessage(CpeMessageType.Status2, "");
             p.SendCpeMessage(CpeMessageType.Status3, "");
         }
         
+        /// <summary> Sends a message of the given type to all players on the level this game is running on. </summary>
         public void MessageMap(CpeMessageType type, string message) {
             if (!Running) return;
             Player[] online = PlayerInfo.Online.Items;
@@ -97,6 +99,14 @@ namespace MCGalaxy.Games {
         
         protected void UpdateStatus3(Player p) {
             p.SendCpeMessage(CpeMessageType.Status3, FormatStatus3(p));
+        }
+        
+        
+        public static bool InRange(Player a, Player b, int dist) {
+            int dx = Math.Abs(a.Pos.X - b.Pos.X);
+            int dy = Math.Abs(a.Pos.Y - b.Pos.Y);
+            int dz = Math.Abs(a.Pos.Z - b.Pos.Z);
+            return dx <= dist && dy <= dist && dz <= dist;
         }
     }
 }

@@ -21,7 +21,7 @@ using System.Collections.Generic;
 namespace MCGalaxy.Generator {
     public static class SimpleGen {
         delegate byte NextBlock();
-        const string defHelp = "%HSeed affects how terrain is generated. If seed is the same, the generated level will be the same.";
+        const string defHelp = "&HSeed affects how terrain is generated. If seed is the same, the generated level will be the same.";
         
         public static void RegisterGenerators() {
             const GenType type = GenType.Simple;
@@ -29,9 +29,9 @@ namespace MCGalaxy.Generator {
             MapGen.Register("Mountains", type, GenMountains, defHelp);
             MapGen.Register("Forest",    type, GenForest,    defHelp);
             MapGen.Register("Ocean",     type, GenOcean,     defHelp);
-            MapGen.Register("Flat",  type, GenFlat,  "%HSeed specifies grass height (default half of level height)");
-            MapGen.Register("Pixel", type, GenPixel, "%HSeed does nothing");
-            MapGen.Register("Empty", type, GenEmpty, "%HSeed does nothing");
+            MapGen.Register("Flat",  type, GenFlat,  "&HSeed specifies grass height (default half of level height)");
+            MapGen.Register("Pixel", type, GenPixel, "&HSeed does nothing");
+            MapGen.Register("Empty", type, GenEmpty, "&HSeed does nothing");
             MapGen.Register("Desert",  type, GenDesert,  defHelp);
             MapGen.Register("Space",   type, GenSpace,   defHelp);
             MapGen.Register("Rainbow", type, GenRainbow, defHelp);
@@ -158,10 +158,10 @@ namespace MCGalaxy.Generator {
         }
         
         unsafe static void MapSet(int width, int length, byte* ptr,
-                                  int yStart, int yEnd, byte block) {
-            int start = (yStart * length) * width;
+                                  int yBeg, int yEnd, byte block) {
+            int beg = (yBeg * length) * width;
             int end = (yEnd * length + (length - 1)) * width + (width - 1);
-            Utils.memset((IntPtr)ptr, block, start, end - start + 1);
+            Utils.memset((IntPtr)ptr, block, beg, end - beg + 1);
         }
         
         static void Cuboid(Level lvl, int minX, int minY, int minZ,

@@ -34,13 +34,15 @@ namespace MCGalaxy.Games {
             OnEntitySpawnedEvent.Register(HandleEntitySpawned, Priority.High);
             OnTabListEntryAddedEvent.Register(HandleTabListEntryAdded, Priority.High);
             OnMoneyChangedEvent.Register(HandleMoneyChanged, Priority.High);
-            OnBlockChangeEvent.Register(HandleBlockChange, Priority.High);
+            OnBlockChangingEvent.Register(HandleBlockChanging, Priority.High);
+            OnSendingModelEvent.Register(HandleSendingModel, Priority.High);
             
             OnPlayerConnectEvent.Register(HandlePlayerConnect, Priority.High);
             OnPlayerMoveEvent.Register(HandlePlayerMove, Priority.High);
             OnPlayerSpawningEvent.Register(HandlePlayerSpawning, Priority.High);
             OnJoinedLevelEvent.Register(HandleJoinedLevel, Priority.High);           
             OnPlayerChatEvent.Register(HandlePlayerChat, Priority.High);
+            OnGettingCanSeeEntityEvent.Register(HandleCanSeeEntity, Priority.High);
             
             base.HookEventHandlers();
         }
@@ -49,33 +51,50 @@ namespace MCGalaxy.Games {
             OnEntitySpawnedEvent.Unregister(HandleEntitySpawned);
             OnTabListEntryAddedEvent.Unregister(HandleTabListEntryAdded);
             OnMoneyChangedEvent.Unregister(HandleMoneyChanged);
-            OnBlockChangeEvent.Unregister(HandleBlockChange);
+            OnBlockChangingEvent.Unregister(HandleBlockChanging);
+            OnSendingModelEvent.Unregister(HandleSendingModel);
             
             OnPlayerConnectEvent.Unregister(HandlePlayerConnect);
             OnPlayerMoveEvent.Unregister(HandlePlayerMove);
             OnPlayerSpawningEvent.Unregister(HandlePlayerSpawning);
             OnJoinedLevelEvent.Unregister(HandleJoinedLevel);            
             OnPlayerChatEvent.Unregister(HandlePlayerChat);
+            OnGettingCanSeeEntityEvent.Unregister(HandleCanSeeEntity);
             
             base.UnhookEventHandlers();
         }
-
         
-        void HandleTabListEntryAdded(Entity entity, ref string tabName, ref string tabGroup, Player dst) {
-            Player p = entity as Player;
+        
+        void HandleCanSeeEntity(Player p, ref bool canSee, Entity other) {
+            Player target = other as Player;
+            if (!canSee || p.Game.Referee || target == null) return;
+            
+            ZSData data = TryGet(target);
+            if (data == null || target.level != Map) return;
+            canSee = !(target.Game.Referee || data.Invisible);
+        }
+        
+        void HandleSendingModel(Entity e, ref string model, Player dst) {
+            Player p = e as Player;
+            if (p == null || !Get(p).Infected) return;
+            model = p == dst ? p.Model : Config.ZombieModel;
+        }
+        
+        void HandleTabListEntryAdded(Entity e, ref string tabName, ref string tabGroup, Player dst) {
+            Player p = e as Player;
             if (p == null || p.level != Map) return;
             
             if (p.Game.Referee) {
                 tabGroup = "&2Referees";
             } else if (Get(p).Infected) {
-                tabGroup = "&cZombies";
+                tabGroup = Config.ZombieTabListGroup;
                 if (Config.ZombieName.Length > 0 && !Get(dst).AkaMode) {
                     tabName = "&c" + Config.ZombieName;
                 } else {
                     tabName = "&c" + p.truename;
                 }
             } else {
-                tabGroup = "&fHumans";
+                tabGroup = Config.HumanTabListGroup;
             }
         }
         
@@ -84,8 +103,8 @@ namespace MCGalaxy.Games {
             UpdateStatus3(p);
         }
         
-        void HandleEntitySpawned(Entity entity, ref string name, ref string skin, ref string model, Player dst) {
-            Player p = entity as Player;
+        void HandleEntitySpawned(Entity e, ref string name, ref string skin, ref string model, Player dst) {
+            Player p = e as Player;
             if (p == null || !Get(p).Infected) return;
 
             name = p.truename;
@@ -93,19 +112,21 @@ namespace MCGalaxy.Games {
                 name = Config.ZombieName; skin = name;
             }
             name = Colors.red + name;
-            model = p == dst ? p.Model : Config.ZombieModel;
         }
         
         void HandlePlayerConnect(Player p) {
             if (GetConfig().SetMainLevel) return;
-            p.Message("&3Zombie Survival %Sis running! Type %T/ZS go %Sto join");
+            p.Message("&3Zombie Survival &Sis running! Type &T/ZS go &Sto join");
         }
         
         void HandlePlayerMove(Player p, Position next, byte rotX, byte rotY) {
             if (!RoundInProgress || p.level != Map) return;
             
-            bool reverted = MovementCheck.DetectNoclip(p, next)
-                || MovementCheck.DetectSpeedhack(p, next, Config.MaxMoveDist);
+            // TODO: Maybe tidy this up?
+            if (p.Game.Noclip == null) p.Game.Noclip = new NoclipDetector(p);
+            if (p.Game.Speed  == null) p.Game.Speed  = new SpeedhackDetector(p);
+            
+            bool reverted = p.Game.Noclip.Detect(next) || p.Game.Speed.Detect(next, Config.MaxMoveDist);
             if (reverted) p.cancelmove = true;
         }
         
@@ -132,11 +153,11 @@ namespace MCGalaxy.Games {
 
             double startLeft = (RoundStart - DateTime.UtcNow).TotalSeconds;
             if (startLeft >= 0) {
-                p.Message("&a{0} %Sseconds left until the round starts. &aRun!", (int)startLeft);
+                p.Message("&a{0} &Sseconds left until the round starts. &aRun!", (int)startLeft);
             }
             
             MessageMapInfo(p);
-            p.Message("This map's win chance is &a{0}%S%", Map.WinChance);
+            p.Message("This map's win chance is &a{0}&S%", Map.WinChance);
         }
         
         void HandlePlayerChat(Player p, string message) {
@@ -164,22 +185,15 @@ namespace MCGalaxy.Games {
         }
         
         
-        void HandleBlockChange(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing) {
+        void HandleBlockChanging(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing, ref bool cancel) {
             if (p.level != Map) return;
             BlockID old = Map.GetBlock(x, y, z);
-            
-            if (Map.Config.BuildType == BuildType.NoModify) {
-                p.RevertBlock(x, y, z); p.cancelBlock = true; return;
-            }
-            if (Map.Config.BuildType == BuildType.ModifyOnly && Map.Props[old].OPBlock) {
-                p.RevertBlock(x, y, z); p.cancelBlock = true; return;
-            }
-            
-            if (p.Game.Referee) return;
             ZSData data = Get(p);
+            bool nonReplacable = Map.Config.BuildType == BuildType.NoModify || 
+                                 Map.Config.BuildType == BuildType.ModifyOnly && Map.Props[old].OPBlock;
             
             // Check pillaring
-            if (placing && !Map.Config.Pillaring) {
+            if (placing && !Map.Config.Pillaring && !p.Game.Referee) {
                 if (NotPillaring(block, old)) {
                     data.BlocksStacked = 0;
                 } else if (CheckCoords(p, data, x, y, z)) {
@@ -187,14 +201,20 @@ namespace MCGalaxy.Games {
                 } else {
                     data.BlocksStacked = 0;
                 }
-                if (WarnPillaring(p, data, x, y, z)) { p.cancelBlock = true; return; }
+                if (WarnPillaring(p, data, x, y, z, nonReplacable)) { cancel = true; return; }
             }
             data.LastX = x; data.LastY = y; data.LastZ = z;
+            
+            if (nonReplacable) {
+                p.RevertBlock(x, y, z); cancel = true; return;
+            }
+            
+            if (p.Game.Referee) return;
             
             if (placing || (!placing && p.painting)) {
                 if (data.BlocksLeft <= 0) {
                     p.Message("You have no blocks left.");
-                    p.RevertBlock(x, y, z); p.cancelBlock = true; return;
+                    p.RevertBlock(x, y, z); cancel = true; return;
                 }
 
                 data.BlocksLeft--;
@@ -223,21 +243,21 @@ namespace MCGalaxy.Games {
                 || (maxX == x && minZ == z) || (maxX == x && maxZ == z);
         }
         
-        static bool WarnPillaring(Player p, ZSData data, ushort x, ushort y, ushort z) {
-            if (data.BlocksStacked == 2) {
+        static bool WarnPillaring(Player p, ZSData data, ushort x, ushort y, ushort z, bool nonReplacable) {
+            if ((!nonReplacable && data.BlocksStacked == 2) || (nonReplacable && data.BlocksStacked == 1)) {
                 TimeSpan delta = DateTime.UtcNow - data.LastPillarWarn;
                 if (delta.TotalSeconds >= 5) {
-                    Chat.MessageFromOps(p, "  &cWarning: λNICK %Sis pillaring!");
+                    Chat.MessageFromOps(p, "  &cWarning: λNICK &Sis pillaring!");
                     data.LastPillarWarn = DateTime.UtcNow;
                 }
                 
                 string action = data.PillarFined ? "kicked" : "fined 10 " + Server.Config.Currency;
-                p.Message("You are pillaring! %WStop before you are " + action + "!");
-            } else if (data.BlocksStacked == 4) {
+                p.Message("You are pillaring! &WStop before you are " + action + "!");
+            } else if ((!nonReplacable && data.BlocksStacked == 4) || (nonReplacable && data.BlocksStacked == 2)) {
                 if (!data.PillarFined) {
-                    Chat.MessageFromOps(p, "  &cWarning: λNICK %Sis pillaring!");
+                    Chat.MessageFromOps(p, "  &cWarning: λNICK &Sis pillaring!");
                     Command.Find("Take").Use(Player.Console, p.name + " 10 Auto fine for pillaring");
-                    p.Message("  %WThe next time you pillar, you will be &4kicked!");
+                    p.Message("  &WThe next time you pillar, you will be &4kicked!");
                 } else {
                     ModAction action = new ModAction(p.name, Player.Console, ModActionType.Kicked, "Auto kick for pillaring");
                     OnModActionEvent.Call(action);

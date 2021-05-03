@@ -46,14 +46,14 @@ namespace MCGalaxy.Commands.Chatting {
         }
         
         static void ClearChat(Player p) {
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 30; i++) {
                 p.Send(Packet.BlankMessage());
             }
         }
 
         public override void Help(Player p) {
-            p.Message("%T/Clear %H- Clears your chat.");
-            p.Message("%T/Clear global %H- Clears chat of all users.");
+            p.Message("&T/Clear &H- Clears your chat.");
+            p.Message("&T/Clear global &H- Clears chat of all users.");
         }
     }
 }

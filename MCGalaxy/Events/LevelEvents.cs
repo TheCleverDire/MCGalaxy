@@ -17,6 +17,7 @@
  */
 using System;
 using MCGalaxy.Blocks.Physics;
+using BlockID = System.UInt16;
    
 namespace MCGalaxy.Events.LevelEvents {
     
@@ -29,30 +30,39 @@ namespace MCGalaxy.Events.LevelEvents {
         }
     }
     
-    public delegate void OnLevelLoad(string level);
+    public delegate void OnLevelLoad(string name, string path, ref bool cancel);
     public sealed class OnLevelLoadEvent : IEvent<OnLevelLoad> {
         
-        public static void Call(string name) {
-            if (handlers.Count == 0) return;
-            CallCommon(pl => pl(name));
+        public static void Call(string name, string path, ref bool cancel) {
+            IEvent<OnLevelLoad>[] items = handlers.Items;
+            for (int i = 0; i < items.Length; i++) {
+                try { items[i].method(name, path, ref cancel); } 
+                catch (Exception ex) { LogHandlerException(ex, items[i]); }
+            }
         }
     }
     
-    public delegate void OnLevelSave(Level lvl);
+    public delegate void OnLevelSave(Level lvl, ref bool cancel);
     public sealed class OnLevelSaveEvent : IEvent<OnLevelSave> {
         
-        public static void Call(Level lvl) {
-            if (handlers.Count == 0) return;
-            CallCommon(pl => pl(lvl));
+        public static void Call(Level lvl, ref bool cancel) {
+            IEvent<OnLevelSave>[] items = handlers.Items;
+            for (int i = 0; i < items.Length; i++) {
+                try { items[i].method(lvl, ref cancel); } 
+                catch (Exception ex) { LogHandlerException(ex, items[i]); }
+            }
         }
     }
     
-    public delegate void OnLevelUnload(Level lvl);
+    public delegate void OnLevelUnload(Level lvl, ref bool cancel);
     public sealed class OnLevelUnloadEvent : IEvent<OnLevelUnload> {
         
-        public static void Call(Level lvl) {
-            if (handlers.Count == 0) return;
-            CallCommon(pl => pl(lvl));
+    	public static void Call(Level lvl, ref bool cancel) {
+            IEvent<OnLevelUnload>[] items = handlers.Items;
+            for (int i = 0; i < items.Length; i++) {
+                try { items[i].method(lvl, ref cancel); } 
+                catch (Exception ex) { LogHandlerException(ex, items[i]); }
+            }
         }
     }
     
@@ -98,6 +108,42 @@ namespace MCGalaxy.Events.LevelEvents {
             
             if (handlers.Count == 0) return;
             CallCommon(pl => pl(x, y, z, extraInfo, l));
+        }
+    }    
+    
+    public delegate void OnLevelRenamed(string srcMap, string dstMap);
+    public sealed class OnLevelRenamedEvent : IEvent<OnLevelRenamed> {
+        
+        public static void Call(string srcMap, string dstMap) {
+            if (handlers.Count == 0) return;
+            CallCommon(pl => pl(srcMap, dstMap));
+        }
+    }    
+    
+    public delegate void OnLevelCopied(string srcMap, string dstMap);
+    public sealed class OnLevelCopiedEvent : IEvent<OnLevelCopied> {
+        
+        public static void Call(string srcMap, string dstMap) {
+            if (handlers.Count == 0) return;
+            CallCommon(pl => pl(srcMap, dstMap));
+        }
+    }  
+        
+    public delegate void OnLevelDeleted(string map);
+    public sealed class OnLevelDeletedEvent : IEvent<OnLevelDeleted> {
+        
+        public static void Call(string map) {
+            if (handlers.Count == 0) return;
+            CallCommon(pl => pl(map));
+        }
+    }
+        
+    public delegate void OnBlockHandlersUpdated(Level lvl, BlockID block);
+    public sealed class OnBlockHandlersUpdatedEvent : IEvent<OnBlockHandlersUpdated> {
+        
+        public static void Call(Level lvl, BlockID block) {
+            if (handlers.Count == 0) return;
+            CallCommon(pl => pl(lvl, block));
         }
     }
 }

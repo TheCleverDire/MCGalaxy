@@ -37,23 +37,21 @@ namespace MCGalaxy.Commands.Info {
         
         static void ForPlayer(Player p, string message) {
             Player nick = FindNick(p, message);
-            
             if (nick == null) return;
-            p.Message("This player's real username is " + nick.name);
+            p.Message("The player nicknamed {0} &Sis named {1}", nick.DisplayName, nick.name);
         }
         static Player FindNick(Player p, string nick) {
             nick = Colors.Strip(nick);
             Player[] players = PlayerInfo.Online.Items;
             int matches;
-            return Matcher.Find(p, nick, out matches, players, pl => Entities.CanSee(p, pl),
+            return Matcher.Find(p, nick, out matches, players, pl => p.CanSee(pl),
                                 pl => Colors.Strip(pl.DisplayName), "online player nicks");
         }
         
         static void ForBot(Player p, string message) {
-            PlayerBot nick = FindBotNick(p, message);
-            
-            if (nick == null) return;
-            p.Message("This bot's real name is &1{0}%S, its nickname is {1}%S and its owner is {2}.", nick.name, nick.DisplayName, string.IsNullOrEmpty(nick.Owner) ? "no one" : nick.Owner);
+            PlayerBot bot = FindBotNick(p, message);
+            if (bot == null) return;
+            p.Message("The bot nicknamed {0} &Sis named {1}", bot.DisplayName, bot.name);
         }
         static PlayerBot FindBotNick(Player p, string nick) {
             nick = Colors.Strip(nick);
@@ -64,10 +62,10 @@ namespace MCGalaxy.Commands.Info {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/WhoNick [nickname]");
-            p.Message("%HDisplays the player's real username");
-            p.Message("%T/WhoNick bot [nickname]");
-            p.Message("%HDisplays the bots's real name");
+            p.Message("&T/WhoNick [nickname]");
+            p.Message("&HDisplays the player's real username");
+            p.Message("&T/WhoNick bot [nickname]");
+            p.Message("&HDisplays the bot's real name");
         }
     }
 }

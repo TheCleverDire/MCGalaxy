@@ -42,12 +42,12 @@ namespace MCGalaxy.Commands.Chatting {
         protected override void SetBotData(Player p, PlayerBot bot, string nick) {
             if (nick.Length == 0) {
                 bot.DisplayName = bot.name;
-                p.level.Message("Bot " + bot.ColoredName + " %Sreverted to their original name.");
+                p.level.Message("Bot " + bot.ColoredName + " &Sreverted to their original name.");
             } else {
                 string nameTag = nick.CaselessEq("empty") ? "" : nick;
                 if (nick.Length > 62) { p.Message("Name must be 62 or fewer letters."); return; }
                 
-                p.Message("You changed the name of bot " + bot.ColoredName + " %Sto &c" + nameTag);
+                p.Message("You changed the name of bot " + bot.ColoredName + " &Sto &c" + nameTag);
                 bot.DisplayName = Colors.Escape(nick);
             }
             
@@ -56,28 +56,31 @@ namespace MCGalaxy.Commands.Chatting {
             BotsFile.Save(p.level);
         }
         
-        protected override void SetPlayerData(Player p, Player who, string nick) {
+        protected override void SetPlayerData(Player p, string target, string nick) {
+            if (Colors.Strip(nick).Length >= 30) { p.Message("Nick must be under 30 letters."); return; }
+            Player who = PlayerInfo.FindExact(target);
+            
             if (nick.Length == 0) {
-                Chat.MessageFrom(who, "λNICK %Shad their custom nick reset");
-                who.DisplayName = who.truename;
+                MessageFrom(target, who, "had their custom nick reset");
+                nick = target.RemoveLastPlus();
             } else {
-                if (Colors.Strip(nick).Length >= 30) { p.Message("Nick must be under 30 letters."); return; }
-                
-                Chat.MessageFrom(who, "λNICK %Shad their nick set to " + who.color + nick);
-                who.DisplayName = nick;
+                // TODO: select color from database?
+                string color = who != null ? who.color : Group.GroupIn(target).Color;
+                MessageFrom(target, who, "had their nick set to " + color + nick);
             }
-        	
-            PlayerDB.Save(who);
-            TabList.Update(who, true);
+            
+            if (who != null) who.DisplayName = nick;
+            if (who != null) TabList.Update(who, true);
+            PlayerDB.SetNick(target, nick);
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Nick [player] [nick]");
-            p.Message("%HSets the nick of that player.");
-            p.Message("%H  If [nick] is not given, reverts [player]'s nick to their account name.");
-            p.Message("%T/Nick bot [bot] [name]");
-            p.Message("%HSets the name shown above that bot in game.");
-            p.Message("%H  If [name] is \"empty\", the bot will not have a name shown.");
+            p.Message("&T/Nick [player] [nick]");
+            p.Message("&HSets the nick of that player.");
+            p.Message("&H  If [nick] is not given, reverts [player]'s nick to their account name.");
+            p.Message("&T/Nick bot [bot] [name]");
+            p.Message("&HSets the name shown above that bot in game.");
+            p.Message("&H  If [name] is \"empty\", the bot will not have a name shown.");
         }
     }
 }

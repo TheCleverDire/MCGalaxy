@@ -31,8 +31,8 @@ namespace MCGalaxy.Commands.Info {
             Player pl = PlayerInfo.FindMatches(p, message, out matches);
             if (matches > 1) return;
             if (matches == 1) {
-                Show(p, pl.ColoredName, pl.FirstLogin, pl.LastLogin, pl.LastLogout);
-                p.Message(pl.ColoredName + " %Sis currently online.");
+                Show(p, pl.ColoredName, pl.FirstLogin, pl.LastLogin);
+                p.Message("{0} &Sis currently online.", p.FormatNick(pl));
                 return;
             }
 
@@ -60,6 +60,16 @@ namespace MCGalaxy.Commands.Info {
             p.Message("%T/Seen [player]");
             p.Message("%HSays when a player was first and last seen on the server");
             p.Message("&HAlso says how long ago it was");
+            TimeSpan lastDelta  = DateTime.Now - last;
+            
+            name = p.FormatNick(name);
+            p.Message("{0} &Swas first seen at {1:H:mm} on {1:yyyy-MM-dd} ({2} ago)", name, first, firstDelta.Shorten());
+            p.Message("{0} &Swas last seen at {1:H:mm} on {1:yyyy-MM-dd} ({2} ago)",  name, last,  lastDelta.Shorten());
+        }
+        
+        public override void Help(Player p) {
+            p.Message("&T/Seen [player]");
+            p.Message("&HSays when a player was first and last seen on the server");
         }
     }
 }

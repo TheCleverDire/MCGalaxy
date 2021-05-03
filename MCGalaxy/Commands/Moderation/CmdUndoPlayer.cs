@@ -57,7 +57,7 @@ namespace MCGalaxy.Commands.Moderation {
                 p.Message("Place or break two blocks to determine the edges.");
                 UndoAreaArgs args = new UndoAreaArgs();
                 args.ids = ids; args.names = names; args.delta = delta;
-                p.MakeSelection(2, "Selecting region for %SUndo player", args, DoUndoArea);
+                p.MakeSelection(2, "Selecting region for &SUndo player", args, DoUndoArea);
             }
         }
         
@@ -74,15 +74,14 @@ namespace MCGalaxy.Commands.Moderation {
             UndoDrawOp op = new UndoDrawOp();
             op.Start = DateTime.UtcNow.Subtract(delta);
             op.who = names[0]; op.ids = ids;
+            op.AlwaysUsable = true;
             
             if (p.IsSuper) {
                 // undo them across all loaded levels
                 Level[] levels = LevelInfo.Loaded.Items;
                 
                 foreach (Level lvl in levels) {
-                    op.SetMarks(marks);
-                    op.SetLevel(lvl);
-                    op.Player = p;
+                    op.Setup(p, lvl, marks);
                     DrawOpPerformer.Execute(p, op, null, marks);
                 }
                 p.level = null;
@@ -90,12 +89,12 @@ namespace MCGalaxy.Commands.Moderation {
                 DrawOpPerformer.Do(op, null, p, marks);
             }
 
-            string namesStr = names.Join(name => PlayerInfo.GetColoredName(p, name));
+            string namesStr = names.Join(name => p.FormatNick(name));
             if (op.found) {
-                Chat.MessageGlobal("Undid {1}%S's changes for the past &b{0}", delta.Shorten(true), namesStr);
+                Chat.MessageGlobal("Undid {1}&S's changes for the past &b{0}", delta.Shorten(true), namesStr);
                 Logger.Log(LogType.UserActivity, "Actions of {0} for the past {1} were undone.", names.Join(), delta.Shorten(true));
             } else {
-                p.Message("No changes found by {1} %Sin the past &b{0}", delta.Shorten(true), namesStr);
+                p.Message("No changes found by {1} &Sin the past &b{0}", delta.Shorten(true), namesStr);
             }
         }
         
@@ -109,21 +108,18 @@ namespace MCGalaxy.Commands.Moderation {
                 if (names[i] == null) return null;
                 
                 Group grp = PlayerInfo.GetGroup(names[i]);
-                if (!p.name.CaselessEq(names[i])) {
-                    if (!CheckRank(p, data, grp.Permission, "undo", false)) return null;
-                }
-
+                if (!CheckRank(p, data, names[i], grp.Permission, "undo", false)) return null;
                 ids.AddRange(NameConverter.FindIds(names[i]));
             }
             return ids.ToArray();
         }
 
         public override void Help(Player p) {
-            p.Message("%T/UndoPlayer [player1] <player2..> <timespan>");
-            p.Message("%HUndoes the block changes of [players] in the past <timespan>");
-            p.Message("%T/UndoPlayer -area [player1] <player2..> <timespan>");
-            p.Message("%HOnly undoes block changes in the specified region.");
-            p.Message("%H  If <timespan> is not given, undoes 30 minutes.");
+            p.Message("&T/UndoPlayer [player1] <player2..> <timespan>");
+            p.Message("&HUndoes the block changes of [players] in the past <timespan>");
+            p.Message("&T/UndoPlayer -area [player1] <player2..> <timespan>");
+            p.Message("&HOnly undoes block changes in the specified region.");
+            p.Message("&H  If <timespan> is not given, undoes 30 minutes.");
         }
     }
 }

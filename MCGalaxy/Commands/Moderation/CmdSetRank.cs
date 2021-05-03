@@ -55,8 +55,8 @@ namespace MCGalaxy.Commands.Moderation {
             if (newRank == null) return;
             
             if (curRank == newRank) {
-                p.Message("{0} %Sis already ranked {1}",
-                          PlayerInfo.GetColoredName(p, target), curRank.ColoredName);
+                p.Message("{0} &Sis already ranked {1}",
+                          p.FormatNick(target), curRank.ColoredName);
                 return;
             }
             if (!CanChangeRank(target, curRank, newRank, p, data, ref reason)) return;
@@ -78,27 +78,25 @@ namespace MCGalaxy.Commands.Moderation {
             if (reason == null) return false;
             
             if (newRank == banned) {
-                p.Message("Use /ban to change a player's rank to {0}%S.", banned.ColoredName); return false;
+                p.Message("Use /ban to change a player's rank to {0}&S.", banned.ColoredName); return false;
             }
             if (curRank == banned) {
-                p.Message("Use /unban to change a player's rank from %S{0}.", banned.ColoredName); return false;
+                p.Message("Use /unban to change a player's rank from &S{0}.", banned.ColoredName); return false;
             }
             
-            if (!p.IsConsole) {
-                if (!CheckRank(p, data, curRank.Permission, "change the rank of", false)) return false;            
-                if (newRank.Permission >= data.Rank) {
-                    p.Message("Cannot rank a player to a rank equal to or higher than yours."); return false;
-                }
+            if (!CheckRank(p, data, name, curRank.Permission, "change the rank of", false)) return false;            
+            if (!p.IsConsole && newRank.Permission >= data.Rank) {
+                p.Message("Cannot rank a player to a rank equal to or higher than yours."); return false;
             }
             
             if (newRank.Permission == curRank.Permission) {
-                p.Message("{0} %Sis already ranked {1}.",
-                          PlayerInfo.GetColoredName(p, name), curRank.ColoredName); return false;
+                p.Message("{0} &Sis already ranked {1}.",
+                          p.FormatNick(name), curRank.ColoredName); return false;
             }
             
-            OnChangingGroupEvent.Call(name, curRank, newRank);
-            if (Group.cancelrank) { Group.cancelrank = false; return false; }
-            return true;
+            bool cancel = false;
+            OnChangingGroupEvent.Call(name, curRank, newRank, ref cancel);
+            return !cancel;
         }
         
         static Group TargetRank(Player p, string name, Group curRank) {
@@ -126,10 +124,10 @@ namespace MCGalaxy.Commands.Moderation {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/SetRank [player] [rank] <reason>");
-            p.Message("%HSets that player's rank/group, with an optional reason.");
-            p.Message("%HTo see available ranks, type %T/ViewRanks");
-            p.Message("%HFor <reason>, @number can be used as a shortcut for that rule.");
+            p.Message("&T/SetRank [player] [rank] <reason>");
+            p.Message("&HSets that player's rank/group, with an optional reason.");
+            p.Message("&HTo see available ranks, type &T/ViewRanks");
+            p.Message("&HFor <reason>, @number can be used as a shortcut for that rule.");
         }
     }
 }

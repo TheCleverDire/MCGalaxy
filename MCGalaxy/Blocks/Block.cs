@@ -164,7 +164,7 @@ namespace MCGalaxy {
             }
             
             SetDefaultNames();
-            string propsPath = BlockProps.PropsPath("default");
+            string propsPath = Paths.BlockPropsPath("default");
                 
             // backwards compatibility with older versions
             if (!File.Exists(propsPath)) {
@@ -182,7 +182,7 @@ namespace MCGalaxy {
             Level[] loaded = LevelInfo.Loaded.Items;
             foreach (Level lvl in loaded) {
                 lvl.UpdateBlockProps();
-                lvl.UpdateBlockHandlers();
+                lvl.UpdateAllBlockHandlers();
             }
         }
         

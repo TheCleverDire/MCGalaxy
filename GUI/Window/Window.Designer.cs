@@ -49,7 +49,6 @@ namespace MCGalaxy.Gui
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Window));
             this.tsMap = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsMap_physicsMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.tsMap_physics0 = new System.Windows.Forms.ToolStripMenuItem();
@@ -94,6 +93,9 @@ namespace MCGalaxy.Gui
             this.main_btnUnloadEmpty = new System.Windows.Forms.Button();
             this.main_btnKillPhysics = new System.Windows.Forms.Button();
             this.main_btnSaveAll = new System.Windows.Forms.Button();
+            this.main_colLvlName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.main_colLvlPlayers = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.main_colLvlPhysics = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.main_Maps = new System.Windows.Forms.DataGridView();
             this.main_txtLog = new MCGalaxy.Gui.Components.ColoredTextBox();
             this.tsLog_Menu = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -108,11 +110,14 @@ namespace MCGalaxy.Gui
             this.tsLog_clear = new System.Windows.Forms.ToolStripMenuItem();
             this.main_txtInput = new System.Windows.Forms.TextBox();
             this.main_txtUrl = new System.Windows.Forms.TextBox();
+            this.main_colPlName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.main_colPlMap = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.main_colPlRank = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.main_Players = new System.Windows.Forms.DataGridView();
             this.tabs = new System.Windows.Forms.TabControl();
             this.tp_Maps = new System.Windows.Forms.TabPage();
             this.map_gbProps = new System.Windows.Forms.GroupBox();
-            this.map_pgProps = new System.Windows.Forms.PropertyGrid();
+            this.map_pgProps = new MCGalaxy.Gui.HackyPropertyGrid();
             this.map_gbLoaded = new System.Windows.Forms.GroupBox();
             this.map_lbLoaded = new System.Windows.Forms.ListBox();
             this.map_gbUnloaded = new System.Windows.Forms.GroupBox();
@@ -134,25 +139,26 @@ namespace MCGalaxy.Gui
             this.map_txtName = new System.Windows.Forms.TextBox();
             this.tp_Players = new System.Windows.Forms.TabPage();
             this.pl_gbProps = new System.Windows.Forms.GroupBox();
-            this.pl_pgProps = new System.Windows.Forms.PropertyGrid();
+            this.pl_pgProps = new MCGalaxy.Gui.HackyPropertyGrid();
             this.pl_gbOther = new System.Windows.Forms.GroupBox();
             this.pl_txtImpersonate = new System.Windows.Forms.TextBox();
             this.pl_btnSendCommand = new System.Windows.Forms.Button();
             this.pl_txtMessage = new System.Windows.Forms.TextBox();
             this.pl_btnMessage = new System.Windows.Forms.Button();
             this.pl_gbActions = new System.Windows.Forms.GroupBox();
-            this.pl_btnSpawn = new System.Windows.Forms.Button();
+            this.pl_btnKill = new System.Windows.Forms.Button();
             this.pl_txtUndo = new System.Windows.Forms.TextBox();
             this.pl_btnWarn = new System.Windows.Forms.Button();
             this.pl_btnRules = new System.Windows.Forms.Button();
             this.pl_btnKick = new System.Windows.Forms.Button();
             this.pl_btnBanIP = new System.Windows.Forms.Button();
             this.pl_btnUndo = new System.Windows.Forms.Button();
-            this.pl_btnSlap = new System.Windows.Forms.Button();
+            this.pl_btnMute = new System.Windows.Forms.Button();
             this.pl_btnBan = new System.Windows.Forms.Button();
-            this.pl_btnKill = new System.Windows.Forms.Button();
+            this.pl_btnFreeze = new System.Windows.Forms.Button();
             this.pl_statusBox = new System.Windows.Forms.TextBox();
             this.pl_listBox = new System.Windows.Forms.ListBox();
+            this.pl_lblOnline = new System.Windows.Forms.Label();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.tsMap.SuspendLayout();
             this.tsPlayer.SuspendLayout();
@@ -457,7 +463,7 @@ namespace MCGalaxy.Gui
             // 
             // logs_txtError
             // 
-            this.logs_txtError.BackColor = System.Drawing.Color.White;
+            this.logs_txtError.BackColor = System.Drawing.SystemColors.Window;
             this.logs_txtError.Cursor = System.Windows.Forms.Cursors.Arrow;
             this.logs_txtError.Location = new System.Drawing.Point(-2, 0);
             this.logs_txtError.Multiline = true;
@@ -521,7 +527,7 @@ namespace MCGalaxy.Gui
             // 
             // logs_txtSystem
             // 
-            this.logs_txtSystem.BackColor = System.Drawing.Color.White;
+            this.logs_txtSystem.BackColor = System.Drawing.SystemColors.Window;
             this.logs_txtSystem.Cursor = System.Windows.Forms.Cursors.Arrow;
             this.logs_txtSystem.Location = new System.Drawing.Point(-2, 0);
             this.logs_txtSystem.Multiline = true;
@@ -585,13 +591,38 @@ namespace MCGalaxy.Gui
             this.main_btnSaveAll.UseVisualStyleBackColor = true;
             this.main_btnSaveAll.Click += new System.EventHandler(this.main_BtnSaveAll_Click);
             // 
+            // main_colLvlName
+            // 
+            this.main_colLvlName.HeaderText = "Name";
+            this.main_colLvlName.Name = "main_colLvlName";
+            this.main_colLvlName.ReadOnly = true;
+            // 
+            // main_colLvlPlayers
+            // 
+            this.main_colLvlPlayers.FillWeight = 70F;
+            this.main_colLvlPlayers.HeaderText = "Players";
+            this.main_colLvlPlayers.Name = "main_colLvlPlayers";
+            this.main_colLvlPlayers.ReadOnly = true;
+            // 
+            // main_colLvlPhysics
+            // 
+            this.main_colLvlPhysics.FillWeight = 70F;
+            this.main_colLvlPhysics.HeaderText = "Physics";
+            this.main_colLvlPhysics.Name = "main_colLvlPhysics";
+            this.main_colLvlPhysics.ReadOnly = true;
+            // 
             // main_Maps
             // 
             this.main_Maps.AllowUserToAddRows = false;
             this.main_Maps.AllowUserToDeleteRows = false;
+            this.main_Maps.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.main_Maps.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
             this.main_Maps.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
             this.main_Maps.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.main_Maps.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+        	        	        	this.main_colLvlName,
+        	        	        	this.main_colLvlPlayers,
+        	        	        	this.main_colLvlPhysics});
             this.main_Maps.ContextMenuStrip = this.tsMap;
             this.main_Maps.Location = new System.Drawing.Point(512, 292);
             this.main_Maps.MultiSelect = false;
@@ -697,6 +728,7 @@ namespace MCGalaxy.Gui
             // 
             // main_txtInput
             // 
+            this.main_txtInput.BackColor = System.Drawing.SystemColors.Window;
             this.main_txtInput.Font = new System.Drawing.Font("Calibri", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.main_txtInput.Location = new System.Drawing.Point(8, 454);
             this.main_txtInput.Name = "main_txtInput";
@@ -718,6 +750,24 @@ namespace MCGalaxy.Gui
             this.main_txtUrl.Text = "Finding classicube.net url..";
             this.main_txtUrl.DoubleClick += new System.EventHandler(this.main_TxtUrl_DoubleClick);
             // 
+            // main_colPlName
+            // 
+            this.main_colPlName.HeaderText = "Name";
+            this.main_colPlName.Name = "main_colPlName";
+            this.main_colPlName.ReadOnly = true;
+            // 
+            // main_colPlMap
+            // 
+            this.main_colPlMap.HeaderText = "Map";
+            this.main_colPlMap.Name = "main_colPlMap";
+            this.main_colPlMap.ReadOnly = true;
+            // 
+            // main_colPlRank
+            // 
+            this.main_colPlRank.HeaderText = "Rank";
+            this.main_colPlRank.Name = "main_colPlRank";
+            this.main_colPlRank.ReadOnly = true;
+            // 
             // main_Players
             // 
             this.main_Players.AllowUserToAddRows = false;
@@ -725,6 +775,10 @@ namespace MCGalaxy.Gui
             this.main_Players.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
             this.main_Players.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
             this.main_Players.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.main_Players.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+        	        	        	this.main_colPlName,
+        	        	        	this.main_colPlMap,
+        	        	        	this.main_colPlRank});
             this.main_Players.ContextMenuStrip = this.tsPlayer;
             this.main_Players.Location = new System.Drawing.Point(512, 7);
             this.main_Players.MultiSelect = false;
@@ -794,6 +848,7 @@ namespace MCGalaxy.Gui
             // 
             // map_lbLoaded
             // 
+            this.map_lbLoaded.BackColor = System.Drawing.SystemColors.Window;
             this.map_lbLoaded.FormattingEnabled = true;
             this.map_lbLoaded.Location = new System.Drawing.Point(5, 15);
             this.map_lbLoaded.MultiColumn = true;
@@ -825,6 +880,7 @@ namespace MCGalaxy.Gui
             // 
             // map_lbUnloaded
             // 
+            this.map_lbUnloaded.BackColor = System.Drawing.SystemColors.Window;
             this.map_lbUnloaded.FormattingEnabled = true;
             this.map_lbUnloaded.Location = new System.Drawing.Point(5, 15);
             this.map_lbUnloaded.MultiColumn = true;
@@ -911,6 +967,7 @@ namespace MCGalaxy.Gui
             // 
             // map_txtSeed
             // 
+            this.map_txtSeed.BackColor = System.Drawing.SystemColors.Window;
             this.map_txtSeed.Location = new System.Drawing.Point(231, 75);
             this.map_txtSeed.Name = "map_txtSeed";
             this.map_txtSeed.Size = new System.Drawing.Size(107, 21);
@@ -918,6 +975,7 @@ namespace MCGalaxy.Gui
             // 
             // map_cmbType
             // 
+            this.map_cmbType.BackColor = System.Drawing.SystemColors.Window;
             this.map_cmbType.FormattingEnabled = true;
             this.map_cmbType.Location = new System.Drawing.Point(51, 75);
             this.map_cmbType.Name = "map_cmbType";
@@ -926,6 +984,7 @@ namespace MCGalaxy.Gui
             // 
             // map_cmbZ
             // 
+            this.map_cmbZ.BackColor = System.Drawing.SystemColors.Window;
             this.map_cmbZ.FormattingEnabled = true;
             this.map_cmbZ.Items.AddRange(new object[] {
                                     "16",
@@ -942,6 +1001,7 @@ namespace MCGalaxy.Gui
             // 
             // map_cmbY
             // 
+            this.map_cmbY.BackColor = System.Drawing.SystemColors.Window;
             this.map_cmbY.FormattingEnabled = true;
             this.map_cmbY.Items.AddRange(new object[] {
                                     "16",
@@ -958,6 +1018,7 @@ namespace MCGalaxy.Gui
             // 
             // map_cmbX
             // 
+            this.map_cmbX.BackColor = System.Drawing.SystemColors.Window;
             this.map_cmbX.FormattingEnabled = true;
             this.map_cmbX.Items.AddRange(new object[] {
                                     "16",
@@ -983,6 +1044,7 @@ namespace MCGalaxy.Gui
             // 
             // map_txtName
             // 
+            this.map_txtName.BackColor = System.Drawing.SystemColors.Window;
             this.map_txtName.Location = new System.Drawing.Point(51, 21);
             this.map_txtName.Name = "map_txtName";
             this.map_txtName.Size = new System.Drawing.Size(287, 21);
@@ -990,6 +1052,7 @@ namespace MCGalaxy.Gui
             // 
             // tp_Players
             // 
+            this.tp_Players.Controls.Add(this.pl_lblOnline);
             this.tp_Players.Controls.Add(this.pl_gbProps);
             this.tp_Players.Controls.Add(this.pl_gbOther);
             this.tp_Players.Controls.Add(this.pl_gbActions);
@@ -1001,6 +1064,15 @@ namespace MCGalaxy.Gui
             this.tp_Players.Size = new System.Drawing.Size(767, 488);
             this.tp_Players.TabIndex = 7;
             this.tp_Players.Text = "Players";
+            // 
+            // pl_lblOnline
+            // 
+            this.pl_lblOnline.AutoSize = true;
+            this.pl_lblOnline.Location = new System.Drawing.Point(8, 9);
+            this.pl_lblOnline.Name = "pl_lblOnline";
+            this.pl_lblOnline.Size = new System.Drawing.Size(78, 13);
+            this.pl_lblOnline.TabIndex = 68;
+            this.pl_lblOnline.Text = "Online players:";
             // 
             // pl_gbProps
             // 
@@ -1036,6 +1108,7 @@ namespace MCGalaxy.Gui
             // 
             // pl_txtImpersonate
             // 
+            this.pl_txtImpersonate.BackColor = System.Drawing.SystemColors.Window;
             this.pl_txtImpersonate.Location = new System.Drawing.Point(115, 50);
             this.pl_txtImpersonate.Name = "pl_txtImpersonate";
             this.pl_txtImpersonate.Size = new System.Drawing.Size(485, 21);
@@ -1054,6 +1127,7 @@ namespace MCGalaxy.Gui
             // 
             // pl_txtMessage
             // 
+            this.pl_txtMessage.BackColor = System.Drawing.SystemColors.Window;
             this.pl_txtMessage.Location = new System.Drawing.Point(115, 18);
             this.pl_txtMessage.Name = "pl_txtMessage";
             this.pl_txtMessage.Size = new System.Drawing.Size(485, 21);
@@ -1072,16 +1146,16 @@ namespace MCGalaxy.Gui
             // 
             // pl_gbActions
             // 
-            this.pl_gbActions.Controls.Add(this.pl_btnSpawn);
+            this.pl_gbActions.Controls.Add(this.pl_btnKill);
             this.pl_gbActions.Controls.Add(this.pl_txtUndo);
             this.pl_gbActions.Controls.Add(this.pl_btnWarn);
             this.pl_gbActions.Controls.Add(this.pl_btnRules);
             this.pl_gbActions.Controls.Add(this.pl_btnKick);
             this.pl_gbActions.Controls.Add(this.pl_btnBanIP);
             this.pl_gbActions.Controls.Add(this.pl_btnUndo);
-            this.pl_gbActions.Controls.Add(this.pl_btnSlap);
+            this.pl_gbActions.Controls.Add(this.pl_btnMute);
             this.pl_gbActions.Controls.Add(this.pl_btnBan);
-            this.pl_gbActions.Controls.Add(this.pl_btnKill);
+            this.pl_gbActions.Controls.Add(this.pl_btnFreeze);
             this.pl_gbActions.Location = new System.Drawing.Point(529, 9);
             this.pl_gbActions.Name = "pl_gbActions";
             this.pl_gbActions.Size = new System.Drawing.Size(228, 186);
@@ -1089,18 +1163,19 @@ namespace MCGalaxy.Gui
             this.pl_gbActions.TabStop = false;
             this.pl_gbActions.Text = "Actions";
             // 
-            // pl_btnSpawn
+            // pl_btnKill
             // 
-            this.pl_btnSpawn.Location = new System.Drawing.Point(8, 105);
-            this.pl_btnSpawn.Name = "pl_btnSpawn";
-            this.pl_btnSpawn.Size = new System.Drawing.Size(98, 23);
-            this.pl_btnSpawn.TabIndex = 43;
-            this.pl_btnSpawn.Text = "Spawn";
-            this.pl_btnSpawn.UseVisualStyleBackColor = true;
-            this.pl_btnSpawn.Click += new System.EventHandler(this.pl_BtnSpawn_Click);
+            this.pl_btnKill.Location = new System.Drawing.Point(8, 105);
+            this.pl_btnKill.Name = "pl_btnKill";
+            this.pl_btnKill.Size = new System.Drawing.Size(98, 23);
+            this.pl_btnKill.TabIndex = 43;
+            this.pl_btnKill.Text = "Kill";
+            this.pl_btnKill.UseVisualStyleBackColor = true;
+            this.pl_btnKill.Click += new System.EventHandler(this.pl_BtnKill_Click);
             // 
             // pl_txtUndo
             // 
+            this.pl_txtUndo.BackColor = System.Drawing.SystemColors.Window;
             this.pl_txtUndo.Location = new System.Drawing.Point(122, 150);
             this.pl_txtUndo.Name = "pl_txtUndo";
             this.pl_txtUndo.Size = new System.Drawing.Size(98, 21);
@@ -1157,15 +1232,15 @@ namespace MCGalaxy.Gui
             this.pl_btnUndo.UseVisualStyleBackColor = true;
             this.pl_btnUndo.Click += new System.EventHandler(this.pl_BtnUndo_Click);
             // 
-            // pl_btnSlap
+            // pl_btnMute
             // 
-            this.pl_btnSlap.Location = new System.Drawing.Point(8, 76);
-            this.pl_btnSlap.Name = "pl_btnSlap";
-            this.pl_btnSlap.Size = new System.Drawing.Size(98, 23);
-            this.pl_btnSlap.TabIndex = 40;
-            this.pl_btnSlap.Text = "Slap";
-            this.pl_btnSlap.UseVisualStyleBackColor = true;
-            this.pl_btnSlap.Click += new System.EventHandler(this.pl_BtnSlap_Click);
+            this.pl_btnMute.Location = new System.Drawing.Point(8, 76);
+            this.pl_btnMute.Name = "pl_btnMute";
+            this.pl_btnMute.Size = new System.Drawing.Size(98, 23);
+            this.pl_btnMute.TabIndex = 40;
+            this.pl_btnMute.Text = "Mute";
+            this.pl_btnMute.UseVisualStyleBackColor = true;
+            this.pl_btnMute.Click += new System.EventHandler(this.pl_BtnMute_Click);
             // 
             // pl_btnBan
             // 
@@ -1177,15 +1252,15 @@ namespace MCGalaxy.Gui
             this.pl_btnBan.UseVisualStyleBackColor = true;
             this.pl_btnBan.Click += new System.EventHandler(this.pl_BtnBan_Click);
             // 
-            // pl_btnKill
+            // pl_btnFreeze
             // 
-            this.pl_btnKill.Location = new System.Drawing.Point(122, 76);
-            this.pl_btnKill.Name = "pl_btnKill";
-            this.pl_btnKill.Size = new System.Drawing.Size(98, 23);
-            this.pl_btnKill.TabIndex = 36;
-            this.pl_btnKill.Text = "Kill";
-            this.pl_btnKill.UseVisualStyleBackColor = true;
-            this.pl_btnKill.Click += new System.EventHandler(this.pl_BtnKill_Click);
+            this.pl_btnFreeze.Location = new System.Drawing.Point(122, 76);
+            this.pl_btnFreeze.Name = "pl_btnFreeze";
+            this.pl_btnFreeze.Size = new System.Drawing.Size(98, 23);
+            this.pl_btnFreeze.TabIndex = 36;
+            this.pl_btnFreeze.Text = "Freeze";
+            this.pl_btnFreeze.UseVisualStyleBackColor = true;
+            this.pl_btnFreeze.Click += new System.EventHandler(this.pl_BtnFreeze_Click);
             // 
             // pl_statusBox
             // 
@@ -1202,10 +1277,11 @@ namespace MCGalaxy.Gui
             // 
             // pl_listBox
             // 
+            this.pl_listBox.BackColor = System.Drawing.SystemColors.Window;
             this.pl_listBox.FormattingEnabled = true;
-            this.pl_listBox.Location = new System.Drawing.Point(8, 14);
+            this.pl_listBox.Location = new System.Drawing.Point(8, 27);
             this.pl_listBox.Name = "pl_listBox";
-            this.pl_listBox.Size = new System.Drawing.Size(123, 459);
+            this.pl_listBox.Size = new System.Drawing.Size(123, 446);
             this.pl_listBox.TabIndex = 62;
             this.pl_listBox.Click += new System.EventHandler(this.pl_listBox_Click);
             // 
@@ -1228,7 +1304,6 @@ namespace MCGalaxy.Gui
             this.Controls.Add(this.main_btnRestart);
             this.Controls.Add(this.tabs);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "Window";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Window_FormClosing);
@@ -1266,6 +1341,13 @@ namespace MCGalaxy.Gui
             this.pl_gbActions.PerformLayout();
             this.ResumeLayout(false);
         }
+        private System.Windows.Forms.DataGridViewTextBoxColumn main_colPlName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn main_colPlMap;
+        private System.Windows.Forms.DataGridViewTextBoxColumn main_colPlRank;
+        private System.Windows.Forms.DataGridViewTextBoxColumn main_colLvlPhysics;
+        private System.Windows.Forms.DataGridViewTextBoxColumn main_colLvlPlayers;
+        private System.Windows.Forms.DataGridViewTextBoxColumn main_colLvlName;
+        private System.Windows.Forms.Label pl_lblOnline;
         private System.Windows.Forms.GroupBox pl_gbProps;
         private System.Windows.Forms.GroupBox pl_gbActions;
         private System.Windows.Forms.GroupBox pl_gbOther;
@@ -1333,13 +1415,13 @@ namespace MCGalaxy.Gui
         private Button pl_btnMessage;
         private TextBox pl_txtMessage;
         private Button pl_btnWarn;
-        private Button pl_btnKill;
+        private Button pl_btnFreeze;
         private TextBox pl_txtImpersonate;
         private Button pl_btnSendCommand;
-        private Button pl_btnSpawn;
+        private Button pl_btnKill;
         private TextBox pl_txtUndo;
         private Button pl_btnUndo;
-        private Button pl_btnSlap;
+        private Button pl_btnMute;
         private Button pl_btnRules;
         private TextBox pl_statusBox;
         private ListBox pl_listBox;

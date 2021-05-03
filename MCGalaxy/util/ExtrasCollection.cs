@@ -20,8 +20,8 @@ using System.Collections.Generic;
 
 namespace MCGalaxy {
     
-    /// <summary> You can use this class to store extra information for/about the player/level/server.
-    /// For example: This is useful if you want to store the value "lives" for a player. </summary>
+    /// <summary> Stores extra information for/about a player/level/server. </summary>
+    /// <example> Storing a "lives" value for a player. </example>
     public sealed class ExtrasCollection {
         readonly Dictionary<string, object> dict = new Dictionary<string, object>();
         readonly object locker = new object();
@@ -73,9 +73,13 @@ namespace MCGalaxy {
             return defaultValue;
         }
 
+        [Obsolete("Use extras[key] = value; instead", true)]
         public void Put(string key, object value)       { this[key] = value; }
+        [Obsolete("Use extras[key] = value; instead", true)]
         public void PutBoolean(string key, bool value)  { this[key] = value; }
+        [Obsolete("Use extras[key] = value; instead", true)]
         public void PutInt(string key, int value)       { this[key] = value; }
+        [Obsolete("Use extras[key] = value; instead", true)]
         public void PutString(string key, string value) { this[key] = value; }
     }
 }

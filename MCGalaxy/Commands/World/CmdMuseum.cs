@@ -35,9 +35,9 @@ namespace MCGalaxy.Commands.World {
             
             string name = null;
             if (args.Length == 1) {
-                name = "&cMuseum " + Server.Config.DefaultColor + "(" + args[0] + ")";
+                name = "&cMuseum &S(" + args[0] + ")";
             } else {
-                name = "&cMuseum " + Server.Config.DefaultColor + "(" + args[0] + " " + args[1] + ")";
+                name = "&cMuseum &S(" + args[0] + " " + args[1] + ")";
             }
             
             if (p.level.name.CaselessEq(name)) {
@@ -56,7 +56,7 @@ namespace MCGalaxy.Commands.World {
         
         static void JoinMuseum(Player p, string name, string mapName, string path) {
             Level lvl = IMapImporter.Formats[0].Read(path, name, false);
-            lvl.MapName = mapName;           
+            lvl.MapName = mapName;
             SetLevelProps(lvl);
             Level.LoadMetadata(lvl);
             
@@ -71,8 +71,8 @@ namespace MCGalaxy.Commands.World {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Museum [map] [backup]");
-            p.Message("%HTeleports you to a backup of the given map.");
+            p.Message("&T/Museum [level] [backup]");
+            p.Message("&HTeleports you to a backup of the given level.");
         }
     }
 }

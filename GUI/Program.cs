@@ -16,11 +16,11 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
-using MCGalaxy.Cli;
 
 namespace MCGalaxy.Gui {
     
@@ -53,37 +53,10 @@ namespace MCGalaxy.Gui {
         [STAThread]
         public static void Main(string[] args) {
             Environment.CurrentDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            bool useConsole = DetectConsole();
             
-            if (useConsole) {
-                CLI.RunCLI();
-            } else {
-                RunGUI();
-            }
-        }
-        
-        // For compatibility with older MCGalaxy versions, which use Viewmode.cfg
-        static bool DetectConsole() {
-            try {
-                if (!File.Exists("Viewmode.cfg")) return false;
-                string[] lines = File.ReadAllLines("Viewmode.cfg");
-                
-                for (int i = 0; i < lines.Length; i++) {
-                    string line = lines[i];
-                    if (line.Length == 0 || line[0] == '#') continue;
-                    
-                    line = line.Trim().Replace(" ", "");
-                    if (!line.StartsWith("cli=")) continue;                  
-                    return bool.Parse(line.Substring("cli=".Length));
-                }
-            } catch { }
-            return false;
-        }
-        
-        static void RunGUI() {
             if (!File.Exists("MCGalaxy_.dll")) {
-                Popup.Error("Cannot start server as MCGalaxy_.dll is missing\r\n" +
-                            "Download it from https://github.com/UnknownShadow200/MCGalaxy/tree/master/Uploads");
+                Popup.Error("Cannot start server as MCGalaxy_.dll is missing from " + Environment.CurrentDirectory 
+                            + "\r\nDownload it from " + Updater.UploadsURL);
                 return;
             }
             // separate method, in case MCGalaxy_.dll is missing
@@ -105,12 +78,32 @@ namespace MCGalaxy.Gui {
             }
         }
         
+        static void LogAndRestart(Exception ex) {
+            Logger.LogError(ex);
+            FileLogger.Flush(null);
+            
+            Thread.Sleep(500);
+            if (Server.Config.restartOnError) {
+                Thread stopThread = Server.Stop(true, "Server restart - unhandled error");
+                stopThread.Join();
+            }
+        }
+        
         static void GlobalExHandler(object sender, UnhandledExceptionEventArgs e) {
-            CLI.LogAndRestart((Exception)e.ExceptionObject);
+            LogAndRestart((Exception)e.ExceptionObject);
         }
 
         static void ThreadExHandler(object sender, ThreadExceptionEventArgs e) {
-            CLI.LogAndRestart(e.Exception);
+            LogAndRestart(e.Exception);
+        }
+        
+        public static void OpenBrowser(string url) {
+            try { 
+                Process.Start(url);
+            } catch (Exception ex) {
+                Logger.LogError("Opening url in browser", ex);
+                Popup.Error("Failed to open " + url);
+            }
         }
     }
 }

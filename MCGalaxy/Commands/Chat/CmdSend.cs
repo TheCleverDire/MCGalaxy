@@ -16,7 +16,7 @@
     permissions and limitations under the Licenses.
  */
 using System;
-using System.Text.RegularExpressions;
+using MCGalaxy.DB;
 using MCGalaxy.SQL;
 
 namespace MCGalaxy.Commands.Chatting {
@@ -28,30 +28,30 @@ namespace MCGalaxy.Commands.Chatting {
         
         public override void Use(Player p, string message, CommandData data) {
             string[] parts = message.SplitSpaces(2);
-            if (message.Length == 0 || parts.Length == 1) { Help(p); return; }
-            if (!MessageCmd.CanSpeak(p, name)) return;
+            if (parts.Length <= 1) { Help(p); return; }
+            if (!MessageCmd.CanSpeak(p, "Send")) return;
 
-            string receiverName = PlayerInfo.FindMatchesPreferOnline(p, parts[0]);
-            if (receiverName == null) return;
-
+            string name = PlayerDB.MatchNames(p, parts[0]);
+            if (name == null) return;
             message = parts[1];
-            //DB
+            
             if (message.Length >= 256 && Database.Backend.EnforcesTextLength) {
-                p.Message("Message was too long. It has been trimmed to:");
-                p.Message(message.Substring(0, 255));
-                message = message.Substring(0, 255);
+            	message = message.Substring(0, 255);
+                p.Message("&WMessage was too long. It has been trimmed to:");
+                p.Message(message);
             }
             
-            Database.Backend.CreateTable("Inbox" + receiverName, createInbox);
-            Database.Backend.AddRow("Inbox" + receiverName, "PlayerFrom, TimeSent, Contents",
-                                    p.name, DateTime.Now.ToString(Database.DateFormat), message);
+            Database.CreateTable("Inbox" + name, createInbox);
+            Database.AddRow("Inbox" + name, "PlayerFrom, TimeSent, Contents",
+                            p.name, DateTime.Now.ToString(Database.DateFormat), message);
+            p.CheckForMessageSpam();
 
-            Player receiver = PlayerInfo.FindExact(receiverName);
-            p.Message("Message sent to {0}%S.", PlayerInfo.GetColoredName(p, receiverName));
-            if (receiver == null) return;
+            Player target = PlayerInfo.FindExact(name);
+            p.Message("Message sent to {0}&S.", p.FormatNick(name));
+            if (target == null) return;
             
-            if (!Chat.Ignoring(receiver, p)) {
-                receiver.Message("Message recieved from {0}%S. Check %T/inbox", p.ColoredName);
+            if (!Chat.Ignoring(target, p)) {
+                target.Message("Message received from {0}&S. Check &T/Inbox", target.FormatNick(p));
             }
         }
         
@@ -62,8 +62,8 @@ namespace MCGalaxy.Commands.Chatting {
         };
         
         public override void Help(Player p) {
-            p.Message("%T/Send [name] [message]");
-            p.Message("%HSends [message] to [name], which can be read with %T/inbox");
+            p.Message("&T/Send [name] [message]");
+            p.Message("&HSends [message] to [name], which can be read with &T/Inbox");
         }
     }
 }

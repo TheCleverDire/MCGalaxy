@@ -27,9 +27,11 @@ namespace MCGalaxy.Commands.Eco {
         
         public override void Use(Player p, string message, CommandData data) {
             if (CheckSuper(p, message, "player name")) return;
+            if (message.Length == 0) message = p.name;
             if (!Formatter.ValidName(p, message, "player")) return;
+            
             int matches = 1;
-            Player who = message.Length == 0 ? p : PlayerInfo.FindMatches(p, message, out matches);
+            Player who  = PlayerInfo.FindMatches(p, message, out matches);
             if (matches > 1) return;
             
             string target = null;
@@ -41,8 +43,8 @@ namespace MCGalaxy.Commands.Eco {
                 target = who.name; money = who.money;
             }
 
-            string targetName = PlayerInfo.GetColoredName(p, target);
-            p.Message("Economy stats for {0}%S:", targetName);
+            string targetName = p.FormatNick(target);
+            p.Message("Economy stats for {0}&S:", targetName);
             p.Message(" Current balance: &f{0} &3{1}", money, Server.Config.Currency);
             
             Economy.EcoStats ecos = Economy.RetrieveStats(target);
@@ -87,10 +89,10 @@ namespace MCGalaxy.Commands.Eco {
         }
 
         public override void Help(Player p) {
-            p.Message("%T/Balance [player]");
-            p.Message("%HShows how much &3" + Server.Config.Currency + " %H[player] has, " +
+            p.Message("&T/Balance [player]");
+            p.Message("&HShows how much &3" + Server.Config.Currency + " &H[player] has, " +
                            "plus their most recent transactions.");
-            p.Message("%HIf [player] is not given, shows your own balance.");
+            p.Message("&HIf [player] is not given, shows your own balance.");
         }
     }
 }

@@ -42,8 +42,8 @@ namespace MCGalaxy.DB {
         public const string ColumnLastLogout = "LastLogout";
         public const string ColumnTimeSpent = "TimeSpent";
         
-        public const string ColumnTotalBlocks = "totalBlocks";
-        public const string ColumnTotalCuboided = "totalCuboided";
+        public const string ColumnBlocks   = "totalBlocks";
+        public const string ColumnDrawn    = "totalCuboided";
         public const string ColumnMessages = "Messages";
         
         public string Name, Color, Title, TitleColor, IP;
@@ -55,16 +55,16 @@ namespace MCGalaxy.DB {
         static object ReadID(IDataRecord record, object arg) { return record.GetInt32(0); }
         internal static void Create(Player p) {
             p.prefix = "";
-            p.color = p.group.Color;
+            p.SetColor(p.group.Color);
             p.FirstLogin = DateTime.Now;
             p.TimesVisited = 1;
             
             string now = DateTime.Now.ToString(Database.DateFormat);
-            Database.Backend.AddRow("Players", "Name, IP, FirstLogin, LastLogin, LastLogout, totalLogin, Title, " +
-                                    "totalDeaths, Money, totalBlocks, totalKicked, Messages, TimeSpent",
-                                    p.name, p.ip, now, now, DateTime.MinValue, 1, "", 0, 0, 0, 0, 0, (long)p.TotalTime.TotalSeconds);
+            Database.AddRow("Players", "Name, IP, FirstLogin, LastLogin, totalLogin, Title, " +
+                            "totalDeaths, Money, totalBlocks, totalKicked, Messages, TimeSpent",
+                            p.name, p.ip, now, now, 1, "", 0, 0, 0, 0, 0, (long)p.TotalTime.TotalSeconds);
             
-            object id = Database.Backend.ReadRows("Players", "ID", null, ReadID, "WHERE Name=@0", p.name);
+            object id = Database.ReadRows("Players", "ID", null, ReadID, "WHERE Name=@0", p.name);
             if (id != null) {
                 p.DatabaseID = (int)id;
             } else {
@@ -72,27 +72,29 @@ namespace MCGalaxy.DB {
             }
         }
         
-        internal static void Apply(PlayerData data, Player p) {
-            p.TimesVisited = data.Logins + 1;
-            p.TotalTime = data.TotalTime;
-            p.DatabaseID = data.DatabaseID;
-            p.FirstLogin = data.FirstLogin;
-            p.LastLogout = data.LastLogout;
+        /// <summary> Initialises the given player's stats from this instance. </summary>
+        public void ApplyTo(Player p) {
+            p.TimesVisited = Logins + 1;
+            p.TotalTime = TotalTime;
+            p.DatabaseID = DatabaseID;
+            p.FirstLogin = FirstLogin;
             
-            p.title = data.Title;
-            p.titlecolor = data.TitleColor;
-            p.color = data.Color;
-            if (p.color.Length == 0) p.color = p.group.Color;
+            p.title = Title;
+            p.titlecolor = TitleColor;
             
-            p.TotalModified = data.TotalModified;
-            p.TotalDrawn = data.TotalDrawn;
-            p.TotalPlaced = data.TotalPlaced;
-            p.TotalDeleted = data.TotalDeleted;
+            string col = Color;
+            if (col.Length == 0) col = p.group.Color;
+            p.SetColor(col);
             
-            p.TimesDied = data.Deaths;
-            p.TotalMessagesSent = data.Messages;
-            p.money = data.Money;
-            p.TimesBeenKicked = data.Kicks;
+            p.TotalModified = TotalModified;
+            p.TotalDrawn = TotalDrawn;
+            p.TotalPlaced = TotalPlaced;
+            p.TotalDeleted = TotalDeleted;
+            
+            p.TimesDied = Deaths;
+            p.TotalMessagesSent = Messages;
+            p.money = Money;
+            p.TimesBeenKicked = Kicks;
         }
         
         internal static PlayerData Parse(IDataRecord record) {
@@ -116,8 +118,8 @@ namespace MCGalaxy.DB {
             
             data.Title = record.GetText(ColumnTitle);
             data.Title = data.Title.Cp437ToUnicode();
-            data.TitleColor = ParseCol(record.GetText(ColumnTColor));
-            data.Color = ParseCol(record.GetText(ColumnColor));
+            data.TitleColor = ParseColor(record.GetText(ColumnTColor));
+            data.Color = ParseColor(record.GetText(ColumnColor));
             
             data.Money    = record.GetInt(ColumnMoney);
             data.Deaths   = record.GetInt(ColumnDeaths);
@@ -125,12 +127,12 @@ namespace MCGalaxy.DB {
             data.Kicks    = record.GetInt(ColumnKicked);
             data.Messages = record.GetInt(ColumnMessages);
             
-            long blocks   = record.GetLong(ColumnTotalBlocks);
-            long cuboided = record.GetLong(ColumnTotalCuboided);
-            data.TotalModified = blocks & LowerBitsMask;
-            data.TotalPlaced   = blocks >> LowerBits;
-            data.TotalDrawn    = cuboided & LowerBitsMask;
-            data.TotalDeleted  = cuboided >> LowerBits;
+            long blocks = record.GetLong(ColumnBlocks);
+            long drawn  = record.GetLong(ColumnDrawn);
+            data.TotalModified = UnpackLo(blocks);
+            data.TotalPlaced   = UnpackHi(blocks);
+            data.TotalDrawn    = UnpackLo(drawn);
+            data.TotalDeleted  = UnpackHi(drawn);
             return data;
         }
         internal static object Read(IDataRecord record, object arg) { return Parse(record); }
@@ -143,7 +145,7 @@ namespace MCGalaxy.DB {
             return (value.Length == 0 || value.CaselessEq("null")) ? 0 : int.Parse(value);
         }
         
-        internal static string ParseCol(string raw) {
+        internal static string ParseColor(string raw) {
             if (raw.Length == 0) return raw;
             
             // Try parse color name, then color code
@@ -169,15 +171,19 @@ namespace MCGalaxy.DB {
         }
         
         
-        internal static long BlocksPacked(long placed, long modified) {
-            return placed << LowerBits | modified;
+        internal static long UnpackHi(long value) {
+            return (value >> HiBitsShift) & HiBitsMask;
         }
-        
-        internal static long CuboidPacked(long deleted, long drawn) {
-            return deleted << LowerBits | drawn;
+        internal static long UnpackLo(long value) {
+            return value & LoBitsMask;
+        }
+        internal static long Pack(long hi, long lo) {
+            return hi << HiBitsShift | lo; 
         }
 
-        public const int LowerBits = 38;
-        public const long LowerBitsMask = (1L << LowerBits) - 1;
+        public const int HiBitsShift = 38;
+        public const long LoBitsMask = (1L << HiBitsShift) - 1;
+        // convert negative to positive after shifting
+        public const long HiBitsMask = (1L << 26) - 1;
     }
 }

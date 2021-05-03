@@ -24,6 +24,7 @@ using MCGalaxy.Network;
 using MCGalaxy.Tasks;
 
 namespace MCGalaxy {
+    /// <summary> Checks for and applies software updates. </summary>
     public static class Updater {
         
         public static string parent = Path.GetFileName(Assembly.GetEntryAssembly().Location);
@@ -31,13 +32,13 @@ namespace MCGalaxy {
         public const string UploadsURL = "https://github.com/TheCleverDire/MCMars/tree/master/Uploads";
         const string CurrentVersionFile = BaseURL + "Uploads/current_version.txt";
         #if TEN_BIT_BLOCKS
-        const string DLLLocation = BaseURL + "Uploads/MCGalaxy_infid.dll?raw=true";
+        const string dllURL = BaseURL + "Uploads/MCGalaxy_infid.dll?raw=true";
         #else
-        const string DLLLocation = BaseURL + "Uploads/MCGalaxy_.dll?raw=true";
+        const string dllURL = BaseURL + "Uploads/MCGalaxy_.dll?raw=true";
         #endif
-        const string ChangelogLocation = BaseURL + "Changelog.txt";
-        const string EXELocation = BaseURL + "Uploads/MCGalaxy.exe?raw=true";
-        const string CLILocation = BaseURL + "Uploads/MCGalaxyCLI.exe?raw=true";
+        const string changelogURL = BaseURL + "Changelog.txt";
+        const string guiURL = BaseURL + "Uploads/MCGalaxy.exe?raw=true";
+        const string cliURL = BaseURL + "Uploads/MCGalaxyCLI.exe?raw=true";
 
         public static event EventHandler NewerVersionDetected;
         
@@ -51,10 +52,9 @@ namespace MCGalaxy {
             WebClient client = HttpUtil.CreateWebClient();
 
             try {
-                string raw = client.DownloadString(CurrentVersionFile);
-                Version latestVersion = new Version(raw);
+                string latest = client.DownloadString(CurrentVersionFile);
                 
-                if (latestVersion <= Server.Version) {
+                if (new Version(Server.Version) >= new Version(latest)) {
                     Logger.Log(LogType.SystemActivity, "No update found!");
                 } else if (NewerVersionDetected != null) {
                     NewerVersionDetected(null, EventArgs.Empty);
@@ -69,15 +69,16 @@ namespace MCGalaxy {
         public static void PerformUpdate() {
             try {
                 try {
-                    DeleteFiles("Changelog.txt", "MCGalaxy_.update", "MCGalaxy.update", "MCGalaxyCLI.update");
+                    DeleteFiles("Changelog.txt", "MCGalaxy_.update", "MCGalaxy.update", "MCGalaxyCLI.update",
+                                "prev_MCGalaxy_.dll", "prev_MCGalaxy.exe", "prev_MCGalaxyCLI.exe");
                 } catch {
                 }
                 
                 WebClient client = HttpUtil.CreateWebClient();
-                client.DownloadFile(DLLLocation, "MCGalaxy_.update");
-                client.DownloadFile(EXELocation, "MCGalaxy.update");
-                client.DownloadFile(CLILocation, "MCGalaxyCLI.update");
-                client.DownloadFile(ChangelogLocation, "Changelog.txt");
+                client.DownloadFile(dllURL, "MCGalaxy_.update");
+                client.DownloadFile(guiURL, "MCGalaxy.update");
+                client.DownloadFile(cliURL, "MCGalaxyCLI.update");
+                client.DownloadFile(changelogURL, "Changelog.txt");
 
                 Level[] levels = LevelInfo.Loaded.Items;
                 foreach (Level lvl in levels) {
@@ -87,25 +88,27 @@ namespace MCGalaxy {
                 }
 
                 Player[] players = PlayerInfo.Online.Items;
-                foreach (Player pl in players) pl.save();
+                foreach (Player pl in players) pl.SaveStats();
                 
-                bool mono = Type.GetType("Mono.Runtime") != null;
-                if (!mono) {
-                    Process.Start("Updater.exe", "securitycheck10934579068013978427893755755270374" + parent);
-                } else {
-                    string path = Path.Combine(Utils.FolderPath, "Updater.exe");
-                    Process.Start("mono", path + " securitycheck10934579068013978427893755755270374" + parent);
-                }
-                Server.Stop(false, "Updating server.");
+                // Move current files to previous files (by moving instead of copying, 
+                //  can overwrite original the files without breaking the server)
+                FileIO.TryMove("MCGalaxy_.dll",   "prev_MCGalaxy_.dll");
+                FileIO.TryMove("MCGalaxy.exe",    "prev_MCGalaxy.exe");
+                FileIO.TryMove("MCGalaxyCLI.exe", "prev_MCGalaxyCLI.exe");
+                
+                // Move update files to current files
+                File.Move("MCGalaxy_.update",   "MCGalaxy_.dll");
+                File.Move("MCGalaxy.update",    "MCGalaxy.exe");
+                File.Move("MCGalaxyCLI.update", "MCGalaxyCLI.exe");                             
+
+                Server.Stop(true, "Updating server.");
             } catch (Exception ex) {
                 Logger.LogError("Error performing update", ex);
             }
         }
         
-        static void DeleteFiles(params string[] files) {
-            foreach (string f in files) {
-                if (File.Exists(f)) File.Delete(f);
-            }
+        static void DeleteFiles(params string[] paths) {
+            foreach (string path in paths) { FileIO.TryDelete(path); }
         }
     }
 }

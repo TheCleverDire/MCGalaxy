@@ -64,21 +64,10 @@ namespace MCGalaxy {
         public static bool MapExists(string name) {
             return File.Exists(MapPath(name));
         }
-        
-        
-        /// <summary> Relative path of a deleted level's map file </summary>
-        public static string DeletedPath(string name) {
-            return "levels/deleted/" + name + ".lvl";
-        }
-        
+                
         /// <summary> Relative path of a level's map file </summary>
         public static string MapPath(string name) {
             return "levels/" + name.ToLower() + ".lvl";
-        }
-        
-        /// <summary> Relative path of a level's previous save map file </summary>
-        public static string PrevPath(string name) {
-            return "levels/prev/" + name.ToLower() + ".lvl.prev";
         }
         
 
@@ -132,9 +121,9 @@ namespace MCGalaxy {
             return cfg;
         }
         
-        internal static bool Check(Player p, LevelPermission plRank, string map, string action) {
+        public static bool Check(Player p, LevelPermission plRank, string map, string action, out LevelConfig cfg) {
+            Level lvl; cfg = GetConfig(map, out lvl);
             if (p.IsConsole) return true;
-            Level lvl; LevelConfig cfg = GetConfig(map, out lvl);
             if (lvl != null) return Check(p, plRank, lvl, action);
             
             AccessController visit = new LevelAccessController(cfg, map, true);
@@ -145,7 +134,12 @@ namespace MCGalaxy {
             return true;
         }
         
-        internal static bool Check(Player p, LevelPermission plRank, Level lvl, string action) {
+        public static bool Check(Player p, LevelPermission plRank, string map, string action) {
+            LevelConfig ignored;
+            return Check(p, plRank, map, action, out ignored);
+        }
+        
+        public static bool Check(Player p, LevelPermission plRank, Level lvl, string action) {
             if (p.IsConsole) return true;
             if (!lvl.VisitAccess.CheckDetailed(p, plRank) || !lvl.BuildAccess.CheckDetailed(p, plRank)) {
                 p.Message("Hence, you cannot {0}.", action); return false;
@@ -155,7 +149,7 @@ namespace MCGalaxy {
         
         public static bool ValidName(string map) {
             foreach (char c in map) {
-                if (!IDatabaseBackend.ValidNameChar(c)) return false;
+                if (!Database.ValidNameChar(c)) return false;
             }
             return true;
         }
@@ -163,7 +157,14 @@ namespace MCGalaxy {
         public static bool IsRealmOwner(string name, string map) {
             Level lvl = null;
             LevelConfig cfg = GetConfig(map, out lvl); 
-            
+            return IsRealmOwner(map, cfg, name);
+        }
+        
+        public static bool IsRealmOwner(Level lvl, string name) {
+            return IsRealmOwner(lvl.name, lvl.Config, name);
+        }
+        
+        public static bool IsRealmOwner(string map, LevelConfig cfg, string name) {
             string[] owners = cfg.RealmOwner.SplitComma();
             if (owners.Length > 0) {
                 foreach (string owner in owners) {

@@ -25,9 +25,9 @@ using MCGalaxy.Tasks;
 
 namespace MCGalaxy.Core {
 
-    public sealed class CorePlugin : Plugin_Simple {
+    public sealed class CorePlugin : Plugin {
         public override string creator { get { return Server.SoftwareName + " team"; } }
-        public override string MCGalaxy_Version { get { return Server.VersionString; } }
+        public override string MCGalaxy_Version { get { return Server.Version; } }
         public override string name { get { return "CorePlugin"; } }
         SchedulerTask clearTask;
 

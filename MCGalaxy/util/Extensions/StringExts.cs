@@ -18,10 +18,11 @@
 using System;
 
 namespace MCGalaxy {
-    
+
+    /// <summary> Extension methods relating to strings. </summary>
     public static class StringExts {
 
-        /// <summary> Sets the first character of the input string touppercase. </summary>
+        /// <summary> Sets the first character of the input string to uppercase. </summary>
         public static string Capitalize(this string str) {
             if (String.IsNullOrEmpty(str)) return str;
             
@@ -36,6 +37,11 @@ namespace MCGalaxy {
             
             if (str[str.Length - 1] != '+') return str;
             return str.Substring(0, str.Length - 1);
+        }
+
+        /// <summary> Returns whether line is empty or starts with a #. </summary>
+        public static bool IsCommentLine(this string line) {
+            return line.Length == 0 || line[0] == '#';
         }
         
         

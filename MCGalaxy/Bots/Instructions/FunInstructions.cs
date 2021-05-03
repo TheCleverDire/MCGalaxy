@@ -48,18 +48,18 @@ namespace MCGalaxy.Bots {
             return data;
         }
         
-       public override void Output(Player p, string[] args, StreamWriter w) {
+       public override void Output(Player p, string[] args, TextWriter w) {
             string time  = args.Length > 3 ? args[3] : "10";
             string speed = args.Length > 4 ? args[4] : "2";
             w.WriteLine(Name + " " + short.Parse(time) + " " + short.Parse(speed));
         }
         
         public override string[] Help { get { return help; } }
-        static string[] help = new string[] { "%T/BotAI add [name] spin <interval> <speed>",
-            "%HCauses the bot to spin around for a period of time.",
-            "%H  <interval> is in tenths of a second, so an interval of 20 means " +
+        static string[] help = new string[] { "&T/BotAI add [name] spin <interval> <speed>",
+            "&HCauses the bot to spin around for a period of time.",
+            "&H  <interval> is in tenths of a second, so an interval of 20 means " +
             "spin for two seconds. (defaults to 1 second)",
-            "%H  <speed> sets how fast the bot spins. (defaults to 2)",
+            "&H  <speed> sets how fast the bot spins. (defaults to 2)",
         };
     }
     
@@ -96,11 +96,11 @@ namespace MCGalaxy.Bots {
         }
         
         public override string[] Help { get { return help; } }
-        static string[] help = new string[] { "%T/BotAI add [name] nod <interval> <speed>",
-            "%HCauses the bot to nod up and down for a period of time.",
-            "%H  <interval> is in tenths of a second, so an interval of 20 means " +
+        static string[] help = new string[] { "&T/BotAI add [name] nod <interval> <speed>",
+            "&HCauses the bot to nod up and down for a period of time.",
+            "&H  <interval> is in tenths of a second, so an interval of 20 means " +
             "nod for two seconds. (defaults to 1 second)",
-            "%H  <speed> sets how fast the bot nods. (defaults to 2)",
+            "&H  <speed> sets how fast the bot nods. (defaults to 2)",
         };
     }
 }

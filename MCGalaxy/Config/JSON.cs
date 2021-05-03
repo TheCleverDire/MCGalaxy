@@ -5,75 +5,87 @@ using System.IO;
 using System.Text;
 
 namespace MCGalaxy.Config {
-
-    public class JsonContext {
-        public string Val; public int Idx; public bool Success = true;
-        public char Cur { get { return Val[Idx]; } }
-        internal StringBuilder strBuffer = new StringBuilder(96);
-    }
     
-    public sealed class JsonArray : List<object> { }
+    public sealed class JsonArray  : List<object> { }
     
-    public sealed class JsonObject {
-        // NOTE: BlockDefinitions entries have about 30 members
-        public List<string> Keys = new List<string>(30);
-        public List<object> Values = new List<object>(30);
+    public sealed class JsonObject : Dictionary<string, object> {
+        public object Meta;
         
         public void Deserialise(ConfigElement[] elems, object instance) {
-            for (int i = 0; i < Keys.Count; i++) {
-                ConfigElement.Parse(elems, instance, Keys[i], (string)Values[i]);
+            foreach (var kvp in this) {
+                ConfigElement.Parse(elems, instance, kvp.Key, (string)kvp.Value);
             }
         }
     }
     
-    public static class Json {
-        const int T_NONE = 0, T_NUM = 1, T_TRUE = 2, T_FALSE = 3, T_NULL = 4;
+    public delegate void JsonOnMember(JsonObject obj, string key, object value);
+    
+    /// <summary> Implements a simple JSON parser. </summary>
+    public sealed class JsonReader {
+        public readonly string Value;
+        /// <summary> Whether an error occurred while parsing the given JSON. </summary>
+        public bool Failed;
+        /// <summary> Callback invoked when a member of an object has been parsed. </summary>
+        public JsonOnMember OnMember;
         
+        int offset;
+        char Cur { get { return Value[offset]; } }
+        StringBuilder strBuffer = new StringBuilder(96);
+        
+        public JsonReader(string value) {
+            Value    = value;
+            OnMember = DefaultOnMember;
+        }
+        
+        static void DefaultOnMember(JsonObject obj, string key, object value) { obj[key] = value; }
+        
+        
+        const int T_NONE = 0, T_NUM = 1, T_TRUE = 2, T_FALSE = 3, T_NULL = 4;
         static bool IsWhitespace(char c) {
             return c == '\r' || c == '\n' || c == '\t' || c == ' ';
         }
         
-        static bool NextConstant(JsonContext ctx, string value) {
-            if (ctx.Idx + value.Length > ctx.Val.Length) return false;
+        bool NextConstant(string value) {
+            if (offset + value.Length > Value.Length) return false;
             
             for (int i = 0; i < value.Length; i++) {
-                if (ctx.Val[ctx.Idx + i] != value[i]) return false;
+                if (Value[offset + i] != value[i]) return false;
             }
             
-            ctx.Idx += value.Length; return true;
+            offset += value.Length; return true;
         }
         
-        static int NextToken(JsonContext ctx) {
-            for (; ctx.Idx < ctx.Val.Length && IsWhitespace(ctx.Cur); ctx.Idx++);
-            if (ctx.Idx >= ctx.Val.Length) return T_NONE;
+        int NextToken() {
+            for (; offset < Value.Length && IsWhitespace(Cur); offset++);
+            if (offset >= Value.Length) return T_NONE;
             
-            char c = ctx.Cur; ctx.Idx++;
+            char c = Cur; offset++;
             if (c == '{' || c == '}') return c;
             if (c == '[' || c == ']') return c;
             if (c == ',' || c == '"' || c == ':') return c;
             
             if (IsNumber(c)) return T_NUM;
-            ctx.Idx--;
+            offset--;
             
-            if (NextConstant(ctx, "true"))  return T_TRUE;
-            if (NextConstant(ctx, "false")) return T_FALSE;
-            if (NextConstant(ctx, "null"))  return T_NULL;
+            if (NextConstant("true"))  return T_TRUE;
+            if (NextConstant("false")) return T_FALSE;
+            if (NextConstant("null"))  return T_NULL;
             
             // invalid token
-            ctx.Idx++; return T_NONE;
+            offset++; return T_NONE;
         }
         
-        public static object ParseStream(JsonContext ctx) {
-            return ParseValue(NextToken(ctx), ctx);
-        }
+        /// <summary> Parses the given JSON and then returns the root element. </summary>
+        /// <returns> Either a JsonObject, a JsonArray, a string, or null </returns>
+        public object Parse() { return ParseValue(NextToken()); }
         
-        static object ParseValue(int token, JsonContext ctx) {
+        object ParseValue(int token) {
             switch (token) {
-                case '{': return ParseObject(ctx);
-                case '[': return ParseArray(ctx);
-                case '"': return ParseString(ctx);
+                case '{': return ParseObject();
+                case '[': return ParseArray();
+                case '"': return ParseString();
                     
-                case T_NUM:   return ParseNumber(ctx);
+                case T_NUM:   return ParseNumber();
                 case T_TRUE:  return "true";
                 case T_FALSE: return "false";
                 case T_NULL:  return null;
@@ -82,87 +94,93 @@ namespace MCGalaxy.Config {
             }
         }
         
-        static JsonObject ParseObject(JsonContext ctx) {
-            JsonObject members = new JsonObject();
+        JsonObject ParseObject() {
+            JsonObject obj = new JsonObject();
             while (true) {
-                int token = NextToken(ctx);
+                int token = NextToken();
                 if (token == ',') continue;
-                if (token == '}') return members;
+                if (token == '}') return obj;
                 
-                if (token != '"') { ctx.Success = false; return null; }
-                string key = ParseString(ctx);
+                if (token != '"') { Failed = true; return null; }
+                string key = ParseString();
                 
-                token = NextToken(ctx);
-                if (token != ':') { ctx.Success = false; return null; }
+                token = NextToken();
+                if (token != ':') { Failed = true; return null; }
                 
-                token = NextToken(ctx);
-                if (token == T_NONE) { ctx.Success = false; return null; }
+                token = NextToken();
+                if (token == T_NONE) { Failed = true; return null; }
                 
-                object value = ParseValue(token, ctx);
-                members.Keys.Add(key);
-                members.Values.Add(value);
+                object value = ParseValue(token);
+                OnMember(obj, key, value);
             }
         }
         
-        static JsonArray ParseArray(JsonContext ctx) {
-            JsonArray elements = new JsonArray();
+        JsonArray ParseArray() {
+            JsonArray arr = new JsonArray();
             while (true) {
-                int token = NextToken(ctx);
+                int token = NextToken();
                 if (token == ',') continue;
-                if (token == ']') return elements;
+                if (token == ']') return arr;
                 
-                if (token == T_NONE) { ctx.Success = false; return null; }
-                elements.Add(ParseValue(token, ctx));
+                if (token == T_NONE) { Failed = true; return null; }
+                arr.Add(ParseValue(token));
             }
         }
         
-        static string ParseString(JsonContext ctx) {
-            StringBuilder s = ctx.strBuffer; s.Length = 0;
+        string ParseString() {
+            StringBuilder s = strBuffer; s.Length = 0;
             
-            for (; ctx.Idx < ctx.Val.Length;) {
-                char c = ctx.Cur; ctx.Idx++;
+            for (; offset < Value.Length;) {
+                char c = Cur; offset++;
                 if (c == '"') return s.ToString();
                 if (c != '\\') { s.Append(c); continue; }
                 
-                if (ctx.Idx >= ctx.Val.Length) break;
-                c = ctx.Cur; ctx.Idx++;
+                if (offset >= Value.Length) break;
+                c = Cur; offset++;
                 if (c == '/' || c == '\\' || c == '"') { s.Append(c); continue; }
                 
                 if (c != 'u') break;
-                if (ctx.Idx + 4 > ctx.Val.Length) break;
+                if (offset + 4 > Value.Length) break;
                 
                 // form of \uYYYY
-                int aH = Colors.UnHex(ctx.Val[ctx.Idx + 0]);
-                int aL = Colors.UnHex(ctx.Val[ctx.Idx + 1]);
-                int bH = Colors.UnHex(ctx.Val[ctx.Idx + 2]);
-                int bL = Colors.UnHex(ctx.Val[ctx.Idx + 3]);
+                int aH = Colors.UnHex(Value[offset + 0]);
+                int aL = Colors.UnHex(Value[offset + 1]);
+                int bH = Colors.UnHex(Value[offset + 2]);
+                int bL = Colors.UnHex(Value[offset + 3]);
                 
                 if (aH == -1 || aL == -1 || bH == -1 || bL == -1) break;
                 int codePoint = (aH << 12) | (aL << 8) | (bH << 4) | bL;
                 s.Append((char)codePoint);
-                ctx.Idx += 4;
+                offset += 4;
             }
             
-            ctx.Success = false; return null;
+            Failed = true; return null;
         }
         
         static bool IsNumber(char c) {
             return c == '-' || c == '.' || (c >= '0' && c <= '9');
         }
         
-        static string ParseNumber(JsonContext ctx) {
-            int start = ctx.Idx - 1;
-            for (; ctx.Idx < ctx.Val.Length && IsNumber(ctx.Cur); ctx.Idx++);
-            return ctx.Val.Substring(start, ctx.Idx - start);
+        string ParseNumber() {
+            int start = offset - 1;
+            for (; offset < Value.Length && IsNumber(Cur); offset++);
+            return Value.Substring(start, offset - start);
         }
-        
+    }
+    
+    public class JsonWriter {
+        readonly TextWriter w;
+        public JsonWriter(TextWriter dst) { w = dst; }
         
         static char Hex(char c, int shift) {
             int x = (c >> shift) & 0x0F;
             return (char)(x <= 9 ? ('0' + x) : ('a' + (x - 10)));
         }
         
-        static void WriteString(StreamWriter w, string value) {
+        public void WriteNull() { w.Write("null"); }
+        public void Write(string value) { w.Write(value); }
+        
+        public void WriteString(string value) {
             w.Write('"');
             foreach (char c in value) {
                 if (c == '/')         { w.Write("\\/");
@@ -178,18 +196,111 @@ namespace MCGalaxy.Config {
             w.Write('"');
         }
         
-        static void WriteValue(StreamWriter w, ConfigAttribute a, string value) {
-            if (String.IsNullOrEmpty(value)) {
-                w.Write("null");
-            } else if (a is ConfigBoolAttribute || a is ConfigIntegerAttribute || a is ConfigRealAttribute) {
-                w.Write(value);
+        public void WriteArray<T>(IList<T> array) {
+            w.Write("[\r\n");
+            string separator = "";
+            
+            for (int i = 0; i < array.Count; i++) {
+                w.Write(separator);
+                object value = array[i];               
+                WriteValue(value);
+                separator = ",\r\n";
+            }
+            w.Write("]\r\n");
+        }
+        
+        public void WriteObject(object value) {
+            w.Write("{\r\n");
+            SerialiseObject(value);
+            w.Write("\r\n}");
+        }
+        
+        internal void WriteObjectKey(string name) {
+            Write("    "); WriteString(name); Write(": ");
+        }
+        
+        
+        protected virtual void WriteValue(object value) {
+            // TODO this is awful code
+            if (value == null) {
+                WriteNull();
+            } else if (value is int) {
+                Write(value.ToString());
+            } else if (value is bool) {
+                bool val = (bool)value;
+                Write(val ? "true" : "false");
+            } else if (value is string) {
+                WriteString((string)value);
+            } else if (value is JsonArray) {
+                WriteArray((JsonArray)value);
+            }  else if (value is JsonObject) {
+                WriteObject(value);
             } else {
-                WriteString(w, value);
+                throw new InvalidOperationException("Unknown datatype: " + value.GetType());
             }
         }
         
-        public static void Serialise(StreamWriter w, ConfigElement[] elems, object instance) {
-            w.Write("{\r\n");
+        protected virtual void SerialiseObject(object value) {
+            string separator = null;
+            JsonObject obj   = (JsonObject)value;
+            
+            foreach (var kvp in obj) {
+                Write(separator);
+                WriteObjectKey(kvp.Key);
+                WriteValue(kvp.Value);
+                separator = ",\r\n";
+            }
+        }
+    }
+    
+    public class JsonConfigWriter : JsonWriter {
+        ConfigElement[] elems;    
+        public JsonConfigWriter(TextWriter dst, ConfigElement[] cfg) : base(dst) { elems = cfg; }
+        
+        // Only ever write an object
+        protected override void WriteValue(object value) { WriteObject(value); }
+        
+        void WriteConfigValue(ConfigAttribute a, string value) {
+            if (String.IsNullOrEmpty(value)) {
+                WriteNull();
+            } else if (a is ConfigBoolAttribute || a is ConfigIntegerAttribute || a is ConfigRealAttribute) {
+                Write(value);
+            } else {
+                WriteString(value);
+            }
+        }
+        
+        protected override void SerialiseObject(object value) {
+            string separator = null;
+            
+            for (int i = 0; i < elems.Length; i++) {
+                ConfigElement elem = elems[i];
+                ConfigAttribute a  = elem.Attrib;
+                Write(separator);
+                
+                WriteObjectKey(a.Name);
+                object raw  = elem.Field.GetValue(value);
+                string text = elem.Attrib.Serialise(raw);
+                
+                WriteConfigValue(a, text);
+                separator = ",\r\n";
+            }
+        }
+    }
+    
+    public static class JsonSerialisers {
+        
+        static void WriteConfigValue(JsonWriter w, ConfigAttribute a, string value) {
+            if (String.IsNullOrEmpty(value)) {
+                w.WriteNull();
+            } else if (a is ConfigBoolAttribute || a is ConfigIntegerAttribute || a is ConfigRealAttribute) {
+                w.Write(value);
+            } else {
+                w.WriteString(value);
+            }
+        }
+        
+        public static void WriteConfig(JsonWriter w, ConfigElement[] elems, object instance) {
             string separator = null;
             
             for (int i = 0; i < elems.Length; i++) {
@@ -197,14 +308,39 @@ namespace MCGalaxy.Config {
                 ConfigAttribute a = elem.Attrib;
                 w.Write(separator);
                 
-                w.Write("    "); WriteString(w, a.Name); w.Write(": ");
+                w.WriteObjectKey(a.Name);
                 object raw = elem.Field.GetValue(instance);
                 string value = elem.Attrib.Serialise(raw);
                 
-                WriteValue(w, a, value);
+                WriteConfigValue(w, a, value);
                 separator = ",\r\n";
             }
-            w.Write("\r\n}");
+        }
+    }
+    
+    public static class Json {
+        
+        [Obsolete("Use JsonReader instead")]
+        public static object Parse(string s, out bool success) {
+            JsonReader reader = new JsonReader(s);
+            object obj = reader.Parse();
+            success    = !reader.Failed;
+            return obj;
+        }
+        
+        [Obsolete("Use JsonWriter instead")]
+        public static void Serialise(TextWriter dst, ConfigElement[] elems, object instance) {
+            JsonConfigWriter w = new JsonConfigWriter(dst, elems);
+            w.WriteObject(instance);
+        }
+        
+        /// <summary> Shorthand for serialising an object to a JSON object </summary>
+        public static string SerialiseObject(object obj) {
+            StringWriter dst  = new StringWriter();
+            JsonWriter   w    = new JsonWriter(dst);
+            
+            w.WriteObject(obj);
+            return dst.ToString();
         }
     }
 }

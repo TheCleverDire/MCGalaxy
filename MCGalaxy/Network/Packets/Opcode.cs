@@ -68,5 +68,13 @@ namespace MCGalaxy.Network {
         public const byte CpeSetEntityProperty = 42;
         public const byte CpeTwoWayPing = 43;
         public const byte CpeSetInventoryOrder = 44;
+        public const byte CpeSetHotbar = 45;
+        public const byte CpeSetSpawnpoint = 46;
+        public const byte CpeVelocityControl = 47;
+        public const byte CpeDefineEffect = 48;
+        public const byte CpeSpawnEffect = 49;
+        public const byte CpeDefineModel = 50;
+        public const byte CpeDefineModelPart = 51;
+        public const byte CpeUndefineModel = 52;
     }
 }

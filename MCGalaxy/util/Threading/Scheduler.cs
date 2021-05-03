@@ -17,17 +17,19 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 
 namespace MCGalaxy.Tasks {
     public delegate void SchedulerCallback(SchedulerTask task);
     
-    public sealed partial class Scheduler {
+    public sealed class Scheduler {
 
         readonly List<SchedulerTask> tasks = new List<SchedulerTask>();
         readonly AutoResetEvent handle = new AutoResetEvent(false);
         readonly Thread thread;
         readonly object taskLock = new object();
+        volatile SchedulerTask curTask; // for .ToString()
 
         public Scheduler(string name) {
             thread = new Thread(Loop);
@@ -59,8 +61,8 @@ namespace MCGalaxy.Tasks {
             }
         }
         
-        /// <summary> Rechecks minimum delay for next task. 
-        /// Useful for when external code changes the delay of a scheduled task. </summary>
+        /// <summary> Recalculates the delay until there is a task to execute. </summary>
+        /// <remarks> Useful for when external code changes the delay of a scheduled task. </remarks>
         public void Recheck() {
             lock (taskLock) {
                 handle.Set();
@@ -99,11 +101,13 @@ namespace MCGalaxy.Tasks {
         }
 
         void DoTask(SchedulerTask task) {
+            curTask = task;
             try {
                 task.Callback(task);
             } catch (Exception ex) {
                 Logger.LogError(ex);
             }
+            curTask = null;
             
             if (task.Repeating) {
                 task.NextRun = DateTime.UtcNow.Add(task.Delay);
@@ -128,6 +132,17 @@ namespace MCGalaxy.Tasks {
                 }
             }
             return wait == int.MaxValue ? -1 : (int)wait;
+        }
+        
+        public override string ToString() {
+            SchedulerTask cur = curTask;
+            string str = tasks.Count + " tasks";
+            
+            if (cur != null) {
+                MethodInfo method = cur.Callback.Method;
+                str += " (currently executing " + method.DeclaringType.FullName + "." + method.Name + ")";
+            }
+            return str;
         }
     }
 

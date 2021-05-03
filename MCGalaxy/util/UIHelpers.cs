@@ -38,7 +38,7 @@ namespace MCGalaxy.UI {
                 Logger.Log(LogType.CommandUsage, "(console): Cannot repeat command - no commands used yet.");
                 return;
             }
-            Logger.Log(LogType.CommandUsage, "Repeating %T/" + lastCMD);
+            Logger.Log(LogType.CommandUsage, "Repeating &T/" + lastCMD);
             HandleCommand(lastCMD);
         }
         
@@ -112,8 +112,8 @@ namespace MCGalaxy.UI {
                 if (i == message.Length - 1) return -1;
                 
                 // Check following character is an actual colour code
-                char col = message[i + 1];
-                if (Colors.Map(ref col)) return i;
+                char col = Colors.Lookup(message[i + 1]);
+                if (col != '\0') return i;
             }
             return -1;
         }

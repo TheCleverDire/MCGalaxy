@@ -31,16 +31,20 @@ namespace MCGalaxy.Games {
             if (!Running) return;
             
             RoundInProgress = true;
-            while (Blue.Captures < cfg.RoundPoints && Red.Captures < cfg.RoundPoints) {
-                if (!Running) return;
-                if (!RoundInProgress) break;
+            while (Running && RoundInProgress && !HasSomeoneWon()) {
                 Tick();
                 Thread.Sleep(300);
             }
         }
+              
+        bool HasSomeoneWon() {
+            return Blue.Captures >= cfg.RoundPoints || Red.Captures >= cfg.RoundPoints;
+        }
         
         void Tick() {
+            int dist = (int)(Config.TagDistance * 32);
             Player[] online = PlayerInfo.Online.Items;
+            
             foreach (Player p in online) {
                 if (p.level != Map) continue;
                 CtfTeam team = TeamOf(p);
@@ -55,11 +59,11 @@ namespace MCGalaxy.Games {
                 
                 Player[] opponents = opposing.Members.Items;
                 foreach (Player other in opponents) {
-                    if (!MovementCheck.InRange(p, other, 2 * 32)) continue;
+                    if (!InRange(p, other, dist)) continue;
                     CtfData otherData = Get(other);
 
                     otherData.TagCooldown = true;
-                    other.Message(p.ColoredName + " %Stagged you!");
+                    other.Message(p.ColoredName + " &Stagged you!");
                     PlayerActions.Respawn(other);
                     Thread.Sleep(300); // TODO: get rid of this
                     
@@ -96,9 +100,9 @@ namespace MCGalaxy.Games {
             RoundInProgress = false;
             
             if (Blue.Captures > Red.Captures) {
-                Map.Message(Blue.ColoredName + " %Swon this round of CTF!");
+                Map.Message(Blue.ColoredName + " &Swon this round of CTF!");
             } else if (Red.Captures > Blue.Captures) {
-                Map.Message(Red.ColoredName + " %Swon this round of CTF!");
+                Map.Message(Red.ColoredName + " &Swon this round of CTF!");
             } else {
                 Map.Message("The round ended in a tie!");
             }
@@ -114,7 +118,7 @@ namespace MCGalaxy.Games {
         /// <summary> Called when the given player takes the opposing team's flag. </summary>
         void TakeFlag(Player p, CtfTeam team) {
             CtfTeam opposing = Opposing(team);
-            Map.Message(team.Color + p.DisplayName + " took the " + opposing.ColoredName + " %Steam's FLAG");
+            Map.Message(team.Color + p.DisplayName + " took the " + opposing.ColoredName + " &Steam's FLAG");
             
             CtfData data = Get(p);
             data.HasFlag = true;
@@ -125,7 +129,6 @@ namespace MCGalaxy.Games {
         void ReturnFlag(Player p, CtfTeam team) {
             Vec3U16 flagPos = team.FlagPos;
             p.RevertBlock(flagPos.X, flagPos.Y, flagPos.Z);
-            p.cancelBlock = true;
             
             CtfData data = Get(p);
             if (data.HasFlag) {

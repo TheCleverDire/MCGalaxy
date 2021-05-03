@@ -28,6 +28,8 @@ namespace MCGalaxy {
         public LevelPermission MinRank;
         public List<LevelPermission> Allowed, Disallowed;
         
+        public ItemPerms(LevelPermission min) { Init(min, null, null); }
+        
         public ItemPerms(LevelPermission min, List<LevelPermission> allowed,
                          List<LevelPermission> disallowed) {
             Init(min, allowed, disallowed);
@@ -50,13 +52,13 @@ namespace MCGalaxy {
         }
         
         public void Describe(StringBuilder builder) {
-            builder.Append(Group.GetColoredName(MinRank) + "%S+");
+            builder.Append(Group.GetColoredName(MinRank) + "&S+");
             
             if (Allowed != null && Allowed.Count > 0) {
                 foreach (LevelPermission perm in Allowed) {
                     builder.Append(", " + Group.GetColoredName(perm));
                 }
-                builder.Append("%S");
+                builder.Append("&S");
             }
             
             if (Disallowed != null && Disallowed.Count > 0) {
@@ -65,7 +67,7 @@ namespace MCGalaxy {
                     builder.Append(Group.GetColoredName(perm) + ", ");
                 }
                 builder.Remove(builder.Length - 2, 2);
-                builder.Append("%S)");
+                builder.Append("&S)");
             }
         }
         

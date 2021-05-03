@@ -32,7 +32,7 @@ namespace MCGalaxy.Commands.Eco {
             int matches = 1;
             Player who = PlayerInfo.FindMatches(p, trans.TargetName, out matches);
             if (matches > 1) return;
-            if (p == who) { p.Message("%WYou cannot take &3" + Server.Config.Currency + " %Wfrom yourself"); return; }
+            if (p == who) { p.Message("&WYou cannot take &3" + Server.Config.Currency + " &Wfrom yourself"); return; }
             
             int money = 0;
             if (who == null) {
@@ -49,7 +49,7 @@ namespace MCGalaxy.Commands.Eco {
                 who.SetMoney(money);
             }
             
-            trans.TargetFormatted = PlayerInfo.GetColoredName(p, trans.TargetName);
+            trans.TargetFormatted = p.FormatNick(trans.TargetName);
             trans.Type = EcoTransactionType.Take;
             OnEcoTransactionEvent.Call(trans);
         }
@@ -64,10 +64,10 @@ namespace MCGalaxy.Commands.Eco {
         }
         
         public override void Help(Player p){
-            p.Message("%T/Take [player] [amount] <reason>");
-            p.Message("%HTakes [amount] of &3" + Server.Config.Currency + " %Sfrom [player]");
-            p.Message("%T/Take [player] all <reason>");
-            p.Message("%HTakes all the &3" + Server.Config.Currency + " %Sfrom [player]");
+            p.Message("&T/Take [player] [amount] <reason>");
+            p.Message("&HTakes [amount] of &3" + Server.Config.Currency + " &Sfrom [player]");
+            p.Message("&T/Take [player] all <reason>");
+            p.Message("&HTakes all the &3" + Server.Config.Currency + " &Sfrom [player]");
         }
     }
 }

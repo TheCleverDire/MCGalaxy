@@ -44,15 +44,15 @@ namespace MCGalaxy.Commands.Info {
                 p.Message("No players last played with the given IP.");
             } else {
                 p.Message("These players have the same IP:");
-                p.Message(accounts.Join(alt => PlayerInfo.GetColoredName(p, alt)));
+                p.Message(accounts.Join(alt => p.FormatNick(alt)));
             }
         }
 
         public override void Help(Player p) {
-            p.Message("%T/Clones [name]");
-            p.Message("%HFinds everyone with the same IP as [name]");
-            p.Message("%T/Clones [ip address]");
-            p.Message("%HFinds everyone who last played or is playing on the given IP");
+            p.Message("&T/Clones [name]");
+            p.Message("&HFinds everyone with the same IP as [name]");
+            p.Message("&T/Clones [ip address]");
+            p.Message("&HFinds everyone who last played or is playing on the given IP");
         }
     }
 }

@@ -16,7 +16,6 @@
     permissions and limitations under the Licenses.
  */
 using System;
-using System.Collections.Generic;
 
 namespace MCGalaxy.Commands.World {
     public sealed class CmdRenameLvl : Command2 {
@@ -31,31 +30,22 @@ namespace MCGalaxy.Commands.World {
         public override void Use(Player p, string message, CommandData data) {
             string[] args = message.SplitSpaces();
             if (args.Length != 2) { Help(p); return; }
+            LevelConfig cfg;
+                       
+            string src = Matcher.FindMaps(p, args[0]);
+            if (src == null) return;
+            if (!LevelInfo.Check(p, data.Rank, src, "rename this map", out cfg)) return;
             
-            Level lvl = Matcher.FindLevels(p, args[0]);
-            if (lvl == null) return;
-            string newMap = args[1].ToLower();
-            if (!Formatter.ValidMapName(p, newMap)) return;
-            
-            if (LevelInfo.MapExists(newMap)) { p.Message("Level already exists."); return; }
-            if (lvl == Server.mainLevel) { p.Message("Cannot rename the main level."); return; }
-            if (!LevelInfo.Check(p, data.Rank, lvl, "rename this level")) return;
-            
-            List<Player> players = lvl.getPlayers();
-            lvl.Unload();
-            
-            LevelActions.Rename(lvl.name, newMap);
-            LevelActions.Load(p, newMap, true);
-            Chat.MessageGlobal("Renamed {0} to {1}", lvl.name, newMap);
-            // Move all the old players to the renamed map
-            foreach (Player pl in players)
-                PlayerActions.ChangeMap(pl, newMap);
+            string dst = args[1].ToLower();
+            if (!Formatter.ValidMapName(p, dst)) return;
+
+            if (!LevelActions.Rename(p, src, dst)) return;
+            Chat.MessageGlobal("Level {0} &Swas renamed to {1}", cfg.Color + src, cfg.Color + dst);
         }
         
         public override void Help(Player p) {
-            p.Message("%T/RenameLvl [level] [new name]");
-            p.Message("%HRenames [level] to [new name]");
-            p.Message("%HNote: Portals going to [level] will no longer work.");
+            p.Message("&T/RenameLvl [level] [new name]");
+            p.Message("&HRenames [level] to [new name]");
         }
     }
 }

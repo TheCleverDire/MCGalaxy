@@ -43,7 +43,7 @@ namespace MCGalaxy.Network {
             IP = ip; Port = port;
             
             try {
-                socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);               
+                socket = new Socket(ip.AddressFamily, SocketType.Stream, ProtocolType.Tcp);           
                 socket.Bind(new IPEndPoint(ip, port));
                 
                 socket.Listen((int)SocketOptionName.MaxConnections);

@@ -61,7 +61,7 @@ namespace MCGalaxy.Network {
         public override string GetHeartbeatData()  {
             string name = Server.Config.Name;
             OnSendingHeartbeatEvent.Call(this, ref name);
-            name = Colors.Strip(name);
+            name = Colors.StripUsed(name);
             
             return
                 "&port="     + Server.Config.Port +
@@ -70,7 +70,7 @@ namespace MCGalaxy.Network {
                 "&public="   + Server.Config.Public +
                 "&version=7" +
                 "&salt="     + Server.salt +
-                "&users="    + PlayerInfo.NonHiddenCount() +
+                "&users="    + PlayerInfo.NonHiddenUniqueIPCount() +
                 "&software=" + Uri.EscapeDataString(Server.SoftwareNameVersioned) +
                 "&web="      + Server.Config.WebClient;
         }
@@ -93,7 +93,7 @@ namespace MCGalaxy.Network {
             Server.Hash = hash;
             Server.URL = response;
             
-            if (!response.Contains("\"errors\": [")) {
+            if (!response.Contains("\"errors\":")) {
                 Server.UpdateUrl(Server.URL);
                 File.WriteAllText("text/externalurl.txt", Server.URL);
                 Logger.Log(LogType.SystemActivity, "ClassiCube URL found: " + Server.URL);
@@ -108,23 +108,23 @@ namespace MCGalaxy.Network {
         }
         
         static string GetError(string json) {
-            JsonContext ctx = new JsonContext(); ctx.Val = json;
-            JsonObject obj = (JsonObject)Json.ParseStream(ctx);
-            if (obj == null) return null;
+            JsonReader reader = new JsonReader(json);
+            string error = null;
             
-            for (int i = 0; i < obj.Keys.Count; i++) {
-                if (!obj.Keys[i].CaselessEq("errors")) continue;
-                object value = obj.Values[i];
-                if (value == null) return null;
+            // silly design, but form of json is: "errors": [ ["Error1"], ["Error2"] ]
+            reader.OnMember = (obj, key, value) => {
+                if (key != "errors") return;                
+                JsonArray errors = value as JsonArray;
+                if (errors == null) return;
                 
-                // silly design, but form of json is: "errors": [ ["Error1"], ["Error2"] ]
-                JsonArray errors = (JsonArray)value;
                 foreach (object raw in errors) {
-                    JsonArray error = raw as JsonArray;
-                    if (error != null && error.Count > 0) return (string)error[0];
-                }
-            }
-            return null;
+                    JsonArray err = raw as JsonArray;
+                    if (err != null && err.Count > 0) error = (string)err[0];
+                }                
+            };
+            
+            reader.Parse();
+            return error;
         }
     }
 }

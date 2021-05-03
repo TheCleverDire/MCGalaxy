@@ -70,11 +70,14 @@ namespace MCGalaxy.Drawing.Ops {
         /// <summary> Whether this draw operation can be undone. </summary>
         public bool Undoable = true;
         
+        /// <summary> Whether this draw operation can be used on maps that have drawing disabled. </summary>
+        public bool AlwaysUsable;
+        
         
         /// <summary> Human friendly name of the draw operation. </summary>
         public abstract string Name { get; }
         
-        /// <summary> Whether the output blocks this draw operation are affected by the player's current Transform. </summary>
+        /// <summary> Whether the output of this draw operation is affected by the player's current Transform. </summary>
         public bool AffectedByTransform = true;
         
         /// <summary> Estimates the total number of blocks that the drawing commands affects. <br/>
@@ -82,6 +85,13 @@ namespace MCGalaxy.Drawing.Ops {
         public abstract long BlocksAffected(Level lvl, Vec3S32[] marks);
         
         public abstract void Perform(Vec3S32[] marks, Brush brush, DrawOpOutput output);
+        
+        
+        public void Setup(Player p, Level lvl, Vec3S32[] marks) {
+            Player = p;
+            SetMarks(marks);
+            SetLevel(lvl);
+        }
         
         public virtual bool CanDraw(Vec3S32[] marks, Player p, long affected) {
             if (affected <= p.group.DrawLimit) return true;
@@ -103,6 +113,7 @@ namespace MCGalaxy.Drawing.Ops {
             Level = lvl;
             clip = new Vec3S32(lvl.Width - 1, lvl.Height - 1, lvl.Length - 1);
         }
+        
         
         protected DrawOpBlock Place(ushort x, ushort y, ushort z, Brush brush) {
             Coords.X = x; Coords.Y = y; Coords.Z = z;

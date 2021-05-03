@@ -18,7 +18,6 @@
     permissions and limitations under the Licenses.
 */
 using System;
-using System.IO;
 
 namespace MCGalaxy.Commands.World {   
     public class CmdCopyLVL : Command2 {        
@@ -36,31 +35,23 @@ namespace MCGalaxy.Commands.World {
             if (args.Length < 2) {
                 p.Message("You did not specify the destination level name."); return;
             }
+            LevelConfig cfg;
             
-            string src = args[0];
-            src = Matcher.FindMaps(p, src);
+            string src = Matcher.FindMaps(p, args[0]);
             if (src == null) return;
-            if (!LevelInfo.Check(p, data.Rank, src, "copy this map")) return;
+            if (!LevelInfo.Check(p, data.Rank, src, "copy this map", out cfg)) return;
             
             string dst = args[1];
             if (!Formatter.ValidMapName(p, dst)) return;
-            if (LevelInfo.MapExists(dst)) { p.Message("Level \"" + dst + "\" already exists."); return; }
 
-            try {
-                LevelActions.CopyLevel(src, dst);
-            } catch (IOException) {
-                p.Message("Level %W" + dst + " %Salready exists!"); return;
-            }
-            
-            Level ignored;
-            LevelConfig cfg = LevelInfo.GetConfig(src, out ignored);
-            p.Message("Level {0} %Shas been copied to {1}", cfg.Color + src, cfg.Color + dst);
+            if (!LevelActions.Copy(p, src, dst)) return;
+            Chat.MessageGlobal("Level {0} &Swas copied to {1}", cfg.Color + src, cfg.Color + dst);
         }
         
         public override void Help(Player p) {
-            p.Message("%T/CopyLvl [level] [copied level]");
-            p.Message("%HMakes a copy of [level] called [copied Level].");
-            p.Message("%HNote: The level's BlockDB is not copied.");
+            p.Message("&T/CopyLvl [level] [copied level]");
+            p.Message("&HMakes a copy of [level] called [copied level].");
+            p.Message("&HNote: The level's BlockDB is not copied.");
         }
     }
 }

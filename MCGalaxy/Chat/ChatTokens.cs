@@ -113,12 +113,12 @@ namespace MCGalaxy {
             Player[] players = PlayerInfo.Online.Items;
             int count = 0;
             foreach (Player pl in players) {
-                if (p == pl || Entities.CanSee(p, pl)) count++;
+                if (p.CanSee(pl)) count++;
             }
             return count.ToString();
         }
         
-        static string TokenName(Player p) { return (Server.Config.DollarNames ? "$" : "") + Colors.Strip(p.DisplayName); }
+        static string TokenName(Player p) { return (Server.Config.DollarNames ? "$" : "") + Colors.StripUsed(p.DisplayName); }
         static string TokenTrueName(Player p) { return (Server.Config.DollarNames ? "$" : "") + p.truename; }
         static string TokenColor(Player p) { return p.color; }
         static string TokenRank(Player p) { return p.group.Name; }
@@ -138,7 +138,7 @@ namespace MCGalaxy {
         static string TokenLevel(Player p) { return p.level == null ? null : p.level.name; }
 
         public static List<ChatToken> Custom = new List<ChatToken>();
-        static bool hookedCustom;
+        static bool hookedCustom;        
         internal static void LoadCustom() {
             Custom.Clear();
             TextFile tokensFile = TextFile.Files["Custom $s"];
@@ -150,7 +150,6 @@ namespace MCGalaxy {
             }
             
             string[] lines = tokensFile.GetText();
-            char[] colon = new char[] {':'};
             
             foreach (string line in lines) {
                 if (line.StartsWith("//") || line.Length == 0) continue;
@@ -162,14 +161,25 @@ namespace MCGalaxy {
                     offset = emoteEnd + 1;
                 }
                 
-                int separator = line.IndexOf(':', offset);
+                int separator = FindColon(line, offset);
                 if (separator == -1) continue; // not a proper line
                 
-                string key = line.Substring(0, separator).Trim();
+                string key = line.Substring(0, separator).Trim().Replace("\\:", ":");
                 string value = line.Substring(separator + 1).Trim();
                 if (key.Length == 0) continue;
                 Custom.Add(new ChatToken(key, value, null));
             }
+        }
+       
+        static int FindColon(string s, int offset) {
+            for (int i = offset; i < s.Length; i++) {
+                if (s[i] != ':') continue;
+                
+                // "\:" is used to specify 'this colon is not the separator'
+                if (i > 0 && s[i - 1] == '\\') continue;
+                return i;
+            }
+            return -1;
         }
     }
 }

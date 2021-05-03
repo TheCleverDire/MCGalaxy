@@ -1,6 +1,3 @@
-devs:Dire+
-mods:Goodly+
-helpers:GamerTito+
-helpers:bioclassic23+
-helpers:Doc+
-helpers:Necromancer+
+devs:Hetal+
+devs:venom983+
+devs:UclCommander+

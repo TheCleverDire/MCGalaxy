@@ -19,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
 using MCGalaxy.Network;
 
 namespace MCGalaxy {
@@ -58,6 +57,8 @@ namespace MCGalaxy {
             return List[c.UnicodeToCp437()].Fallback != '\0';
         }
         
+        /// <summary> Returns whether the given color code is considered a standard color. </summary>
+        /// <remarks> Standard colors are 0-9, a-f, A-F </remarks>
         public static bool IsStandard(char c) {
             return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
         }
@@ -88,7 +89,7 @@ namespace MCGalaxy {
             }
             
             ColorDesc col = default(ColorDesc);
-            col.Code = code;
+            col.Code      = code;
             return col;
         }
 
@@ -99,7 +100,7 @@ namespace MCGalaxy {
                 if (!p.Supports(CpeExt.TextColors)) continue;
                 p.Send(Packet.SetTextColor(col));
             }
-            SaveList();
+            Save();
         }
 
         public static string Parse(string name) {
@@ -120,79 +121,33 @@ namespace MCGalaxy {
             if (code >= 'A' && code <= 'F') code += ' ';
             return IsDefined(code) ? Get(code).Name : "";
         }
-        
-        
-        static readonly string[] ircColors = new string[] {
-            "\u000300", "\u000301", "\u000302", "\u000303", "\u000304", "\u000305",
-            "\u000306", "\u000307", "\u000308", "\u000309", "\u000310", "\u000311",
-            "\u000312", "\u000313", "\u000314", "\u000315",
-        };
-        static readonly string[] ircSingle = new string[] {
-            "\u00030", "\u00031", "\u00032", "\u00033", "\u00034", "\u00035",
-            "\u00036", "\u00037", "\u00038", "\u00039",
-        };
-        static readonly string[] ircReplacements = new string[] {
-            white, black, navy, green, red, maroon, purple, gold,
-            yellow, lime, teal, aqua, blue, pink, gray, silver,
-        };
-        static readonly Regex IrcTwoColorCode = new Regex("(\x03\\d{1,2}),\\d{1,2}");
-        
-        public static string ConvertIRCToMC(string input) {
-            if (input == null) throw new ArgumentNullException("input");
-            // get rid of background color component of some IRC color codes.
-            input = IrcTwoColorCode.Replace(input, "$1");
-            StringBuilder sb = new StringBuilder(input);
-            
-            for (int i = 0; i < ircColors.Length; i++) {
-                sb.Replace(ircColors[i], ircReplacements[i]);
-            }
-            for (int i = 0; i < ircSingle.Length; i++) {
-                sb.Replace(ircSingle[i], ircReplacements[i]);
-            }
-            
-            // replace fancy quotes
-            sb.Replace("“", "\"");
-            sb.Replace("”", "\"");
-            sb.Replace("‘", "'");
-            sb.Replace("’", "'"); 
-            
-            // trim misc formatting chars
-            sb.Replace("\x02", ""); // bold
-            sb.Replace("\x1D", ""); // italic
-            sb.Replace("\x1F", ""); // underline
-            
-            sb.Replace("\x03", white); // color reset
-            sb.Replace("\x0f", white); // reset
-            return sb.ToString();
-        }
 
-        public static string ConvertMCToIRC(string input) {
-            if (input == null) throw new ArgumentNullException("input");
-            input = Escape(input);
-            StringBuilder sb = new StringBuilder(input);
-            Cleanup(sb, false);
-            
-            for (int i = 0; i < ircColors.Length; i++) {
-                sb.Replace(ircReplacements[i], ircColors[i]);
-            }
-            return sb.ToString();
-        }
         
         /// <summary> Maps internal system color codes to their actual color codes. </summary>
         /// <remarks> Also converts uppercase standard color codes to lowercase. </remarks>
         /// <returns> Whether given color code was a valid color code. </returns>
         public static bool Map(ref char col) {
-            if (IsStandard(col)) {
-                if (col >= 'A' && col <= 'F') col += ' ';
-                return true;
-            }
+            col = Lookup(col); return col != '\0';
+        }
+        
+        /// <summary> Maps internal system color codes to their actual color codes. </summary>
+        /// <remarks> Also converts uppercase standard color codes to lowercase. </remarks>
+        /// <returns> Whether given color code was a valid color code. </returns>
+        public static char Lookup(char col) {
+            // inlined as this must be fast for line wrapper
+            if  (col >= 'A' && col <= 'F') return (char)(col + ' ');
+            if ((col >= '0' && col <= '9') || (col >= 'a' && col <= 'f')) return col;
             
-            if (col == 'S') { col = Server.Config.DefaultColor[1]; return true; }
-            if (col == 'H') { col = Server.Config.HelpDescriptionColor[1]; return true; }
-            if (col == 'T') { col = Server.Config.HelpSyntaxColor[1]; return true; }
-            if (col == 'I') { col = Server.Config.IRCColor[1]; return true; }
-            if (col == 'W') { col = Server.Config.WarningErrorColor[1]; return true; }
-            return IsDefined(col);
+            if (col == 'S') return Server.Config.DefaultColor[1];
+            if (col == 'H') return Server.Config.HelpDescriptionColor[1];
+            if (col == 'T') return Server.Config.HelpSyntaxColor[1];
+            if (col == 'I') return Server.Config.IRCColor[1];
+            if (col == 'W') return Server.Config.WarningErrorColor[1];
+            return IsDefined(col) ? col : '\0';
+        }
+        
+        public static bool IsSystem(char col) {
+            return col == 'S' || col == 'H' || col == 'T' || col == 'I'|| col == 'W';
         }
         
         
@@ -236,15 +191,17 @@ namespace MCGalaxy {
                 bool validCode = c == '%' && i < chars.Length - 1;
                 
                 if (!validCode) continue;
-                char color = chars[i + 1];
-                if (!Map(ref color)) continue;
+                char col = Lookup(chars[i + 1]);
+                if (col == '\0') continue;
                 
                 chars[i] = '&';
-                chars[i + 1] = color;
+                chars[i + 1] = col;
                 i++; // skip over color code
             }
         }
         
+        /// <summary> Removes all occurrences of % or &amp; and the following character. </summary>
+        /// <remarks> Does NOT check if the following character is actually a valid color code. </remarks>
         public static string Strip(string value) {
             if (value.IndexOf('%') == -1 && value.IndexOf('&') == -1) return value;
             char[] output = new char[value.Length];
@@ -253,7 +210,7 @@ namespace MCGalaxy {
             for (int i = 0; i < value.Length; i++) {
                 char token = value[i];
                 if (token == '%' || token == '&') {
-                    i++; // Skip over the following color code.
+                    i++; // Skip over the following color code
                 } else {
                     output[usedChars++] = token;
                 }
@@ -261,36 +218,41 @@ namespace MCGalaxy {
             return new string(output, 0, usedChars);
         }
         
-        /// <summary> Removes all non-existent color codes, and converts
-        /// custom colors to their fallback standard color codes if required. </summary>
-        public static string Cleanup(string value, bool supportsCustomCols) {
-            StringBuilder sb = new StringBuilder(value);
-            Cleanup(sb, supportsCustomCols);
-            return sb.ToString();
+        static bool UsedColor(string message, int i) {
+            // handle & being last character in string
+            if (i >= message.Length - 1) return false;
+            return Lookup(message[i + 1]) != '\0';
         }
         
-        /// <summary> Removes all non-existent color codes, and converts
-        /// custom colors to their fallback standard color codes if required. </summary>
-        public static void Cleanup(StringBuilder value, bool supportsCustomCols) {
-            for (int i = 0; i < value.Length; i++) {
-                char c = value[i];
-                if (c != '&' || i == value.Length - 1) continue;
-                
-                char code = value[i + 1];
-                if (IsStandard(code)) {
-                    if (code >= 'A' && code <= 'F') {
-                        value[i + 1] += ' '; // WoM doesn't work with uppercase colors
-                    }
-                } else if (!IsDefined(code)) {
-                    value.Remove(i, 2); i--; // now need to check char at i again
-                } else if (!supportsCustomCols) {
-                    value[i + 1] = Get(code).Fallback;
+        /// <summary> Removes all occurrences of % and &amp; that are followed by a used color code. </summary>
+        public static string StripUsed(string message) {
+            if (message.IndexOf('%') == -1 && message.IndexOf('&') == -1) return message;
+            char[] output = new char[message.Length];
+            int usedChars = 0;
+            
+            for (int i = 0; i < message.Length; i++) {
+                char c = message[i];
+                if ((c == '%' || c == '&') && UsedColor(message, i)) {
+                    i++; // Skip over the following color code
+                } else {
+                    output[usedChars++] = c;
                 }
             }
+            return new string(output, 0, usedChars);
         }
 
         
-        internal static void SaveList() {
+        static readonly object ioLock = new object();
+        /// <summary> Saves list of changed colors to disc. </summary>
+        public static void Save() {
+            try {
+                lock (ioLock) SaveCore();
+            } catch (Exception ex) {
+                Logger.LogError("Error saving " + Paths.CustomColorsFile, ex);
+            }
+        }
+        
+        static void SaveCore() {
             using (StreamWriter w = new StreamWriter(Paths.CustomColorsFile)) {
                 foreach (ColorDesc col in List) {
                     if (!col.IsModified()) continue;
@@ -299,9 +261,14 @@ namespace MCGalaxy {
                                 " " + col.R + " " + col.G + " " + col.B + " " + col.A);
                 }
             }
+        }        
+
+        /// <summary> Loads list of changed colors from disc. </summary>
+        public static void Load() {
+            lock (ioLock) LoadCore();
         }
         
-        internal static void LoadList() {
+        static void LoadCore() {
             if (!File.Exists(Paths.CustomColorsFile)) return;
             string[] lines = File.ReadAllLines(Paths.CustomColorsFile);
             ColorDesc col = default(ColorDesc);
@@ -390,6 +357,7 @@ namespace MCGalaxy {
             b = (byte)(191 * ((hex >> 0) & 1) + 64 * (hex >> 3));
         }
         
+        /// <summary> Whether this colour has been modified from its default values. </summary>
         public bool IsModified() {
             if ((Code >= '0' && Code <= '9') || (Code >= 'a' && Code <= 'f')) {
                 ColorDesc def = Colors.DefaultCol(Code);

@@ -116,8 +116,17 @@ namespace MCGalaxy.Gui
             this.rank_numDraw = new System.Windows.Forms.NumericUpDown();
             this.rank_numGen = new System.Windows.Forms.NumericUpDown();
             this.rank_numCopy = new System.Windows.Forms.NumericUpDown();
+            this.dis_grp = new System.Windows.Forms.GroupBox();
+            this.dis_lblToken = new System.Windows.Forms.Label();
+            this.dis_lblChannel = new System.Windows.Forms.Label();
+            this.dis_txtChannel = new System.Windows.Forms.TextBox();
+            this.dis_lblOpChannel = new System.Windows.Forms.Label();
+            this.dis_chkEnabled = new System.Windows.Forms.CheckBox();
+            this.dis_chkNicks = new System.Windows.Forms.CheckBox();
+            this.dis_txtToken = new System.Windows.Forms.TextBox();
+            this.dis_txtOpChannel = new System.Windows.Forms.TextBox();
             this.adv_chkCPE = new System.Windows.Forms.CheckBox();
-            this.eco_cbItemRank = new System.Windows.Forms.ComboBox();
+            this.eco_cmbItemRank = new System.Windows.Forms.ComboBox();
             this.rank_numUndo = new MCGalaxy.Gui.TimespanUpDown();
             this.chkPhysRestart = new System.Windows.Forms.CheckBox();
             this.ls_numMax = new System.Windows.Forms.NumericUpDown();
@@ -201,13 +210,13 @@ namespace MCGalaxy.Gui
             this.bak_lblLocation = new System.Windows.Forms.Label();
             this.bak_txtLocation = new System.Windows.Forms.TextBox();
             this.bak_lblTime = new System.Windows.Forms.Label();
-            this.pageIRC = new System.Windows.Forms.TabPage();
+            this.pageRelay = new System.Windows.Forms.TabPage();
             this.gb_ircSettings = new System.Windows.Forms.GroupBox();
             this.irc_txtPrefix = new System.Windows.Forms.TextBox();
             this.irc_lblPrefix = new System.Windows.Forms.Label();
-            this.irc_cbVerify = new System.Windows.Forms.ComboBox();
+            this.irc_cmbVerify = new System.Windows.Forms.ComboBox();
             this.irc_lblVerify = new System.Windows.Forms.Label();
-            this.irc_cbRank = new System.Windows.Forms.ComboBox();
+            this.irc_cmbRank = new System.Windows.Forms.ComboBox();
             this.irc_lblRank = new System.Windows.Forms.Label();
             this.irc_cbAFK = new System.Windows.Forms.CheckBox();
             this.irc_cbWorldChanges = new System.Windows.Forms.CheckBox();
@@ -227,7 +236,7 @@ namespace MCGalaxy.Gui
             this.irc_grp = new System.Windows.Forms.GroupBox();
             this.irc_lblServer = new System.Windows.Forms.Label();
             this.irc_lblPort = new System.Windows.Forms.Label();
-            this.irc_txtPort = new System.Windows.Forms.TextBox();
+            this.irc_numPort = new System.Windows.Forms.NumericUpDown();
             this.irc_lblNick = new System.Windows.Forms.Label();
             this.irc_lblChannel = new System.Windows.Forms.Label();
             this.irc_lblOpChannel = new System.Windows.Forms.Label();
@@ -277,7 +286,7 @@ namespace MCGalaxy.Gui
             this.eco_lblItemPrice = new System.Windows.Forms.Label();
             this.eco_cbItem = new System.Windows.Forms.CheckBox();
             this.eco_gb = new System.Windows.Forms.GroupBox();
-            this.eco_cbCfg = new System.Windows.Forms.ComboBox();
+            this.eco_cmbCfg = new System.Windows.Forms.ComboBox();
             this.eco_lblCfg = new System.Windows.Forms.Label();
             this.eco_cbEnabled = new System.Windows.Forms.CheckBox();
             this.eco_txtCurrency = new System.Windows.Forms.TextBox();
@@ -336,11 +345,11 @@ namespace MCGalaxy.Gui
             this.zs_lblModel = new System.Windows.Forms.Label();
             this.zs_lblName = new System.Windows.Forms.Label();
             this.zs_grpRevive = new System.Windows.Forms.GroupBox();
-            this.label5 = new System.Windows.Forms.Label();
+            this.zs_lblReviveEff = new System.Windows.Forms.Label();
             this.zs_numReviveEff = new System.Windows.Forms.NumericUpDown();
             this.label4 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.label8 = new System.Windows.Forms.Label();
+            this.zs_lblReviveLimitFtr = new System.Windows.Forms.Label();
+            this.zs_lblReviveLimitHdr = new System.Windows.Forms.Label();
             this.zs_numReviveLimit = new System.Windows.Forms.NumericUpDown();
             this.zs_numReviveMax = new System.Windows.Forms.NumericUpDown();
             this.label9 = new System.Windows.Forms.Label();
@@ -357,14 +366,14 @@ namespace MCGalaxy.Gui
             this.zs_lblInvHumanMax = new System.Windows.Forms.Label();
             this.zs_cbStart = new System.Windows.Forms.CheckBox();
             this.zs_grpMaps = new System.Windows.Forms.GroupBox();
-            this.label12 = new System.Windows.Forms.Label();
+            this.zs_lblNotUsed = new System.Windows.Forms.Label();
             this.zs_lblUsed = new System.Windows.Forms.Label();
             this.zs_btnAdd = new System.Windows.Forms.Button();
             this.zs_btnRemove = new System.Windows.Forms.Button();
             this.zs_lstNotUsed = new System.Windows.Forms.ListBox();
             this.zs_lstUsed = new System.Windows.Forms.ListBox();
             this.tabZS_old = new System.Windows.Forms.TabPage();
-            this.propsZG = new System.Windows.Forms.PropertyGrid();
+            this.propsZG = new MCGalaxy.Gui.HackyPropertyGrid();
             this.tabCTF = new System.Windows.Forms.TabPage();
             this.ctf_grpControls = new System.Windows.Forms.GroupBox();
             this.ctf_btnEnd = new System.Windows.Forms.Button();
@@ -405,7 +414,6 @@ namespace MCGalaxy.Gui
             this.tw_lblScoreLimit = new System.Windows.Forms.Label();
             this.tw_numScoreLimit = new System.Windows.Forms.NumericUpDown();
             this.tw_grpSettings = new System.Windows.Forms.GroupBox();
-            this.tw_btnAbout = new System.Windows.Forms.Button();
             this.tw_cmbMode = new System.Windows.Forms.ComboBox();
             this.tw_cmbDiff = new System.Windows.Forms.ComboBox();
             this.tw_lblMode = new System.Windows.Forms.Label();
@@ -520,7 +528,7 @@ namespace MCGalaxy.Gui
             ((System.ComponentModel.ISupportInitialize)(this.afk_numTimer)).BeginInit();
             this.bak_grp.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bak_numTime)).BeginInit();
-            this.pageIRC.SuspendLayout();
+            this.pageRelay.SuspendLayout();
             this.gb_ircSettings.SuspendLayout();
             this.sql_grp.SuspendLayout();
             this.irc_grp.SuspendLayout();
@@ -699,6 +707,7 @@ namespace MCGalaxy.Gui
             // 
             // chat_txtShutdown
             // 
+            this.chat_txtShutdown.BackColor = System.Drawing.SystemColors.Window;
             this.chat_txtShutdown.Location = new System.Drawing.Point(134, 20);
             this.chat_txtShutdown.MaxLength = 128;
             this.chat_txtShutdown.Name = "chat_txtShutdown";
@@ -718,6 +727,7 @@ namespace MCGalaxy.Gui
             // 
             // chat_txtCheap
             // 
+            this.chat_txtCheap.BackColor = System.Drawing.SystemColors.Window;
             this.chat_txtCheap.Location = new System.Drawing.Point(134, 50);
             this.chat_txtCheap.Name = "chat_txtCheap";
             this.chat_txtCheap.Size = new System.Drawing.Size(343, 21);
@@ -734,6 +744,7 @@ namespace MCGalaxy.Gui
             // 
             // chat_txtBan
             // 
+            this.chat_txtBan.BackColor = System.Drawing.SystemColors.Window;
             this.chat_txtBan.Location = new System.Drawing.Point(134, 80);
             this.chat_txtBan.MaxLength = 64;
             this.chat_txtBan.Name = "chat_txtBan";
@@ -751,6 +762,7 @@ namespace MCGalaxy.Gui
             // 
             // chat_txtPromote
             // 
+            this.chat_txtPromote.BackColor = System.Drawing.SystemColors.Window;
             this.chat_txtPromote.Location = new System.Drawing.Point(134, 110);
             this.chat_txtPromote.MaxLength = 64;
             this.chat_txtPromote.Name = "chat_txtPromote";
@@ -768,6 +780,7 @@ namespace MCGalaxy.Gui
             // 
             // chat_txtDemote
             // 
+            this.chat_txtDemote.BackColor = System.Drawing.SystemColors.Window;
             this.chat_txtDemote.Location = new System.Drawing.Point(134, 144);
             this.chat_txtDemote.MaxLength = 64;
             this.chat_txtDemote.Name = "chat_txtDemote";
@@ -807,6 +820,7 @@ namespace MCGalaxy.Gui
             // 
             // chat_txtConsole
             // 
+            this.chat_txtConsole.BackColor = System.Drawing.SystemColors.Window;
             this.chat_txtConsole.Location = new System.Drawing.Point(89, 17);
             this.chat_txtConsole.Name = "chat_txtConsole";
             this.chat_txtConsole.Size = new System.Drawing.Size(161, 21);
@@ -998,6 +1012,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_cmbVerifyRank
             // 
+            this.sec_cmbVerifyRank.BackColor = System.Drawing.SystemColors.Window;
             this.sec_cmbVerifyRank.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.sec_cmbVerifyRank.FormattingEnabled = true;
             this.sec_cmbVerifyRank.Location = new System.Drawing.Point(72, 95);
@@ -1042,6 +1057,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_cmbDefault
             // 
+            this.rank_cmbDefault.BackColor = System.Drawing.SystemColors.Window;
             this.rank_cmbDefault.FormattingEnabled = true;
             this.rank_cmbDefault.Location = new System.Drawing.Point(85, 20);
             this.rank_cmbDefault.Name = "rank_cmbDefault";
@@ -1088,6 +1104,7 @@ namespace MCGalaxy.Gui
             // 
             // irc_txtServer
             // 
+            this.irc_txtServer.BackColor = System.Drawing.SystemColors.Window;
             this.irc_txtServer.Location = new System.Drawing.Point(82, 47);
             this.irc_txtServer.Name = "irc_txtServer";
             this.irc_txtServer.Size = new System.Drawing.Size(106, 21);
@@ -1096,6 +1113,7 @@ namespace MCGalaxy.Gui
             // 
             // irc_txtNick
             // 
+            this.irc_txtNick.BackColor = System.Drawing.SystemColors.Window;
             this.irc_txtNick.Location = new System.Drawing.Point(82, 101);
             this.irc_txtNick.Name = "irc_txtNick";
             this.irc_txtNick.Size = new System.Drawing.Size(106, 21);
@@ -1104,6 +1122,7 @@ namespace MCGalaxy.Gui
             // 
             // irc_txtChannel
             // 
+            this.irc_txtChannel.BackColor = System.Drawing.SystemColors.Window;
             this.irc_txtChannel.Location = new System.Drawing.Point(82, 128);
             this.irc_txtChannel.Name = "irc_txtChannel";
             this.irc_txtChannel.Size = new System.Drawing.Size(106, 21);
@@ -1112,6 +1131,7 @@ namespace MCGalaxy.Gui
             // 
             // irc_txtOpChannel
             // 
+            this.irc_txtOpChannel.BackColor = System.Drawing.SystemColors.Window;
             this.irc_txtOpChannel.Location = new System.Drawing.Point(82, 155);
             this.irc_txtOpChannel.Name = "irc_txtOpChannel";
             this.irc_txtOpChannel.Size = new System.Drawing.Size(106, 21);
@@ -1151,9 +1171,11 @@ namespace MCGalaxy.Gui
             this.adv_chkVerify.Text = "Verify Names";
             this.toolTip.SetToolTip(this.adv_chkVerify, "Make sure the user is who they claim to be.");
             this.adv_chkVerify.UseVisualStyleBackColor = true;
+            this.adv_chkVerify.CheckedChanged += new System.EventHandler(this.chkVerify_CheckedChanged);
             // 
             // srv_txtName
             // 
+            this.srv_txtName.BackColor = System.Drawing.SystemColors.Window;
             this.srv_txtName.Location = new System.Drawing.Point(83, 19);
             this.srv_txtName.MaxLength = 64;
             this.srv_txtName.Name = "srv_txtName";
@@ -1163,6 +1185,7 @@ namespace MCGalaxy.Gui
             // 
             // srv_txtMOTD
             // 
+            this.srv_txtMOTD.BackColor = System.Drawing.SystemColors.Window;
             this.srv_txtMOTD.Location = new System.Drawing.Point(83, 46);
             this.srv_txtMOTD.MaxLength = 64;
             this.srv_txtMOTD.Name = "srv_txtMOTD";
@@ -1173,6 +1196,7 @@ namespace MCGalaxy.Gui
             // 
             // srv_numPort
             // 
+            this.srv_numPort.BackColor = System.Drawing.SystemColors.Window;
             this.srv_numPort.Location = new System.Drawing.Point(83, 73);
             this.srv_numPort.Maximum = new decimal(new int[] {
                                     65535,
@@ -1214,6 +1238,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_txtPrefix
             // 
+            this.rank_txtPrefix.BackColor = System.Drawing.SystemColors.Window;
             this.rank_txtPrefix.Location = new System.Drawing.Point(259, 47);
             this.rank_txtPrefix.Name = "rank_txtPrefix";
             this.rank_txtPrefix.Size = new System.Drawing.Size(81, 21);
@@ -1223,6 +1248,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_txtMOTD
             // 
+            this.rank_txtMOTD.BackColor = System.Drawing.SystemColors.Window;
             this.rank_txtMOTD.Location = new System.Drawing.Point(85, 74);
             this.rank_txtMOTD.Name = "rank_txtMOTD";
             this.rank_txtMOTD.Size = new System.Drawing.Size(255, 21);
@@ -1233,6 +1259,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_numPerm
             // 
+            this.rank_numPerm.BackColor = System.Drawing.SystemColors.Window;
             this.rank_numPerm.Location = new System.Drawing.Point(259, 20);
             this.rank_numPerm.Maximum = new decimal(new int[] {
                                     120,
@@ -1252,6 +1279,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_txtName
             // 
+            this.rank_txtName.BackColor = System.Drawing.SystemColors.Window;
             this.rank_txtName.Location = new System.Drawing.Point(85, 20);
             this.rank_txtName.Name = "rank_txtName";
             this.rank_txtName.Size = new System.Drawing.Size(81, 21);
@@ -1270,6 +1298,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_cmbOsMap
             // 
+            this.rank_cmbOsMap.BackColor = System.Drawing.SystemColors.Window;
             this.rank_cmbOsMap.FormattingEnabled = true;
             this.rank_cmbOsMap.Location = new System.Drawing.Point(259, 20);
             this.rank_cmbOsMap.Name = "rank_cmbOsMap";
@@ -1291,6 +1320,7 @@ namespace MCGalaxy.Gui
             // 
             // irc_txtPass
             // 
+            this.irc_txtPass.BackColor = System.Drawing.SystemColors.Window;
             this.irc_txtPass.Location = new System.Drawing.Point(82, 182);
             this.irc_txtPass.Name = "irc_txtPass";
             this.irc_txtPass.PasswordChar = '*';
@@ -1300,9 +1330,10 @@ namespace MCGalaxy.Gui
             // 
             // rank_numMaps
             // 
+            this.rank_numMaps.BackColor = System.Drawing.SystemColors.Window;
             this.rank_numMaps.Location = new System.Drawing.Point(259, 20);
             this.rank_numMaps.Maximum = new decimal(new int[] {
-                                    255,
+                                    2147483647,
                                     0,
                                     0,
                                     0});
@@ -1314,6 +1345,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_numDraw
             // 
+            this.rank_numDraw.BackColor = System.Drawing.SystemColors.Window;
             this.rank_numDraw.Location = new System.Drawing.Point(85, 20);
             this.rank_numDraw.Maximum = new decimal(new int[] {
                                     2147483647,
@@ -1328,6 +1360,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_numGen
             // 
+            this.rank_numGen.BackColor = System.Drawing.SystemColors.Window;
             this.rank_numGen.Location = new System.Drawing.Point(259, 47);
             this.rank_numGen.Maximum = new decimal(new int[] {
                                     2147483647,
@@ -1342,6 +1375,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_numCopy
             // 
+            this.rank_numCopy.BackColor = System.Drawing.SystemColors.Window;
             this.rank_numCopy.Location = new System.Drawing.Point(85, 74);
             this.rank_numCopy.Maximum = new decimal(new int[] {
                                     255,
@@ -1375,19 +1409,21 @@ namespace MCGalaxy.Gui
             this.toolTip.SetToolTip(this.adv_chkCPE, "Enables custom blocks, multiline chat, changing env settings, etc");
             this.adv_chkCPE.UseVisualStyleBackColor = true;
             // 
-            // eco_cbItemRank
+            // eco_cmbItemRank
             // 
-            this.eco_cbItemRank.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.eco_cbItemRank.FormattingEnabled = true;
-            this.eco_cbItemRank.Location = new System.Drawing.Point(368, 43);
-            this.eco_cbItemRank.Name = "eco_cbItemRank";
-            this.eco_cbItemRank.Size = new System.Drawing.Size(110, 21);
-            this.eco_cbItemRank.TabIndex = 23;
-            this.toolTip.SetToolTip(this.eco_cbItemRank, "Minimum rank a player must have to purchase this item.");
-            this.eco_cbItemRank.SelectedIndexChanged += new System.EventHandler(this.eco_cbItemRank_SelectedIndexChanged);
+            this.eco_cmbItemRank.BackColor = System.Drawing.SystemColors.Window;
+            this.eco_cmbItemRank.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.eco_cmbItemRank.FormattingEnabled = true;
+            this.eco_cmbItemRank.Location = new System.Drawing.Point(368, 43);
+            this.eco_cmbItemRank.Name = "eco_cmbItemRank";
+            this.eco_cmbItemRank.Size = new System.Drawing.Size(110, 21);
+            this.eco_cmbItemRank.TabIndex = 23;
+            this.toolTip.SetToolTip(this.eco_cmbItemRank, "Minimum rank a player must have to purchase this item.");
+            this.eco_cmbItemRank.SelectedIndexChanged += new System.EventHandler(this.eco_cmbItemRank_SelectedIndexChanged);
             // 
             // rank_numUndo
             // 
+            this.rank_numUndo.BackColor = System.Drawing.SystemColors.Window;
             this.rank_numUndo.Location = new System.Drawing.Point(85, 47);
             this.rank_numUndo.Name = "rank_numUndo";
             this.rank_numUndo.Seconds = ((long)(0));
@@ -1410,6 +1446,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numMax
             // 
+            this.ls_numMax.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numMax.Location = new System.Drawing.Point(71, 89);
             this.ls_numMax.Maximum = new decimal(new int[] {
                                     1000000,
@@ -1427,6 +1464,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numKiller
             // 
+            this.ls_numKiller.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numKiller.Location = new System.Drawing.Point(79, 20);
             this.ls_numKiller.Name = "ls_numKiller";
             this.ls_numKiller.Size = new System.Drawing.Size(52, 21);
@@ -1439,6 +1477,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numFast
             // 
+            this.ls_numFast.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numFast.Location = new System.Drawing.Point(79, 45);
             this.ls_numFast.Name = "ls_numFast";
             this.ls_numFast.Size = new System.Drawing.Size(52, 21);
@@ -1446,6 +1485,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numWater
             // 
+            this.ls_numWater.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numWater.Location = new System.Drawing.Point(226, 20);
             this.ls_numWater.Name = "ls_numWater";
             this.ls_numWater.Size = new System.Drawing.Size(52, 21);
@@ -1453,6 +1493,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numDestroy
             // 
+            this.ls_numDestroy.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numDestroy.Location = new System.Drawing.Point(226, 45);
             this.ls_numDestroy.Name = "ls_numDestroy";
             this.ls_numDestroy.Size = new System.Drawing.Size(52, 21);
@@ -1460,6 +1501,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numLayer
             // 
+            this.ls_numLayer.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numLayer.Location = new System.Drawing.Point(128, 16);
             this.ls_numLayer.Name = "ls_numLayer";
             this.ls_numLayer.Size = new System.Drawing.Size(52, 21);
@@ -1467,6 +1509,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numCount
             // 
+            this.ls_numCount.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numCount.Location = new System.Drawing.Point(7, 44);
             this.ls_numCount.Maximum = new decimal(new int[] {
                                     1000000,
@@ -1484,6 +1527,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numHeight
             // 
+            this.ls_numHeight.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numHeight.Location = new System.Drawing.Point(128, 44);
             this.ls_numHeight.Maximum = new decimal(new int[] {
                                     1000000,
@@ -1521,6 +1565,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_numAfk
             // 
+            this.rank_numAfk.BackColor = System.Drawing.SystemColors.Window;
             this.rank_numAfk.Location = new System.Drawing.Point(113, 102);
             this.rank_numAfk.Name = "rank_numAfk";
             this.rank_numAfk.Seconds = ((long)(0));
@@ -1645,6 +1690,7 @@ namespace MCGalaxy.Gui
             // 
             // blk_txtDeath
             // 
+            this.blk_txtDeath.BackColor = System.Drawing.SystemColors.Window;
             this.blk_txtDeath.Location = new System.Drawing.Point(100, 42);
             this.blk_txtDeath.Name = "blk_txtDeath";
             this.blk_txtDeath.Size = new System.Drawing.Size(254, 21);
@@ -1702,6 +1748,7 @@ namespace MCGalaxy.Gui
             // 
             // blk_cmbAlw3
             // 
+            this.blk_cmbAlw3.BackColor = System.Drawing.SystemColors.Window;
             this.blk_cmbAlw3.FormattingEnabled = true;
             this.blk_cmbAlw3.Location = new System.Drawing.Point(274, 67);
             this.blk_cmbAlw3.Name = "blk_cmbAlw3";
@@ -1711,6 +1758,7 @@ namespace MCGalaxy.Gui
             // 
             // blk_cmbAlw2
             // 
+            this.blk_cmbAlw2.BackColor = System.Drawing.SystemColors.Window;
             this.blk_cmbAlw2.FormattingEnabled = true;
             this.blk_cmbAlw2.Location = new System.Drawing.Point(187, 67);
             this.blk_cmbAlw2.Name = "blk_cmbAlw2";
@@ -1720,6 +1768,7 @@ namespace MCGalaxy.Gui
             // 
             // blk_cmbDis3
             // 
+            this.blk_cmbDis3.BackColor = System.Drawing.SystemColors.Window;
             this.blk_cmbDis3.FormattingEnabled = true;
             this.blk_cmbDis3.Location = new System.Drawing.Point(274, 41);
             this.blk_cmbDis3.Name = "blk_cmbDis3";
@@ -1729,6 +1778,7 @@ namespace MCGalaxy.Gui
             // 
             // blk_cmbDis2
             // 
+            this.blk_cmbDis2.BackColor = System.Drawing.SystemColors.Window;
             this.blk_cmbDis2.FormattingEnabled = true;
             this.blk_cmbDis2.Location = new System.Drawing.Point(187, 41);
             this.blk_cmbDis2.Name = "blk_cmbDis2";
@@ -1738,6 +1788,7 @@ namespace MCGalaxy.Gui
             // 
             // blk_cmbAlw1
             // 
+            this.blk_cmbAlw1.BackColor = System.Drawing.SystemColors.Window;
             this.blk_cmbAlw1.FormattingEnabled = true;
             this.blk_cmbAlw1.Location = new System.Drawing.Point(100, 67);
             this.blk_cmbAlw1.Name = "blk_cmbAlw1";
@@ -1747,6 +1798,7 @@ namespace MCGalaxy.Gui
             // 
             // blk_cmbDis1
             // 
+            this.blk_cmbDis1.BackColor = System.Drawing.SystemColors.Window;
             this.blk_cmbDis1.FormattingEnabled = true;
             this.blk_cmbDis1.Location = new System.Drawing.Point(100, 41);
             this.blk_cmbDis1.Name = "blk_cmbDis1";
@@ -1756,6 +1808,7 @@ namespace MCGalaxy.Gui
             // 
             // blk_cmbMin
             // 
+            this.blk_cmbMin.BackColor = System.Drawing.SystemColors.Window;
             this.blk_cmbMin.FormattingEnabled = true;
             this.blk_cmbMin.Location = new System.Drawing.Point(100, 14);
             this.blk_cmbMin.Name = "blk_cmbMin";
@@ -1802,6 +1855,7 @@ namespace MCGalaxy.Gui
             // 
             // blk_list
             // 
+            this.blk_list.BackColor = System.Drawing.SystemColors.Window;
             this.blk_list.FormattingEnabled = true;
             this.blk_list.Location = new System.Drawing.Point(6, 6);
             this.blk_list.Name = "blk_list";
@@ -2039,6 +2093,7 @@ namespace MCGalaxy.Gui
             // 
             // rank_list
             // 
+            this.rank_list.BackColor = System.Drawing.SystemColors.Window;
             this.rank_list.FormattingEnabled = true;
             this.rank_list.Location = new System.Drawing.Point(6, 6);
             this.rank_list.Name = "rank_list";
@@ -2074,14 +2129,15 @@ namespace MCGalaxy.Gui
             this.grpExtra.Controls.Add(this.chkSmile);
             this.grpExtra.Location = new System.Drawing.Point(10, 158);
             this.grpExtra.Name = "grpExtra";
-            this.grpExtra.Size = new System.Drawing.Size(332, 183);
+            this.grpExtra.Size = new System.Drawing.Size(332, 124);
             this.grpExtra.TabIndex = 40;
             this.grpExtra.TabStop = false;
             this.grpExtra.Text = "Extra";
             // 
             // misc_numReview
             // 
-            this.misc_numReview.Location = new System.Drawing.Point(143, 157);
+            this.misc_numReview.BackColor = System.Drawing.SystemColors.Window;
+            this.misc_numReview.Location = new System.Drawing.Point(126, 89);
             this.misc_numReview.Name = "misc_numReview";
             this.misc_numReview.Seconds = ((long)(300));
             this.misc_numReview.Size = new System.Drawing.Size(66, 21);
@@ -2092,7 +2148,7 @@ namespace MCGalaxy.Gui
             // chkRestart
             // 
             this.chkRestart.AutoSize = true;
-            this.chkRestart.Location = new System.Drawing.Point(6, 66);
+            this.chkRestart.Location = new System.Drawing.Point(190, 20);
             this.chkRestart.Name = "chkRestart";
             this.chkRestart.Size = new System.Drawing.Size(101, 17);
             this.chkRestart.TabIndex = 51;
@@ -2102,7 +2158,7 @@ namespace MCGalaxy.Gui
             // misc_lblReview
             // 
             this.misc_lblReview.AutoSize = true;
-            this.misc_lblReview.Location = new System.Drawing.Point(23, 159);
+            this.misc_lblReview.Location = new System.Drawing.Point(6, 91);
             this.misc_lblReview.Name = "misc_lblReview";
             this.misc_lblReview.Size = new System.Drawing.Size(115, 13);
             this.misc_lblReview.TabIndex = 49;
@@ -2111,7 +2167,7 @@ namespace MCGalaxy.Gui
             // chkRepeatMessages
             // 
             this.chkRepeatMessages.AutoSize = true;
-            this.chkRepeatMessages.Location = new System.Drawing.Point(6, 111);
+            this.chkRepeatMessages.Location = new System.Drawing.Point(190, 43);
             this.chkRepeatMessages.Name = "chkRepeatMessages";
             this.chkRepeatMessages.Size = new System.Drawing.Size(136, 17);
             this.chkRepeatMessages.TabIndex = 29;
@@ -2121,7 +2177,7 @@ namespace MCGalaxy.Gui
             // chk17Dollar
             // 
             this.chk17Dollar.AutoSize = true;
-            this.chk17Dollar.Location = new System.Drawing.Point(6, 90);
+            this.chk17Dollar.Location = new System.Drawing.Point(6, 66);
             this.chk17Dollar.Name = "chk17Dollar";
             this.chk17Dollar.Size = new System.Drawing.Size(100, 17);
             this.chk17Dollar.TabIndex = 22;
@@ -2152,6 +2208,7 @@ namespace MCGalaxy.Gui
             // 
             // hack_num
             // 
+            this.hack_num.BackColor = System.Drawing.SystemColors.Window;
             this.hack_num.Location = new System.Drawing.Point(201, 18);
             this.hack_num.Name = "hack_num";
             this.hack_num.Seconds = ((long)(5));
@@ -2177,6 +2234,7 @@ namespace MCGalaxy.Gui
             // 
             // txtRP
             // 
+            this.txtRP.BackColor = System.Drawing.SystemColors.Window;
             this.txtRP.Location = new System.Drawing.Point(72, 49);
             this.txtRP.Name = "txtRP";
             this.txtRP.Size = new System.Drawing.Size(55, 21);
@@ -2193,6 +2251,7 @@ namespace MCGalaxy.Gui
             // 
             // txtNormRp
             // 
+            this.txtNormRp.BackColor = System.Drawing.SystemColors.Window;
             this.txtNormRp.Location = new System.Drawing.Point(72, 76);
             this.txtNormRp.Name = "txtNormRp";
             this.txtNormRp.Size = new System.Drawing.Size(55, 21);
@@ -2212,6 +2271,7 @@ namespace MCGalaxy.Gui
             // 
             // afk_numTimer
             // 
+            this.afk_numTimer.BackColor = System.Drawing.SystemColors.Window;
             this.afk_numTimer.Location = new System.Drawing.Point(61, 16);
             this.afk_numTimer.Name = "afk_numTimer";
             this.afk_numTimer.Seconds = ((long)(600));
@@ -2246,6 +2306,7 @@ namespace MCGalaxy.Gui
             // 
             // bak_numTime
             // 
+            this.bak_numTime.BackColor = System.Drawing.SystemColors.Window;
             this.bak_numTime.Location = new System.Drawing.Point(81, 43);
             this.bak_numTime.Name = "bak_numTime";
             this.bak_numTime.Seconds = ((long)(300));
@@ -2265,6 +2326,7 @@ namespace MCGalaxy.Gui
             // 
             // bak_txtLocation
             // 
+            this.bak_txtLocation.BackColor = System.Drawing.SystemColors.Window;
             this.bak_txtLocation.Location = new System.Drawing.Point(81, 17);
             this.bak_txtLocation.Name = "bak_txtLocation";
             this.bak_txtLocation.Size = new System.Drawing.Size(245, 21);
@@ -2279,25 +2341,26 @@ namespace MCGalaxy.Gui
             this.bak_lblTime.TabIndex = 7;
             this.bak_lblTime.Text = "Backup time:";
             // 
-            // pageIRC
+            // pageRelay
             // 
-            this.pageIRC.BackColor = System.Drawing.SystemColors.Control;
-            this.pageIRC.Controls.Add(this.gb_ircSettings);
-            this.pageIRC.Controls.Add(this.sql_grp);
-            this.pageIRC.Controls.Add(this.irc_grp);
-            this.pageIRC.Location = new System.Drawing.Point(4, 22);
-            this.pageIRC.Name = "pageIRC";
-            this.pageIRC.Size = new System.Drawing.Size(498, 521);
-            this.pageIRC.TabIndex = 6;
-            this.pageIRC.Text = "IRC/SQL";
+            this.pageRelay.BackColor = System.Drawing.SystemColors.Control;
+            this.pageRelay.Controls.Add(this.dis_grp);
+            this.pageRelay.Controls.Add(this.gb_ircSettings);
+            this.pageMisc.Controls.Add(this.sql_grp);
+            this.pageRelay.Controls.Add(this.irc_grp);
+            this.pageRelay.Location = new System.Drawing.Point(4, 22);
+            this.pageRelay.Name = "pageRelay";
+            this.pageRelay.Size = new System.Drawing.Size(498, 521);
+            this.pageRelay.TabIndex = 6;
+            this.pageRelay.Text = "IRC";
             // 
             // gb_ircSettings
             // 
             this.gb_ircSettings.Controls.Add(this.irc_txtPrefix);
             this.gb_ircSettings.Controls.Add(this.irc_lblPrefix);
-            this.gb_ircSettings.Controls.Add(this.irc_cbVerify);
+            this.gb_ircSettings.Controls.Add(this.irc_cmbVerify);
             this.gb_ircSettings.Controls.Add(this.irc_lblVerify);
-            this.gb_ircSettings.Controls.Add(this.irc_cbRank);
+            this.gb_ircSettings.Controls.Add(this.irc_cmbRank);
             this.gb_ircSettings.Controls.Add(this.irc_lblRank);
             this.gb_ircSettings.Controls.Add(this.irc_cbAFK);
             this.gb_ircSettings.Controls.Add(this.irc_cbWorldChanges);
@@ -2311,6 +2374,7 @@ namespace MCGalaxy.Gui
             // 
             // irc_txtPrefix
             // 
+            this.irc_txtPrefix.BackColor = System.Drawing.SystemColors.Window;
             this.irc_txtPrefix.Location = new System.Drawing.Point(367, 68);
             this.irc_txtPrefix.Name = "irc_txtPrefix";
             this.irc_txtPrefix.Size = new System.Drawing.Size(100, 21);
@@ -2325,14 +2389,15 @@ namespace MCGalaxy.Gui
             this.irc_lblPrefix.TabIndex = 39;
             this.irc_lblPrefix.Text = "Command prefix:";
             // 
-            // irc_cbVerify
+            // irc_cmbVerify
             // 
-            this.irc_cbVerify.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.irc_cbVerify.FormattingEnabled = true;
-            this.irc_cbVerify.Location = new System.Drawing.Point(387, 42);
-            this.irc_cbVerify.Name = "irc_cbVerify";
-            this.irc_cbVerify.Size = new System.Drawing.Size(80, 21);
-            this.irc_cbVerify.TabIndex = 38;
+            this.irc_cmbVerify.BackColor = System.Drawing.SystemColors.Window;
+            this.irc_cmbVerify.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.irc_cmbVerify.FormattingEnabled = true;
+            this.irc_cmbVerify.Location = new System.Drawing.Point(387, 42);
+            this.irc_cmbVerify.Name = "irc_cmbVerify";
+            this.irc_cmbVerify.Size = new System.Drawing.Size(80, 21);
+            this.irc_cmbVerify.TabIndex = 38;
             // 
             // irc_lblVerify
             // 
@@ -2341,15 +2406,16 @@ namespace MCGalaxy.Gui
             this.irc_lblVerify.Name = "irc_lblVerify";
             this.irc_lblVerify.Size = new System.Drawing.Size(99, 13);
             this.irc_lblVerify.TabIndex = 37;
-            this.irc_lblVerify.Text = "Verifcation method:";
+            this.irc_lblVerify.Text = "Verification method:";
             // 
-            // irc_cbRank
+            // irc_cmbRank
             // 
-            this.irc_cbRank.FormattingEnabled = true;
-            this.irc_cbRank.Location = new System.Drawing.Point(367, 17);
-            this.irc_cbRank.Name = "irc_cbRank";
-            this.irc_cbRank.Size = new System.Drawing.Size(100, 21);
-            this.irc_cbRank.TabIndex = 36;
+            this.irc_cmbRank.BackColor = System.Drawing.SystemColors.Window;
+            this.irc_cmbRank.FormattingEnabled = true;
+            this.irc_cmbRank.Location = new System.Drawing.Point(367, 17);
+            this.irc_cmbRank.Name = "irc_cmbRank";
+            this.irc_cmbRank.Size = new System.Drawing.Size(100, 21);
+            this.irc_cmbRank.TabIndex = 36;
             // 
             // irc_lblRank
             // 
@@ -2390,6 +2456,104 @@ namespace MCGalaxy.Gui
             this.irc_cbTitles.Text = "Show player\'s title in messages";
             this.irc_cbTitles.UseVisualStyleBackColor = true;
             // 
+            // dis_grp
+            // 
+            this.dis_grp.Controls.Add(this.dis_chkEnabled);
+            this.dis_grp.Controls.Add(this.dis_lblToken);
+            this.dis_grp.Controls.Add(this.dis_txtToken);
+            this.dis_grp.Controls.Add(this.dis_lblChannel);
+            this.dis_grp.Controls.Add(this.dis_txtChannel);
+            this.dis_grp.Controls.Add(this.dis_lblOpChannel);
+            this.dis_grp.Controls.Add(this.dis_txtOpChannel);
+            this.dis_grp.Controls.Add(this.dis_chkNicks);
+            this.dis_grp.Location = new System.Drawing.Point(241, 3);
+            this.dis_grp.Name = "dis_grp";
+            this.dis_grp.Size = new System.Drawing.Size(250, 158);
+            this.dis_grp.TabIndex = 34;
+            this.dis_grp.TabStop = false;
+            this.dis_grp.Text = "Discord";
+            // 
+            // dis_lblToken
+            // 
+            this.dis_lblToken.AutoSize = true;
+            this.dis_lblToken.Location = new System.Drawing.Point(6, 50);
+            this.dis_lblToken.Name = "dis_lblToken";
+            this.dis_lblToken.Size = new System.Drawing.Size(55, 13);
+            this.dis_lblToken.TabIndex = 19;
+            this.dis_lblToken.Text = "Bot token:";
+            // 
+            // dis_lblChannel
+            // 
+            this.dis_lblChannel.AutoSize = true;
+            this.dis_lblChannel.Location = new System.Drawing.Point(6, 77);
+            this.dis_lblChannel.Name = "dis_lblChannel";
+            this.dis_lblChannel.Size = new System.Drawing.Size(61, 13);
+            this.dis_lblChannel.TabIndex = 30;
+            this.dis_lblChannel.Text = "Channel ID:";
+            // 
+            // dis_txtChannel
+            // 
+            this.dis_txtChannel.BackColor = System.Drawing.SystemColors.Window;
+            this.dis_txtChannel.Location = new System.Drawing.Point(82, 74);
+            this.dis_txtChannel.Name = "dis_txtChannel";
+            this.dis_txtChannel.Size = new System.Drawing.Size(152, 21);
+            this.dis_txtChannel.TabIndex = 31;
+            this.toolTip.SetToolTip(this.dis_txtOpChannel, "The ID of the channel that chat is sent to and read from.\n\n" +
+                                    "To get the ID of a channel on Discord, right click it and then click Copy ID on the dropdown menu");
+            // 
+            // dis_lblOpChannel
+            // 
+            this.dis_lblOpChannel.AutoSize = true;
+            this.dis_lblOpChannel.Location = new System.Drawing.Point(6, 104);
+            this.dis_lblOpChannel.Name = "dis_lblOpChannel";
+            this.dis_lblOpChannel.Size = new System.Drawing.Size(67, 13);
+            this.dis_lblOpChannel.TabIndex = 20;
+            this.dis_lblOpChannel.Text = "Opchanel ID:";
+            // 
+            // dis_chkEnabled
+            // 
+            this.dis_chkEnabled.AutoSize = true;
+            this.dis_chkEnabled.Location = new System.Drawing.Point(9, 20);
+            this.dis_chkEnabled.Name = "dis_chkEnabled";
+            this.dis_chkEnabled.Size = new System.Drawing.Size(96, 17);
+            this.dis_chkEnabled.TabIndex = 22;
+            this.dis_chkEnabled.Text = "Enable Discord integration";
+            this.toolTip.SetToolTip(this.dis_chkEnabled, "Enables sending chat to and reading chat from Discord channel(s) using a bot account");
+            this.dis_chkEnabled.UseVisualStyleBackColor = true;
+            this.dis_chkEnabled.CheckedChanged += new System.EventHandler(this.dis_chkEnabled_CheckedChanged);
+            // 
+            // dis_txtToken
+            // 
+            this.dis_txtToken.BackColor = System.Drawing.SystemColors.Window;
+            this.dis_txtToken.Location = new System.Drawing.Point(82, 47);
+            this.dis_txtToken.Name = "dis_txtToken";
+            this.dis_txtToken.PasswordChar = '*';
+            this.dis_txtToken.Size = new System.Drawing.Size(152, 21);
+            this.dis_txtToken.TabIndex = 15;
+            this.toolTip.SetToolTip(this.dis_txtToken, "The token for the bot account. You can find this token by:\n" +
+                                    "Going to Developer portal -> go to the bot application -> Settings -> Bot -> click Copy under TOKEN\n\n" +
+                                    "Note: This token allows full access to the bot - NEVER SHARE THIS TOKEN WITH ANYONE ELSE");
+            // 
+            // dis_txtOpChannel
+            // 
+            this.dis_txtOpChannel.BackColor = System.Drawing.SystemColors.Window;
+            this.dis_txtOpChannel.Location = new System.Drawing.Point(82, 101);
+            this.dis_txtOpChannel.Name = "dis_txtOpChannel";
+            this.dis_txtOpChannel.Size = new System.Drawing.Size(152, 21);
+            this.dis_txtOpChannel.TabIndex = 16;
+            this.toolTip.SetToolTip(this.dis_txtOpChannel, "The ID of the channel that staff only chat is sent to and read from. Can be left blank.\n\n" +
+                                    "To get the ID of a channel on Discord, right click it and then click Copy ID on the dropdown menu");
+            // 
+            // dis_chkNicks
+            // 
+            this.dis_chkNicks.AutoSize = true;
+            this.dis_chkNicks.Location = new System.Drawing.Point(9, 131);
+            this.dis_chkNicks.Name = "dis_chkNicks";
+            this.dis_chkNicks.Size = new System.Drawing.Size(171, 17);
+            this.dis_chkNicks.TabIndex = 32;
+            this.dis_chkNicks.Text = "Prefer nicknames to usernames";
+            this.dis_chkNicks.UseVisualStyleBackColor = true;
+            // 
             // sql_grp
             // 
             this.sql_grp.Controls.Add(this.sql_chkUseSQL);
@@ -2404,7 +2568,7 @@ namespace MCGalaxy.Gui
             this.sql_grp.Controls.Add(this.sql_txtHost);
             this.sql_grp.Controls.Add(this.sql_lblPort);
             this.sql_grp.Controls.Add(this.sql_txtPort);
-            this.sql_grp.Location = new System.Drawing.Point(264, 3);
+            this.sql_grp.Location = new System.Drawing.Point(10, 288);
             this.sql_grp.Name = "sql_grp";
             this.sql_grp.Size = new System.Drawing.Size(227, 214);
             this.sql_grp.TabIndex = 29;
@@ -2434,6 +2598,7 @@ namespace MCGalaxy.Gui
             // 
             // sql_txtUser
             // 
+            this.sql_txtUser.BackColor = System.Drawing.SystemColors.Window;
             this.sql_txtUser.Location = new System.Drawing.Point(111, 47);
             this.sql_txtUser.Name = "sql_txtUser";
             this.sql_txtUser.Size = new System.Drawing.Size(100, 21);
@@ -2451,6 +2616,7 @@ namespace MCGalaxy.Gui
             // 
             // sql_txtPass
             // 
+            this.sql_txtPass.BackColor = System.Drawing.SystemColors.Window;
             this.sql_txtPass.Location = new System.Drawing.Point(111, 74);
             this.sql_txtPass.Name = "sql_txtPass";
             this.sql_txtPass.PasswordChar = '*';
@@ -2469,6 +2635,7 @@ namespace MCGalaxy.Gui
             // 
             // sql_txtDBName
             // 
+            this.sql_txtDBName.BackColor = System.Drawing.SystemColors.Window;
             this.sql_txtDBName.Location = new System.Drawing.Point(111, 101);
             this.sql_txtDBName.Name = "sql_txtDBName";
             this.sql_txtDBName.Size = new System.Drawing.Size(100, 21);
@@ -2486,6 +2653,7 @@ namespace MCGalaxy.Gui
             // 
             // sql_txtHost
             // 
+            this.sql_txtHost.BackColor = System.Drawing.SystemColors.Window;
             this.sql_txtHost.Location = new System.Drawing.Point(111, 128);
             this.sql_txtHost.Name = "sql_txtHost";
             this.sql_txtHost.Size = new System.Drawing.Size(100, 21);
@@ -2503,6 +2671,7 @@ namespace MCGalaxy.Gui
             // 
             // sql_txtPort
             // 
+            this.sql_txtPort.BackColor = System.Drawing.SystemColors.Window;
             this.sql_txtPort.Location = new System.Drawing.Point(111, 155);
             this.sql_txtPort.Name = "sql_txtPort";
             this.sql_txtPort.Size = new System.Drawing.Size(100, 21);
@@ -2514,7 +2683,7 @@ namespace MCGalaxy.Gui
             this.irc_grp.Controls.Add(this.irc_lblServer);
             this.irc_grp.Controls.Add(this.irc_txtServer);
             this.irc_grp.Controls.Add(this.irc_lblPort);
-            this.irc_grp.Controls.Add(this.irc_txtPort);
+            this.irc_grp.Controls.Add(this.irc_numPort);
             this.irc_grp.Controls.Add(this.irc_lblNick);
             this.irc_grp.Controls.Add(this.irc_txtNick);
             this.irc_grp.Controls.Add(this.irc_lblChannel);
@@ -2525,7 +2694,7 @@ namespace MCGalaxy.Gui
             this.irc_grp.Controls.Add(this.irc_txtOpChannel);
             this.irc_grp.Location = new System.Drawing.Point(8, 3);
             this.irc_grp.Name = "irc_grp";
-            this.irc_grp.Size = new System.Drawing.Size(250, 214);
+            this.irc_grp.Size = new System.Drawing.Size(225, 214);
             this.irc_grp.TabIndex = 27;
             this.irc_grp.TabStop = false;
             this.irc_grp.Text = "IRC";
@@ -2548,12 +2717,23 @@ namespace MCGalaxy.Gui
             this.irc_lblPort.TabIndex = 30;
             this.irc_lblPort.Text = "Port:";
             // 
-            // irc_txtPort
+            // irc_numPort
             // 
-            this.irc_txtPort.Location = new System.Drawing.Point(82, 74);
-            this.irc_txtPort.Name = "irc_txtPort";
-            this.irc_txtPort.Size = new System.Drawing.Size(63, 21);
-            this.irc_txtPort.TabIndex = 31;
+            this.irc_numPort.BackColor = System.Drawing.SystemColors.Window;
+            this.irc_numPort.Location = new System.Drawing.Point(82, 74);
+            this.irc_numPort.Name = "irc_numPort";
+            this.irc_numPort.Size = new System.Drawing.Size(63, 21);
+            this.irc_numPort.TabIndex = 31;
+            this.irc_numPort.Maximum = new decimal(new int[] {
+                                    65535,
+                                    0,
+                                    0,
+                                    0});
+            this.irc_numPort.Value = new decimal(new int[] {
+                                    6667,
+                                    0,
+                                    0,
+                                    0});
             // 
             // irc_lblNick
             // 
@@ -2622,6 +2802,7 @@ namespace MCGalaxy.Gui
             // 
             // lvl_txtMain
             // 
+            this.lvl_txtMain.BackColor = System.Drawing.SystemColors.Window;
             this.lvl_txtMain.Location = new System.Drawing.Point(75, 19);
             this.lvl_txtMain.Name = "lvl_txtMain";
             this.lvl_txtMain.Size = new System.Drawing.Size(87, 21);
@@ -2722,6 +2903,7 @@ namespace MCGalaxy.Gui
             // 
             // srv_txtOwner
             // 
+            this.srv_txtOwner.BackColor = System.Drawing.SystemColors.Window;
             this.srv_txtOwner.Location = new System.Drawing.Point(83, 100);
             this.srv_txtOwner.MaxLength = 64;
             this.srv_txtOwner.Name = "srv_txtOwner";
@@ -2788,6 +2970,7 @@ namespace MCGalaxy.Gui
             // 
             // srv_numPlayers
             // 
+            this.srv_numPlayers.BackColor = System.Drawing.SystemColors.Window;
             this.srv_numPlayers.Location = new System.Drawing.Point(83, 20);
             this.srv_numPlayers.Maximum = new decimal(new int[] {
                                     128,
@@ -2826,6 +3009,7 @@ namespace MCGalaxy.Gui
             // 
             // srv_numGuests
             // 
+            this.srv_numGuests.BackColor = System.Drawing.SystemColors.Window;
             this.srv_numGuests.Location = new System.Drawing.Point(83, 47);
             this.srv_numGuests.Maximum = new decimal(new int[] {
                                     128,
@@ -2847,7 +3031,7 @@ namespace MCGalaxy.Gui
                                     | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl.Controls.Add(this.pageServer);
             this.tabControl.Controls.Add(this.pageChat);
-            this.tabControl.Controls.Add(this.pageIRC);
+            this.tabControl.Controls.Add(this.pageRelay);
             this.tabControl.Controls.Add(this.pageEco);
             this.tabControl.Controls.Add(this.pageMisc);
             this.tabControl.Controls.Add(this.pageGames);
@@ -3050,7 +3234,7 @@ namespace MCGalaxy.Gui
             // eco_gbItem
             // 
             this.eco_gbItem.Controls.Add(this.eco_lblItemRank);
-            this.eco_gbItem.Controls.Add(this.eco_cbItemRank);
+            this.eco_gbItem.Controls.Add(this.eco_cmbItemRank);
             this.eco_gbItem.Controls.Add(this.eco_numItemPrice);
             this.eco_gbItem.Controls.Add(this.eco_lblItemPrice);
             this.eco_gbItem.Controls.Add(this.eco_cbItem);
@@ -3076,6 +3260,7 @@ namespace MCGalaxy.Gui
             // 
             // eco_numItemPrice
             // 
+            this.eco_numItemPrice.BackColor = System.Drawing.SystemColors.Window;
             this.eco_numItemPrice.Location = new System.Drawing.Point(76, 43);
             this.eco_numItemPrice.Margin = new System.Windows.Forms.Padding(2);
             this.eco_numItemPrice.Maximum = new decimal(new int[] {
@@ -3118,7 +3303,7 @@ namespace MCGalaxy.Gui
             // eco_gb
             // 
             this.eco_gb.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.eco_gb.Controls.Add(this.eco_cbCfg);
+            this.eco_gb.Controls.Add(this.eco_cmbCfg);
             this.eco_gb.Controls.Add(this.eco_lblCfg);
             this.eco_gb.Controls.Add(this.eco_cbEnabled);
             this.eco_gb.Controls.Add(this.eco_txtCurrency);
@@ -3130,14 +3315,15 @@ namespace MCGalaxy.Gui
             this.eco_gb.TabStop = false;
             this.eco_gb.Text = "Economy";
             // 
-            // eco_cbCfg
+            // eco_cmbCfg
             // 
-            this.eco_cbCfg.FormattingEnabled = true;
-            this.eco_cbCfg.Location = new System.Drawing.Point(368, 42);
-            this.eco_cbCfg.Name = "eco_cbCfg";
-            this.eco_cbCfg.Size = new System.Drawing.Size(110, 21);
-            this.eco_cbCfg.TabIndex = 23;
-            this.eco_cbCfg.SelectedIndexChanged += new System.EventHandler(this.Eco_cbCfg_SelectedIndexChanged);
+            this.eco_cmbCfg.BackColor = System.Drawing.SystemColors.Window;
+            this.eco_cmbCfg.FormattingEnabled = true;
+            this.eco_cmbCfg.Location = new System.Drawing.Point(368, 42);
+            this.eco_cmbCfg.Name = "eco_cmbCfg";
+            this.eco_cmbCfg.Size = new System.Drawing.Size(110, 21);
+            this.eco_cmbCfg.TabIndex = 23;
+            this.eco_cmbCfg.SelectedIndexChanged += new System.EventHandler(this.Eco_cmbCfg_SelectedIndexChanged);
             // 
             // eco_lblCfg
             // 
@@ -3161,6 +3347,7 @@ namespace MCGalaxy.Gui
             // 
             // eco_txtCurrency
             // 
+            this.eco_txtCurrency.BackColor = System.Drawing.SystemColors.Window;
             this.eco_txtCurrency.Location = new System.Drawing.Point(76, 42);
             this.eco_txtCurrency.Name = "eco_txtCurrency";
             this.eco_txtCurrency.Size = new System.Drawing.Size(118, 21);
@@ -3282,6 +3469,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numFlood
             // 
+            this.ls_numFlood.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numFlood.Location = new System.Drawing.Point(69, 43);
             this.ls_numFlood.Name = "ls_numFlood";
             this.ls_numFlood.Seconds = ((long)(300));
@@ -3292,6 +3480,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numLayerTime
             // 
+            this.ls_numLayerTime.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numLayerTime.Location = new System.Drawing.Point(216, 16);
             this.ls_numLayerTime.Name = "ls_numLayerTime";
             this.ls_numLayerTime.Seconds = ((long)(120));
@@ -3302,6 +3491,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_numRound
             // 
+            this.ls_numRound.BackColor = System.Drawing.SystemColors.Window;
             this.ls_numRound.Location = new System.Drawing.Point(69, 16);
             this.ls_numRound.Name = "ls_numRound";
             this.ls_numRound.Seconds = ((long)(900));
@@ -3518,6 +3708,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_lstNotUsed
             // 
+            this.ls_lstNotUsed.BackColor = System.Drawing.SystemColors.Window;
             this.ls_lstNotUsed.FormattingEnabled = true;
             this.ls_lstNotUsed.Location = new System.Drawing.Point(6, 219);
             this.ls_lstNotUsed.Name = "ls_lstNotUsed";
@@ -3526,6 +3717,7 @@ namespace MCGalaxy.Gui
             // 
             // ls_lstUsed
             // 
+            this.ls_lstUsed.BackColor = System.Drawing.SystemColors.Window;
             this.ls_lstUsed.FormattingEnabled = true;
             this.ls_lstUsed.Location = new System.Drawing.Point(6, 33);
             this.ls_lstUsed.Name = "ls_lstUsed";
@@ -3614,6 +3806,7 @@ namespace MCGalaxy.Gui
             // 
             // timespanUpDown1
             // 
+            this.timespanUpDown1.BackColor = System.Drawing.SystemColors.Window;
             this.timespanUpDown1.Location = new System.Drawing.Point(69, 43);
             this.timespanUpDown1.Name = "timespanUpDown1";
             this.timespanUpDown1.Seconds = ((long)(300));
@@ -3624,6 +3817,7 @@ namespace MCGalaxy.Gui
             // 
             // timespanUpDown2
             // 
+            this.timespanUpDown2.BackColor = System.Drawing.SystemColors.Window;
             this.timespanUpDown2.Location = new System.Drawing.Point(216, 16);
             this.timespanUpDown2.Name = "timespanUpDown2";
             this.timespanUpDown2.Seconds = ((long)(120));
@@ -3634,6 +3828,7 @@ namespace MCGalaxy.Gui
             // 
             // timespanUpDown3
             // 
+            this.timespanUpDown3.BackColor = System.Drawing.SystemColors.Window;
             this.timespanUpDown3.Location = new System.Drawing.Point(69, 16);
             this.timespanUpDown3.Name = "timespanUpDown3";
             this.timespanUpDown3.Seconds = ((long)(900));
@@ -3699,17 +3894,21 @@ namespace MCGalaxy.Gui
             // 
             // zs_txtModel
             // 
+            this.zs_txtModel.BackColor = System.Drawing.SystemColors.Window;
             this.zs_txtModel.Location = new System.Drawing.Point(200, 17);
             this.zs_txtModel.Name = "zs_txtModel";
             this.zs_txtModel.Size = new System.Drawing.Size(76, 21);
             this.zs_txtModel.TabIndex = 39;
+            this.toolTip.SetToolTip(this.zs_txtModel, "Model to use for infected players.\nIf left blank, then 'zombie' model is used.");
             // 
             // zs_txtName
             // 
+            this.zs_txtName.BackColor = System.Drawing.SystemColors.Window;
             this.zs_txtName.Location = new System.Drawing.Point(49, 17);
             this.zs_txtName.Name = "zs_txtName";
             this.zs_txtName.Size = new System.Drawing.Size(80, 21);
             this.zs_txtName.TabIndex = 38;
+            this.toolTip.SetToolTip(this.zs_txtName, "Name to show above head of infected players.\nIf left blank, then the player's name is shown instead.");
             // 
             // zs_lblModel
             // 
@@ -3731,11 +3930,11 @@ namespace MCGalaxy.Gui
             // 
             // zs_grpRevive
             // 
-            this.zs_grpRevive.Controls.Add(this.label5);
+            this.zs_grpRevive.Controls.Add(this.zs_lblReviveEff);
             this.zs_grpRevive.Controls.Add(this.zs_numReviveEff);
             this.zs_grpRevive.Controls.Add(this.label4);
-            this.zs_grpRevive.Controls.Add(this.label7);
-            this.zs_grpRevive.Controls.Add(this.label8);
+            this.zs_grpRevive.Controls.Add(this.zs_lblReviveLimitFtr);
+            this.zs_grpRevive.Controls.Add(this.zs_lblReviveLimitHdr);
             this.zs_grpRevive.Controls.Add(this.zs_numReviveLimit);
             this.zs_grpRevive.Controls.Add(this.zs_numReviveMax);
             this.zs_grpRevive.Controls.Add(this.label9);
@@ -3746,17 +3945,18 @@ namespace MCGalaxy.Gui
             this.zs_grpRevive.TabStop = false;
             this.zs_grpRevive.Text = "Revive settings";
             // 
-            // label5
+            // zs_lblReviveEff
             // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(201, 20);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(79, 13);
-            this.label5.TabIndex = 40;
-            this.label5.Text = "% effectiveness";
+            this.zs_lblReviveEff.AutoSize = true;
+            this.zs_lblReviveEff.Location = new System.Drawing.Point(202, 20);
+            this.zs_lblReviveEff.Name = "zs_lblReviveEff";
+            this.zs_lblReviveEff.Size = new System.Drawing.Size(79, 13);
+            this.zs_lblReviveEff.TabIndex = 40;
+            this.zs_lblReviveEff.Text = "% effectiveness";
             // 
             // zs_numReviveEff
             // 
+            this.zs_numReviveEff.BackColor = System.Drawing.SystemColors.Window;
             this.zs_numReviveEff.Location = new System.Drawing.Point(150, 16);
             this.zs_numReviveEff.Maximum = new decimal(new int[] {
                                     1000000,
@@ -3771,6 +3971,7 @@ namespace MCGalaxy.Gui
                                     0,
                                     0,
                                     0});
+            this.toolTip.SetToolTip(this.zs_numReviveEff, "Likelihood that /buy revive will disinfect a zombie");
             // 
             // label4
             // 
@@ -3781,26 +3982,27 @@ namespace MCGalaxy.Gui
             this.label4.TabIndex = 34;
             this.label4.Text = "times, with";
             // 
-            // label7
+            // zs_lblReviveLimitFtr
             // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(167, 48);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(100, 13);
-            this.label7.TabIndex = 38;
-            this.label7.Text = "seconds of infection";
+            this.zs_lblReviveLimitFtr.AutoSize = true;
+            this.zs_lblReviveLimitFtr.Location = new System.Drawing.Point(167, 48);
+            this.zs_lblReviveLimitFtr.Name = "zs_lblReviveLimitFtr";
+            this.zs_lblReviveLimitFtr.Size = new System.Drawing.Size(100, 13);
+            this.zs_lblReviveLimitFtr.TabIndex = 38;
+            this.zs_lblReviveLimitFtr.Text = "seconds of infection";
             // 
-            // label8
+            // zs_lblReviveLimitHdr
             // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(7, 48);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(102, 13);
-            this.label8.TabIndex = 36;
-            this.label8.Text = "Must be used within";
+            this.zs_lblReviveLimitHdr.AutoSize = true;
+            this.zs_lblReviveLimitHdr.Location = new System.Drawing.Point(7, 48);
+            this.zs_lblReviveLimitHdr.Name = "zs_lblReviveLimitHdr";
+            this.zs_lblReviveLimitHdr.Size = new System.Drawing.Size(102, 13);
+            this.zs_lblReviveLimitHdr.TabIndex = 36;
+            this.zs_lblReviveLimitHdr.Text = "Must be used within";
             // 
             // zs_numReviveLimit
             // 
+            this.zs_numReviveLimit.BackColor = System.Drawing.SystemColors.Window;
             this.zs_numReviveLimit.Location = new System.Drawing.Point(112, 45);
             this.zs_numReviveLimit.Maximum = new decimal(new int[] {
                                     1000000,
@@ -3815,9 +4017,11 @@ namespace MCGalaxy.Gui
                                     0,
                                     0,
                                     0});
+            this.toolTip.SetToolTip(this.zs_numReviveLimit, "The time limit after a human is infected that /buy revive must be used within");
             // 
             // zs_numReviveMax
             // 
+            this.zs_numReviveMax.BackColor = System.Drawing.SystemColors.Window;
             this.zs_numReviveMax.Location = new System.Drawing.Point(36, 17);
             this.zs_numReviveMax.Name = "zs_numReviveMax";
             this.zs_numReviveMax.Size = new System.Drawing.Size(52, 21);
@@ -3871,36 +4075,39 @@ namespace MCGalaxy.Gui
             // 
             // zs_numInvZombieDur
             // 
+            this.zs_numInvZombieDur.BackColor = System.Drawing.SystemColors.Window;
             this.zs_numInvZombieDur.Location = new System.Drawing.Point(227, 45);
             this.zs_numInvZombieDur.Name = "zs_numInvZombieDur";
             this.zs_numInvZombieDur.Size = new System.Drawing.Size(52, 21);
             this.zs_numInvZombieDur.TabIndex = 33;
+            this.toolTip.SetToolTip(this.zs_numInvZombieDur, "How many seconds a zombie is invisible for after using /buy invisibility");
             // 
             // zs_numInvHumanDur
             // 
+            this.zs_numInvHumanDur.BackColor = System.Drawing.SystemColors.Window;
             this.zs_numInvHumanDur.Location = new System.Drawing.Point(227, 20);
             this.zs_numInvHumanDur.Name = "zs_numInvHumanDur";
             this.zs_numInvHumanDur.Size = new System.Drawing.Size(52, 21);
-            this.zs_numInvHumanDur.TabIndex = 32;
+            this.zs_numInvHumanDur.TabIndex = 32;            
+            this.toolTip.SetToolTip(this.zs_numInvHumanDur, "How many seconds a human is invisible for after using /buy invisibility");
             // 
             // zs_numInvZombieMax
             // 
+            this.zs_numInvZombieMax.BackColor = System.Drawing.SystemColors.Window;
             this.zs_numInvZombieMax.Location = new System.Drawing.Point(77, 45);
             this.zs_numInvZombieMax.Name = "zs_numInvZombieMax";
             this.zs_numInvZombieMax.Size = new System.Drawing.Size(52, 21);
             this.zs_numInvZombieMax.TabIndex = 31;
+            this.toolTip.SetToolTip(this.zs_numInvZombieMax, "Maximum number of times a zombie can use /buy invisibility in a round");
             // 
             // zs_numInvHumanMax
             // 
+            this.zs_numInvHumanMax.BackColor = System.Drawing.SystemColors.Window;
             this.zs_numInvHumanMax.Location = new System.Drawing.Point(78, 20);
             this.zs_numInvHumanMax.Name = "zs_numInvHumanMax";
             this.zs_numInvHumanMax.Size = new System.Drawing.Size(52, 21);
             this.zs_numInvHumanMax.TabIndex = 27;
-            this.zs_numInvHumanMax.Value = new decimal(new int[] {
-                                    100,
-                                    0,
-                                    0,
-                                    0});
+            this.toolTip.SetToolTip(this.zs_numInvHumanMax, "Maximum number of times a human can use /buy invisibility in a round");
             // 
             // zs_lblInvZombieDur
             // 
@@ -3909,7 +4116,7 @@ namespace MCGalaxy.Gui
             this.zs_lblInvZombieDur.Name = "zs_lblInvZombieDur";
             this.zs_lblInvZombieDur.Size = new System.Drawing.Size(100, 13);
             this.zs_lblInvZombieDur.TabIndex = 30;
-            this.zs_lblInvZombieDur.Text = "potions, and last for";
+            this.zs_lblInvZombieDur.Text = "times, which last for";
             // 
             // zs_lblInvZombieMax
             // 
@@ -3950,7 +4157,7 @@ namespace MCGalaxy.Gui
             // 
             // zs_grpMaps
             // 
-            this.zs_grpMaps.Controls.Add(this.label12);
+            this.zs_grpMaps.Controls.Add(this.zs_lblNotUsed);
             this.zs_grpMaps.Controls.Add(this.zs_lblUsed);
             this.zs_grpMaps.Controls.Add(this.zs_btnAdd);
             this.zs_grpMaps.Controls.Add(this.zs_btnRemove);
@@ -3963,14 +4170,14 @@ namespace MCGalaxy.Gui
             this.zs_grpMaps.TabStop = false;
             this.zs_grpMaps.Text = "Maps";
             // 
-            // label12
+            // zs_lblNotUsed
             // 
-            this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(187, 17);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(83, 13);
-            this.label12.TabIndex = 6;
-            this.label12.Text = "Maps Not In Use";
+            this.zs_lblNotUsed.AutoSize = true;
+            this.zs_lblNotUsed.Location = new System.Drawing.Point(187, 17);
+            this.zs_lblNotUsed.Name = "zs_lblNotUsed";
+            this.zs_lblNotUsed.Size = new System.Drawing.Size(83, 13);
+            this.zs_lblNotUsed.TabIndex = 6;
+            this.zs_lblNotUsed.Text = "Maps Not In Use";
             // 
             // zs_lblUsed
             // 
@@ -4001,6 +4208,7 @@ namespace MCGalaxy.Gui
             // 
             // zs_lstNotUsed
             // 
+            this.zs_lstNotUsed.BackColor = System.Drawing.SystemColors.Window;
             this.zs_lstNotUsed.FormattingEnabled = true;
             this.zs_lstNotUsed.Location = new System.Drawing.Point(6, 219);
             this.zs_lstNotUsed.Name = "zs_lstNotUsed";
@@ -4009,6 +4217,7 @@ namespace MCGalaxy.Gui
             // 
             // zs_lstUsed
             // 
+            this.zs_lstUsed.BackColor = System.Drawing.SystemColors.Window;
             this.zs_lstUsed.FormattingEnabled = true;
             this.zs_lstUsed.Location = new System.Drawing.Point(6, 33);
             this.zs_lstUsed.Name = "zs_lstUsed";
@@ -4036,6 +4245,7 @@ namespace MCGalaxy.Gui
             // 
             // tabCTF
             // 
+            this.tabCTF.BackColor = System.Drawing.SystemColors.Control;
             this.tabCTF.Controls.Add(this.ctf_grpControls);
             this.tabCTF.Controls.Add(this.ctf_grpSettings);
             this.tabCTF.Controls.Add(this.ctf_grpMaps);
@@ -4044,7 +4254,6 @@ namespace MCGalaxy.Gui
             this.tabCTF.Size = new System.Drawing.Size(484, 489);
             this.tabCTF.TabIndex = 3;
             this.tabCTF.Text = "CTF";
-            this.tabCTF.UseVisualStyleBackColor = true;
             // 
             // ctf_grpControls
             // 
@@ -4180,6 +4389,7 @@ namespace MCGalaxy.Gui
             // 
             // ctf_lstNotUsed
             // 
+            this.ctf_lstNotUsed.BackColor = System.Drawing.SystemColors.Window;
             this.ctf_lstNotUsed.FormattingEnabled = true;
             this.ctf_lstNotUsed.Location = new System.Drawing.Point(6, 219);
             this.ctf_lstNotUsed.Name = "ctf_lstNotUsed";
@@ -4188,6 +4398,7 @@ namespace MCGalaxy.Gui
             // 
             // ctf_lstUsed
             // 
+            this.ctf_lstUsed.BackColor = System.Drawing.SystemColors.Window;
             this.ctf_lstUsed.FormattingEnabled = true;
             this.ctf_lstUsed.Location = new System.Drawing.Point(6, 33);
             this.ctf_lstUsed.Name = "ctf_lstUsed";
@@ -4196,6 +4407,7 @@ namespace MCGalaxy.Gui
             // 
             // tabTW
             // 
+            this.tabTW.BackColor = System.Drawing.SystemColors.Control;
             this.tabTW.Controls.Add(this.tw_grpControls);
             this.tabTW.Controls.Add(this.tw_grpMapSettings);
             this.tabTW.Controls.Add(this.tw_grpSettings);
@@ -4205,7 +4417,6 @@ namespace MCGalaxy.Gui
             this.tabTW.Size = new System.Drawing.Size(484, 489);
             this.tabTW.TabIndex = 4;
             this.tabTW.Text = "TNT Wars";
-            this.tabTW.UseVisualStyleBackColor = true;
             // 
             // tw_grpControls
             // 
@@ -4306,6 +4517,7 @@ namespace MCGalaxy.Gui
             // 
             // tw_numGrace
             // 
+            this.tw_numGrace.BackColor = System.Drawing.SystemColors.Window;
             this.tw_numGrace.Location = new System.Drawing.Point(59, 41);
             this.tw_numGrace.Name = "tw_numGrace";
             this.tw_numGrace.Seconds = ((long)(30));
@@ -4385,6 +4597,7 @@ namespace MCGalaxy.Gui
             // 
             // tw_numMultiKills
             // 
+            this.tw_numMultiKills.BackColor = System.Drawing.SystemColors.Window;
             this.tw_numMultiKills.Location = new System.Drawing.Point(240, 44);
             this.tw_numMultiKills.Maximum = new decimal(new int[] {
                                     100000,
@@ -4402,6 +4615,7 @@ namespace MCGalaxy.Gui
             // 
             // tw_numScoreAssists
             // 
+            this.tw_numScoreAssists.BackColor = System.Drawing.SystemColors.Window;
             this.tw_numScoreAssists.Location = new System.Drawing.Point(240, 17);
             this.tw_numScoreAssists.Maximum = new decimal(new int[] {
                                     100000,
@@ -4428,6 +4642,7 @@ namespace MCGalaxy.Gui
             // 
             // tw_numScorePerKill
             // 
+            this.tw_numScorePerKill.BackColor = System.Drawing.SystemColors.Window;
             this.tw_numScorePerKill.Location = new System.Drawing.Point(82, 44);
             this.tw_numScorePerKill.Maximum = new decimal(new int[] {
                                     100000,
@@ -4454,6 +4669,7 @@ namespace MCGalaxy.Gui
             // 
             // tw_numScoreLimit
             // 
+            this.tw_numScoreLimit.BackColor = System.Drawing.SystemColors.Window;
             this.tw_numScoreLimit.Location = new System.Drawing.Point(82, 17);
             this.tw_numScoreLimit.Maximum = new decimal(new int[] {
                                     100000,
@@ -4471,7 +4687,6 @@ namespace MCGalaxy.Gui
             // 
             // tw_grpSettings
             // 
-            this.tw_grpSettings.Controls.Add(this.tw_btnAbout);
             this.tw_grpSettings.Controls.Add(this.tw_cmbMode);
             this.tw_grpSettings.Controls.Add(this.tw_cmbDiff);
             this.tw_grpSettings.Controls.Add(this.tw_lblMode);
@@ -4486,18 +4701,9 @@ namespace MCGalaxy.Gui
             this.tw_grpSettings.TabStop = false;
             this.tw_grpSettings.Text = "Settings";
             // 
-            // tw_btnAbout
-            // 
-            this.tw_btnAbout.Location = new System.Drawing.Point(156, 89);
-            this.tw_btnAbout.Name = "tw_btnAbout";
-            this.tw_btnAbout.Size = new System.Drawing.Size(134, 23);
-            this.tw_btnAbout.TabIndex = 30;
-            this.tw_btnAbout.Text = "About Difficulties";
-            this.tw_btnAbout.UseVisualStyleBackColor = true;
-            this.tw_btnAbout.Click += new System.EventHandler(this.tw_btnAbout_Click);
-            // 
             // tw_cmbMode
             // 
+            this.tw_cmbMode.BackColor = System.Drawing.SystemColors.Window;
             this.tw_cmbMode.FormattingEnabled = true;
             this.tw_cmbMode.Items.AddRange(new object[] {
                                     "FFA",
@@ -4509,6 +4715,7 @@ namespace MCGalaxy.Gui
             // 
             // tw_cmbDiff
             // 
+            this.tw_cmbDiff.BackColor = System.Drawing.SystemColors.Window;
             this.tw_cmbDiff.FormattingEnabled = true;
             this.tw_cmbDiff.Items.AddRange(new object[] {
                                     "Easy",
@@ -4519,6 +4726,8 @@ namespace MCGalaxy.Gui
             this.tw_cmbDiff.Name = "tw_cmbDiff";
             this.tw_cmbDiff.Size = new System.Drawing.Size(76, 21);
             this.tw_cmbDiff.TabIndex = 28;
+            this.toolTip.SetToolTip(this.tw_cmbDiff, "Easy (2 Hits to die, TNT has long delay)\nNormal (2 Hits to die, TNT has normal delay)\n" +
+                                    "Hard (1 Hit to die, TNT has short delay and team kills on)\nExtreme (1 Hit to die, TNT has short delay, big explosion and team kills on)");
             // 
             // tw_lblMode
             // 
@@ -4611,6 +4820,7 @@ namespace MCGalaxy.Gui
             // 
             // tw_lstNotUsed
             // 
+            this.tw_lstNotUsed.BackColor = System.Drawing.SystemColors.Window;
             this.tw_lstNotUsed.FormattingEnabled = true;
             this.tw_lstNotUsed.Location = new System.Drawing.Point(6, 219);
             this.tw_lstNotUsed.Name = "tw_lstNotUsed";
@@ -4619,6 +4829,7 @@ namespace MCGalaxy.Gui
             // 
             // tw_lstUsed
             // 
+            this.tw_lstUsed.BackColor = System.Drawing.SystemColors.Window;
             this.tw_lstUsed.FormattingEnabled = true;
             this.tw_lstUsed.Location = new System.Drawing.Point(6, 33);
             this.tw_lstUsed.Name = "tw_lstUsed";
@@ -4665,6 +4876,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbExtra7
             // 
+            this.cmd_cmbExtra7.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbExtra7.FormattingEnabled = true;
             this.cmd_cmbExtra7.Location = new System.Drawing.Point(10, 173);
             this.cmd_cmbExtra7.Name = "cmd_cmbExtra7";
@@ -4683,6 +4895,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbExtra6
             // 
+            this.cmd_cmbExtra6.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbExtra6.FormattingEnabled = true;
             this.cmd_cmbExtra6.Location = new System.Drawing.Point(10, 147);
             this.cmd_cmbExtra6.Name = "cmd_cmbExtra6";
@@ -4701,6 +4914,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbExtra5
             // 
+            this.cmd_cmbExtra5.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbExtra5.FormattingEnabled = true;
             this.cmd_cmbExtra5.Location = new System.Drawing.Point(10, 121);
             this.cmd_cmbExtra5.Name = "cmd_cmbExtra5";
@@ -4719,6 +4933,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbExtra4
             // 
+            this.cmd_cmbExtra4.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbExtra4.FormattingEnabled = true;
             this.cmd_cmbExtra4.Location = new System.Drawing.Point(10, 95);
             this.cmd_cmbExtra4.Name = "cmd_cmbExtra4";
@@ -4737,6 +4952,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbExtra3
             // 
+            this.cmd_cmbExtra3.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbExtra3.FormattingEnabled = true;
             this.cmd_cmbExtra3.Location = new System.Drawing.Point(10, 69);
             this.cmd_cmbExtra3.Name = "cmd_cmbExtra3";
@@ -4755,6 +4971,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbExtra2
             // 
+            this.cmd_cmbExtra2.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbExtra2.FormattingEnabled = true;
             this.cmd_cmbExtra2.Location = new System.Drawing.Point(10, 43);
             this.cmd_cmbExtra2.Name = "cmd_cmbExtra2";
@@ -4773,6 +4990,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbExtra1
             // 
+            this.cmd_cmbExtra1.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbExtra1.FormattingEnabled = true;
             this.cmd_cmbExtra1.Location = new System.Drawing.Point(10, 17);
             this.cmd_cmbExtra1.Name = "cmd_cmbExtra1";
@@ -4810,6 +5028,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbAlw3
             // 
+            this.cmd_cmbAlw3.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbAlw3.FormattingEnabled = true;
             this.cmd_cmbAlw3.Location = new System.Drawing.Point(274, 67);
             this.cmd_cmbAlw3.Name = "cmd_cmbAlw3";
@@ -4819,6 +5038,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbAlw2
             // 
+            this.cmd_cmbAlw2.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbAlw2.FormattingEnabled = true;
             this.cmd_cmbAlw2.Location = new System.Drawing.Point(187, 67);
             this.cmd_cmbAlw2.Name = "cmd_cmbAlw2";
@@ -4828,6 +5048,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbDis3
             // 
+            this.cmd_cmbDis3.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbDis3.FormattingEnabled = true;
             this.cmd_cmbDis3.Location = new System.Drawing.Point(274, 41);
             this.cmd_cmbDis3.Name = "cmd_cmbDis3";
@@ -4837,6 +5058,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbDis2
             // 
+            this.cmd_cmbDis2.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbDis2.FormattingEnabled = true;
             this.cmd_cmbDis2.Location = new System.Drawing.Point(187, 41);
             this.cmd_cmbDis2.Name = "cmd_cmbDis2";
@@ -4846,6 +5068,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbAlw1
             // 
+            this.cmd_cmbAlw1.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbAlw1.FormattingEnabled = true;
             this.cmd_cmbAlw1.Location = new System.Drawing.Point(100, 67);
             this.cmd_cmbAlw1.Name = "cmd_cmbAlw1";
@@ -4855,6 +5078,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbDis1
             // 
+            this.cmd_cmbDis1.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbDis1.FormattingEnabled = true;
             this.cmd_cmbDis1.Location = new System.Drawing.Point(100, 41);
             this.cmd_cmbDis1.Name = "cmd_cmbDis1";
@@ -4864,6 +5088,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_cmbMin
             // 
+            this.cmd_cmbMin.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_cmbMin.FormattingEnabled = true;
             this.cmd_cmbMin.Location = new System.Drawing.Point(100, 14);
             this.cmd_cmbMin.Name = "cmd_cmbMin";
@@ -4920,6 +5145,7 @@ namespace MCGalaxy.Gui
             // 
             // cmd_list
             // 
+            this.cmd_list.BackColor = System.Drawing.SystemColors.Window;
             this.cmd_list.FormattingEnabled = true;
             this.cmd_list.Location = new System.Drawing.Point(6, 6);
             this.cmd_list.Name = "cmd_list";
@@ -4969,6 +5195,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_numChatMsgs
             // 
+            this.sec_numChatMsgs.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numChatMsgs.Location = new System.Drawing.Point(53, 45);
             this.sec_numChatMsgs.Maximum = new decimal(new int[] {
                                     10000,
@@ -4995,6 +5222,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_numChatSecs
             // 
+            this.sec_numChatSecs.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numChatSecs.Location = new System.Drawing.Point(156, 45);
             this.sec_numChatSecs.Name = "sec_numChatSecs";
             this.sec_numChatSecs.Seconds = ((long)(5));
@@ -5014,6 +5242,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_numChatMute
             // 
+            this.sec_numChatMute.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numChatMute.Location = new System.Drawing.Point(53, 79);
             this.sec_numChatMute.Name = "sec_numChatMute";
             this.sec_numChatMute.Seconds = ((long)(60));
@@ -5060,6 +5289,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_numCmdMsgs
             // 
+            this.sec_numCmdMsgs.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numCmdMsgs.Location = new System.Drawing.Point(53, 45);
             this.sec_numCmdMsgs.Maximum = new decimal(new int[] {
                                     10000,
@@ -5086,6 +5316,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_numCmdSecs
             // 
+            this.sec_numCmdSecs.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numCmdSecs.Location = new System.Drawing.Point(161, 45);
             this.sec_numCmdSecs.Name = "sec_numCmdSecs";
             this.sec_numCmdSecs.Seconds = ((long)(1));
@@ -5105,6 +5336,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_numCmdMute
             // 
+            this.sec_numCmdMute.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numCmdMute.Location = new System.Drawing.Point(53, 79);
             this.sec_numCmdMute.Name = "sec_numCmdMute";
             this.sec_numCmdMute.Seconds = ((long)(60));
@@ -5151,6 +5383,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_numIPMsgs
             // 
+            this.sec_numIPMsgs.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numIPMsgs.Location = new System.Drawing.Point(53, 45);
             this.sec_numIPMsgs.Maximum = new decimal(new int[] {
                                     10000,
@@ -5177,6 +5410,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_numIPSecs
             // 
+            this.sec_numIPSecs.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numIPSecs.Location = new System.Drawing.Point(166, 45);
             this.sec_numIPSecs.Name = "sec_numIPSecs";
             this.sec_numIPSecs.Seconds = ((long)(1));
@@ -5195,7 +5429,8 @@ namespace MCGalaxy.Gui
             this.sec_lblIPForMute.Text = "Block for";
             // 
             // sec_numIPMute
-            // 
+            //
+            this.sec_numIPMute.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numIPMute.Location = new System.Drawing.Point(53, 79);
             this.sec_numIPMute.Name = "sec_numIPMute";
             this.sec_numIPMute.Seconds = ((long)(300));
@@ -5263,6 +5498,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_numBlocksMsgs
             // 
+            this.sec_numBlocksMsgs.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numBlocksMsgs.Location = new System.Drawing.Point(46, 45);
             this.sec_numBlocksMsgs.Maximum = new decimal(new int[] {
                                     10000,
@@ -5289,6 +5525,7 @@ namespace MCGalaxy.Gui
             // 
             // sec_numBlocksSecs
             // 
+            this.sec_numBlocksSecs.BackColor = System.Drawing.SystemColors.Window;
             this.sec_numBlocksSecs.Location = new System.Drawing.Point(142, 45);
             this.sec_numBlocksSecs.Name = "sec_numBlocksSecs";
             this.sec_numBlocksSecs.Seconds = ((long)(5));
@@ -5316,6 +5553,8 @@ namespace MCGalaxy.Gui
             this.Load += new System.EventHandler(this.PropertyWindow_Load);
             this.Disposed += new System.EventHandler(this.PropertyWindow_Unload);
             this.pageChat.ResumeLayout(false);
+            this.dis_grp.ResumeLayout(false);
+            this.dis_grp.PerformLayout();
             this.chat_grpTab.ResumeLayout(false);
             this.chat_grpTab.PerformLayout();
             this.chat_grpMessages.ResumeLayout(false);
@@ -5325,6 +5564,7 @@ namespace MCGalaxy.Gui
             this.chat_grpColors.ResumeLayout(false);
             this.chat_grpColors.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.srv_numPort)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.irc_numPort)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.rank_numPerm)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.rank_numMaps)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.rank_numDraw)).EndInit();
@@ -5369,7 +5609,7 @@ namespace MCGalaxy.Gui
             this.bak_grp.ResumeLayout(false);
             this.bak_grp.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bak_numTime)).EndInit();
-            this.pageIRC.ResumeLayout(false);
+            this.pageRelay.ResumeLayout(false);
             this.gb_ircSettings.ResumeLayout(false);
             this.gb_ircSettings.PerformLayout();
             this.sql_grp.ResumeLayout(false);
@@ -5507,15 +5747,15 @@ namespace MCGalaxy.Gui
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.NumericUpDown zs_numReviveMax;
         private System.Windows.Forms.NumericUpDown zs_numReviveLimit;
-        private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label zs_lblReviveLimitHdr;
+        private System.Windows.Forms.Label zs_lblReviveLimitFtr;
         private System.Windows.Forms.GroupBox zs_grpRevive;
         private System.Windows.Forms.ListBox zs_lstUsed;
         private System.Windows.Forms.ListBox zs_lstNotUsed;
         private System.Windows.Forms.Button zs_btnRemove;
         private System.Windows.Forms.Button zs_btnAdd;
         private System.Windows.Forms.Label zs_lblUsed;
-        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.Label zs_lblNotUsed;
         private System.Windows.Forms.GroupBox zs_grpMaps;
         private System.Windows.Forms.CheckBox zs_cbStart;
         private System.Windows.Forms.CheckBox zs_cbMap;
@@ -5530,7 +5770,7 @@ namespace MCGalaxy.Gui
         private System.Windows.Forms.NumericUpDown zs_numInvHumanDur;
         private System.Windows.Forms.NumericUpDown zs_numInvZombieDur;
         private System.Windows.Forms.GroupBox zs_grpInv;
-        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label zs_lblReviveEff;
         private System.Windows.Forms.NumericUpDown zs_numReviveEff;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label3;
@@ -5623,9 +5863,9 @@ namespace MCGalaxy.Gui
         private System.Windows.Forms.DataGridView eco_dgvRanks;
 
         private System.Windows.Forms.Label eco_lblItemRank;
-        private System.Windows.Forms.ComboBox eco_cbItemRank;
+        private System.Windows.Forms.ComboBox eco_cmbItemRank;
         private System.Windows.Forms.Label eco_lblCfg;
-        private System.Windows.Forms.ComboBox eco_cbCfg;
+        private System.Windows.Forms.ComboBox eco_cmbCfg;
         private System.Windows.Forms.CheckBox eco_cbItem;
         private System.Windows.Forms.Label eco_lblItemPrice;
         private System.Windows.Forms.NumericUpDown eco_numItemPrice;
@@ -5663,9 +5903,9 @@ namespace MCGalaxy.Gui
         private System.Windows.Forms.Label rank_lblGen;
         private System.Windows.Forms.GroupBox rank_grpLimits;
         private System.Windows.Forms.Label irc_lblRank;
-        private System.Windows.Forms.ComboBox irc_cbRank;
+        private System.Windows.Forms.ComboBox irc_cmbRank;
         private System.Windows.Forms.Label irc_lblVerify;
-        private System.Windows.Forms.ComboBox irc_cbVerify;
+        private System.Windows.Forms.ComboBox irc_cmbVerify;
         private System.Windows.Forms.Label irc_lblPrefix;
         private System.Windows.Forms.TextBox irc_txtPrefix;
         private System.Windows.Forms.CheckBox irc_cbAFK;
@@ -5721,6 +5961,15 @@ namespace MCGalaxy.Gui
         private System.Windows.Forms.GroupBox blk_grpPermissions;
         #endregion
         
+        private System.Windows.Forms.TextBox dis_txtOpChannel;
+        private System.Windows.Forms.Label dis_lblOpChannel;
+        private System.Windows.Forms.TextBox dis_txtChannel;
+        private System.Windows.Forms.Label dis_lblChannel;
+        private System.Windows.Forms.TextBox dis_txtToken;
+        private System.Windows.Forms.Label dis_lblToken;
+        private System.Windows.Forms.CheckBox dis_chkEnabled;
+        private System.Windows.Forms.CheckBox dis_chkNicks;
+        private System.Windows.Forms.GroupBox dis_grp;
         private System.Windows.Forms.ComboBox rank_cmbOsMap;
         private System.Windows.Forms.Label rank_lblOsMap;
         private System.Windows.Forms.TextBox rank_txtPrefix;
@@ -5841,7 +6090,7 @@ namespace MCGalaxy.Gui
         private System.Windows.Forms.Label afk_lblTimer;
         private System.Windows.Forms.Label bak_lblTime;
         private System.Windows.Forms.Label bak_lblLocation;
-        private System.Windows.Forms.TabPage pageIRC;
+        private System.Windows.Forms.TabPage pageRelay;
         private System.Windows.Forms.TextBox irc_txtOpChannel;
         private System.Windows.Forms.TextBox irc_txtChannel;
         private System.Windows.Forms.TextBox irc_txtServer;
@@ -5908,7 +6157,7 @@ namespace MCGalaxy.Gui
         private System.Windows.Forms.CheckBox irc_chkPass;
         private System.Windows.Forms.CheckBox irc_cbTitles;
         private System.Windows.Forms.Label irc_lblPort;
-        private System.Windows.Forms.TextBox irc_txtPort;
+        private System.Windows.Forms.NumericUpDown irc_numPort;
         private System.Windows.Forms.CheckBox rank_cbEmpty;
         private System.Windows.Forms.GroupBox ls_grpMaps;
         private System.Windows.Forms.Label ls_lblNotUsed;
@@ -5945,7 +6194,6 @@ namespace MCGalaxy.Gui
         private System.Windows.Forms.CheckBox tw_cbKills;
         private System.Windows.Forms.CheckBox tw_cbBalance;
         private System.Windows.Forms.CheckBox tw_cbGrace;
-        private System.Windows.Forms.Button tw_btnAbout;
         private System.Windows.Forms.CheckBox tw_cbStreaks;
         private System.Windows.Forms.PropertyGrid propsZG;
     }

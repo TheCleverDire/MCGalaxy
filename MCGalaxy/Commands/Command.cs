@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using MCGalaxy.Commands;
+using MCGalaxy.Maths;
 using MCGalaxy.Scripting;
 
 namespace MCGalaxy {
@@ -44,6 +45,7 @@ namespace MCGalaxy {
         public virtual bool MessageBlockRestricted { get { return false; } }
         public virtual bool UseableWhenFrozen { get { return false; } }
         public virtual bool LogUsage { get { return true; } }
+        public virtual bool UpdatesLastCmd { get { return true; } }
         
         public static CommandList all = new CommandList();
         public static List<Command> allCmds  = new List<Command>();
@@ -66,17 +68,13 @@ namespace MCGalaxy {
             }
             
             coreCmds = new List<Command>(allCmds);
-            IScripting.Autoload();
+            IScripting.AutoloadCommands();
         }
         
         public static void Register(Command cmd) {
             allCmds.Add(cmd);
             
-            CommandPerms perms = CommandPerms.Find(cmd.name);
-            if (perms == null) {
-                perms = new CommandPerms(cmd.name, cmd.defaultRank, null, null);
-                CommandPerms.List.Add(perms);
-            }
+            CommandPerms perms = CommandPerms.GetOrAdd(cmd.name, cmd.defaultRank);
             foreach (Group grp in Group.GroupList) {
                 if (perms.UsableBy(grp.Permission)) grp.Commands.Add(cmd);
             }
@@ -84,17 +82,11 @@ namespace MCGalaxy {
             CommandPerm[] extra = cmd.ExtraPerms;
             if (extra != null) {
                 for (int i = 0; i < extra.Length; i++) {
-                    CommandExtraPerms.Set(cmd.name, i + 1, extra[i].Description, 
-                                          extra[i].Perm, null, null);
+                    CommandExtraPerms exPerms = CommandExtraPerms.GetOrAdd(cmd.name, i + 1, extra[i].Perm);
+                    exPerms.Desc = extra[i].Description;
                 }
-            }
-            
-            CommandAlias[] aliases = cmd.Aliases;
-            if (aliases == null) return;
-            foreach (CommandAlias a in aliases) {
-                Alias alias = new Alias(a.Trigger, cmd.name, a.Format);
-                Alias.coreAliases.Add(alias);
-            }
+            }           
+            Alias.RegisterDefaults(cmd);
         }
         
         public static Command Find(string name) {
@@ -109,6 +101,10 @@ namespace MCGalaxy {
             foreach (Group grp in Group.GroupList) {
                 grp.Commands.Remove(cmd);
             }
+            
+            // typical usage: Command.Unregister(Command.Find("xyz"))
+            // So don't throw exception if Command.Find returned null
+            if (cmd != null) Alias.UnregisterDefaults(cmd);
             return removed;
         }
         
@@ -145,10 +141,11 @@ namespace MCGalaxy {
     public struct CommandData {
         public LevelPermission Rank;
         public CommandContext Context;
+        public Vec3S32 MBCoords;
     }
     
     // Clunky design, but needed to stay backwards compatible with custom commands
-    public abstract class Command2 : Command {       
+    public abstract class Command2 : Command {
         public override void Use(Player p, string message) {
             if (p == null) p = Player.Console;
 
@@ -158,13 +155,13 @@ namespace MCGalaxy {
     
     // Kept around for backwards compatibility
     public sealed class CommandList {
-        [Obsolete("Use Command.Register() instead")]
+        [Obsolete("Use Command.Register() instead", true)]
         public void Add(Command cmd) { Command.Register(cmd); }
-        [Obsolete("Use CommandUnregister() instead")]
+        [Obsolete("Use Command.Unregister() instead", true)]
         public bool Remove(Command cmd) { return Command.Unregister(cmd); }
         
-        [Obsolete("Use Command.Find() instead")]
-        public Command FindByName(string name) { return Command.Find(name); }        
+        [Obsolete("Use Command.Find() instead", true)]
+        public Command FindByName(string name) { return Command.Find(name); }
         [Obsolete("Use Command.Find() instead")]
         public Command Find(string name) {
             foreach (Command cmd in Command.allCmds) {

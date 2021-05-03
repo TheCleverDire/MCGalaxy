@@ -17,7 +17,6 @@
  */
 using System;
 using System.IO;
-using System.Security.Cryptography;
 using MCGalaxy.Commands;
 using MCGalaxy.Games;
 using MCGalaxy.SQL;
@@ -25,20 +24,6 @@ using MCGalaxy.SQL;
 namespace MCGalaxy {
     
     public static class SrvProperties {
-        
-        public static void GenerateSalt() {
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            char[] chars = new char[16];
-            byte[] one = new byte[1];
-            
-            for (int i = 0; i < chars.Length; ) {
-                rng.GetBytes(one);
-                if (!Char.IsLetterOrDigit((char)one[0])) continue;
-                
-                chars[i] = (char)one[0]; i++;
-            }
-            Server.salt = new string(chars);
-        }
         
         public static void Load() {
             old = new OldPerms();
@@ -58,7 +43,7 @@ namespace MCGalaxy {
             #pragma warning restore 0618
             
             if (!Directory.Exists(Server.Config.BackupDirectory))
-                Server.Config.BackupDirectory = Path.Combine(Utils.FolderPath, "levels/backups");
+                Server.Config.BackupDirectory = "levels/backups";
             
             Save();
             Server.SetMainLevel(Server.Config.MainLevel);
@@ -169,7 +154,6 @@ namespace MCGalaxy {
             w.WriteLine("#   server-name                   = The name which displays on classicube.net");
             w.WriteLine("#   motd                          = The message which displays when a player connects");
             w.WriteLine("#   port                          = The port to operate from");
-            w.WriteLine("#   console-only                  = Run without a GUI (useful for Linux servers with mono)");
             w.WriteLine("#   verify-names                  = Verify the validity of names");
             w.WriteLine("#   public                        = Set to true to appear in the public server list");
             w.WriteLine("#   max-players                   = The maximum number of connections");
@@ -202,6 +186,7 @@ namespace MCGalaxy {
             w.WriteLine("#   guest-limit-notify            = Show -Too Many Guests- message in chat when maxGuests has been reached. Default false");
             w.WriteLine("#   guest-join-notify             = Shows when guests and lower ranks join server in chat and IRC. Default true");
             w.WriteLine("#   guest-leave-notify            = Shows when guests and lower ranks leave server in chat and IRC. Default true");
+            w.WriteLine("#   announcement-interval         = The delay in between server announcements in minutes. Default 5");
             w.WriteLine();
             w.WriteLine("#   UseMySQL                      = Use MySQL (true) or use SQLite (false)");
             w.WriteLine("#   Host                          = The host name for the database (usually 127.0.0.1)");

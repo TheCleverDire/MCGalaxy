@@ -50,26 +50,26 @@ namespace MCGalaxy.Commands.Moderation {
         protected override void UpdatePerms(ItemPerms perms, Player p, string msg) {
             if (perms is CommandPerms) {
                 CommandPerms.Save();
-                CommandPerms.Load();
+                CommandPerms.ApplyChanges();
                 Announce(p, perms.ItemName + msg);
             } else {
                 CommandExtraPerms.Save();
                 CommandExtraPerms ex = (CommandExtraPerms)perms;
-                //Announce(p, cmd.name + "%S's extra permission " + idx + " was set to " + grp.ColoredName);
+                //Announce(p, cmd.name + "&S's extra permission " + idx + " was set to " + grp.ColoredName);
                 Announce(p, ex.CmdName + " extra permission #" + ex.Num + msg);
             }
         }
         
         public override void Help(Player p) {
-            p.Message("%T/CmdSet [cmd] [rank]");
-            p.Message("%HSets lowest rank that can use [cmd] to [rank]");
-            p.Message("%T/CmdSet [cmd] +[rank]");
-            p.Message("%HAllows a specific rank to use [cmd]");
-            p.Message("%T/CmdSet [cmd] -[rank]");
-            p.Message("%HPrevents a specific rank from using [cmd]");
-            p.Message("%T/CmdSet [cmd] [rank] [extra permission number]");
-            p.Message("%HSet the lowest rank that has that extra permission for [cmd]");
-            p.Message("%HTo see available ranks, type %T/ViewRanks");
+            p.Message("&T/CmdSet [cmd] [rank]");
+            p.Message("&HSets lowest rank that can use [cmd] to [rank]");
+            p.Message("&T/CmdSet [cmd] +[rank]");
+            p.Message("&HAllows a specific rank to use [cmd]");
+            p.Message("&T/CmdSet [cmd] -[rank]");
+            p.Message("&HPrevents a specific rank from using [cmd]");
+            p.Message("&T/CmdSet [cmd] [rank] [extra permission number]");
+            p.Message("&HSet the lowest rank that has that extra permission for [cmd]");
+            p.Message("&HTo see available ranks, type &T/ViewRanks");
         }
     }
 }

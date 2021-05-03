@@ -24,9 +24,6 @@ using System.Text;
 namespace MCGalaxy {
     public static class Utils {
 
-        /// <summary> The absolute path on disc of the folder MCGalaxy.exe is currently running from. </summary>
-        public static string FolderPath { get { return AppDomain.CurrentDomain.BaseDirectory; } }
-        
         public static string Hex(byte r, byte g, byte b) {
             return "#" + r.ToString("X2") + g.ToString("X2") + b.ToString("X2");
         }
@@ -90,6 +87,11 @@ namespace MCGalaxy {
             if (Double.IsInfinity(temp) || Double.IsNaN(temp)) return false;
             result = temp;
             return true;
+        }
+        
+        // in JSON we must use . instead of ,
+        public static string StringifyDouble(double value) {
+            return value.ToString(CultureInfo.InvariantCulture);
         }
 
         

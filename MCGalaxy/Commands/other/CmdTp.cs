@@ -58,7 +58,7 @@ namespace MCGalaxy.Commands.Misc {
 
             if (p.level != lvl) PlayerActions.ChangeMap(p, lvl.name);
             if (target != null && target.Loading) {
-                p.Message("Waiting for " + target.ColoredName + " %Sto spawn..");
+                p.Message("Waiting for {0} &Sto spawn..", p.FormatNick(target));
                 target.BlockUntilLoad(10);
             }
             
@@ -83,9 +83,9 @@ namespace MCGalaxy.Commands.Misc {
                 pos = Position.FromFeetBlockCoords(P.X, P.Y, P.Z);
             } else {
                 // relative to feet position exactly
-                P = new Vec3S32(p.Pos.X, p.Pos.Y + Entities.CharacterHeight, p.Pos.Z);
+                P = new Vec3S32(p.Pos.X, p.Pos.Y - Entities.CharacterHeight, p.Pos.Z);
                 if (!CommandParser.GetCoords(p, args, 0, ref P)) return false;
-                pos = new Position(P.X, P.Y - Entities.CharacterHeight, P.Z);
+                pos = new Position(P.X, P.Y + Entities.CharacterHeight, P.Z);
             }
             
             int angle = 0;            
@@ -116,7 +116,7 @@ namespace MCGalaxy.Commands.Misc {
         
         static bool CheckPlayer(Player p, Player target, CommandData data) {
             if (target.level.IsMuseum) {
-                p.Message(target.ColoredName + " %Sis in a museum."); return false;
+                p.Message("{0} &Sis in a museum.", p.FormatNick(target)); return false;
             }          
             if (!Server.Config.HigherRankTP && !CheckRank(p, data, target, "teleport to", true)) return false;
             
@@ -129,15 +129,15 @@ namespace MCGalaxy.Commands.Misc {
         }
         
         public override void Help(Player p) {
-            p.Message("%HUse ~ before a coordinate to move relative to current position");
-            p.Message("%T/TP [x y z] <yaw> <pitch>");
-            p.Message("%HTeleports yourself to the given block coordinates.");
-            p.Message("%T/TP -precise [x y z] <yaw> <pitch>");
-            p.Message("%HTeleports using precise units. (32 units = 1 block)");
-            p.Message("%T/TP [player]");
-            p.Message("%HTeleports yourself to that player.");
-            p.Message("%T/TP bot [name]");
-            p.Message("%HTeleports yourself to that bot.");
+            p.Message("&HUse ~ before a coordinate to move relative to current position");
+            p.Message("&T/TP [x y z] <yaw> <pitch>");
+            p.Message("&HTeleports yourself to the given block coordinates.");
+            p.Message("&T/TP -precise [x y z] <yaw> <pitch>");
+            p.Message("&HTeleports using precise units. (32 units = 1 block)");
+            p.Message("&T/TP [player]");
+            p.Message("&HTeleports yourself to that player.");
+            p.Message("&T/TP bot [name]");
+            p.Message("&HTeleports yourself to that bot.");
         }
     }
 }

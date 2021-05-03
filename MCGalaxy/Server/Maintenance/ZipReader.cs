@@ -59,10 +59,10 @@ namespace MCGalaxy {
         public override void Close() { stream = null; }
     }
 
+    /// <summary> Reads entries from a ZIP archive. </summary>
     public sealed class ZipReader {
         BinaryReader reader;
         Stream stream;
-        byte[] buffer = new byte[81920];
         
         List<ZipEntry> entries = new List<ZipEntry>();
         int numEntries;
@@ -82,7 +82,7 @@ namespace MCGalaxy {
             
             uint sig = reader.ReadUInt32();
             if (sig != ZipEntry.SigLocal) {
-                Logger.Log(LogType.Warning, "%WFailed to find local file entry {0}", i); return null;
+                Logger.Log(LogType.Warning, "&WFailed to find local file entry {0}", i); return null;
             }
             
             entry = ReadLocalFileRecord();
@@ -100,7 +100,7 @@ namespace MCGalaxy {
             for (int i = 0; i < numEntries; i++) {
                 uint sig = reader.ReadUInt32();
                 if (sig != ZipEntry.SigCentral) {
-                    Logger.Log(LogType.Warning, "%WFailed to find central dir entry {0}", i); return i;
+                    Logger.Log(LogType.Warning, "&WFailed to find central dir entry {0}", i); return i;
                 }
                 
                 ZipEntry entry = ReadCentralDirectoryRecord();
@@ -122,7 +122,7 @@ namespace MCGalaxy {
             }
             
             if (sig != ZipEntry.SigEnd) {
-                Logger.Log(LogType.Warning, "%WFailed to find end of central directory"); return;
+                Logger.Log(LogType.Warning, "&WFailed to find end of central directory"); return;
             }
             ReadEndOfCentralDirectoryRecord();
             
@@ -132,14 +132,14 @@ namespace MCGalaxy {
             stream.Seek(-i - 20, SeekOrigin.End);
             sig = r.ReadUInt32();
             if (sig != ZipEntry.SigZip64Loc) {
-                Logger.Log(LogType.Warning, "%WFailed to find ZIP64 locator"); return;
+                Logger.Log(LogType.Warning, "&WFailed to find ZIP64 locator"); return;
             }
             ReadZip64EndOfCentralDirectoryLocator();
             
             stream.Seek(zip64EndOffset, SeekOrigin.Begin);
             sig = r.ReadUInt32();
             if (sig != ZipEntry.SigZip64End) {
-                Logger.Log(LogType.Warning, "%WFailed to find ZIP64 end"); return;
+                Logger.Log(LogType.Warning, "&WFailed to find ZIP64 end"); return;
             }
             ReadZip64EndOfCentralDirectoryRecord();
         }
@@ -191,7 +191,7 @@ namespace MCGalaxy {
             int filenameLen = r.ReadUInt16();
             int extraLen = r.ReadUInt16();
             int commentLen = r.ReadUInt16();
-            r.ReadUInt16(); // disk number
+            r.ReadUInt16(); // disc number
             r.ReadUInt16(); // internal attributes
             r.ReadUInt32(); // external attributes
             entry.LocalHeaderOffset = r.ReadUInt32();
@@ -220,27 +220,27 @@ namespace MCGalaxy {
             r.ReadInt64(); // zip64 end of central dir size
             r.ReadUInt16(); // version
             r.ReadUInt16(); // version
-            r.ReadUInt32(); // disk number
-            r.ReadUInt32(); // disk number of central directory
+            r.ReadUInt32(); // disc number
+            r.ReadUInt32(); // disc number of central directory
             numEntries = (int)r.ReadInt64();
-            r.ReadInt64(); // num entries on disk
+            r.ReadInt64(); // num entries on disc
             r.ReadInt64(); // central dir size
             centralDirOffset = r.ReadInt64();
         }
         
         void ReadZip64EndOfCentralDirectoryLocator() {
             BinaryReader r = reader;
-            r.ReadUInt32(); // disk number of zip64 end of central directory
+            r.ReadUInt32(); // disc number of zip64 end of central directory
             zip64EndOffset = reader.ReadInt64();
-            r.ReadUInt32(); // total number of disks
+            r.ReadUInt32(); // total number of discs
         }
         
         void ReadEndOfCentralDirectoryRecord() {
             BinaryReader r = reader;
-            r.ReadUInt16(); // disk number
-            r.ReadUInt16(); // disk number of start
+            r.ReadUInt16(); // disc number
+            r.ReadUInt16(); // disc number of start
             numEntries = r.ReadUInt16();
-            r.ReadUInt16(); // num entries on disk
+            r.ReadUInt16(); // num entries on disc
             r.ReadUInt32(); // cental dir size
             centralDirOffset = r.ReadUInt32();
             r.ReadUInt16(); // comment length

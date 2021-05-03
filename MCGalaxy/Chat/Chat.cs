@@ -22,14 +22,14 @@ namespace MCGalaxy {
         /// <summary> Messages all players on the server </summary>
         All,
         /// <summary> Messages all players on levels which see server-wide chat </summary>
-        /// <remarks> Excludes players who are ignoring all chat, or are in a chatroom </remarks>
+        /// <remarks> Excludes players who are ignoring all chat </remarks>
         Global,
         /// <summary> Messages all players on a particular level </summary>
-        /// <remarks> Excludes players who are ignoring all chat, or are in a chatroom </remarks>
+        /// <remarks> Excludes players who are ignoring all chat </remarks>
         Level,
-        /// <summary> Messages all players in (or spying on) a particular chatroom. </summary>
+        [Obsolete("Chatrooms have been removed")]
         Chatroom,
-        /// <summary> Messages all players in all chatrooms. </summary>
+        [Obsolete("Chatrooms have been removed")]
         AllChatrooms,
         
         /// <summary> Messages all players of a given rank </summary>
@@ -47,34 +47,24 @@ namespace MCGalaxy {
         public static ItemPerms OpchatPerms { 
             get { 
                 ItemPerms perms = CommandExtraPerms.Find("OpChat", 1);
-                return perms != null ? perms : new ItemPerms(LevelPermission.Operator, null, null);
+                return perms ?? new ItemPerms(LevelPermission.Operator);
             }
         }
         
         public static ItemPerms AdminchatPerms {
             get { 
                 ItemPerms perms = CommandExtraPerms.Find("AdminChat", 1);
-                return perms != null ? perms : new ItemPerms(LevelPermission.Admin, null, null);
+                return perms ?? new ItemPerms(LevelPermission.Admin);
             }
         }
-
-        public static ItemPerms StaffchatPerms {
-            get
-            {
-                ItemPerms perms = CommandExtraPerms.Find("Staff", 1);
-                return perms != null ? perms : new ItemPerms(LevelPermission.Moderator, null, null);
-            }
-        }
-
-        public static string Format(string message, Player p, bool tokens = true, bool emotes = true) {
+        
+        public static string Format(string message, Player dst, bool tokens = true, bool emotes = true) {
             message = Colors.Escape(message);
-            StringBuilder sb = new StringBuilder(message);
-            Colors.Cleanup(sb, p.hasTextColors);
-            
-            if (tokens) ChatTokens.Apply(sb, p);
+            StringBuilder sb = new StringBuilder(message);      
+            if (tokens) ChatTokens.Apply(sb, dst);
             if (!emotes) return sb.ToString();
             
-            if (p.parseEmotes) {
+            if (dst.parseEmotes) {
                 sb.Replace(":)", "(darksmile)");
                 sb.Replace(":D", "(smile)");
                 sb.Replace("<3", "(heart)");
@@ -92,30 +82,26 @@ namespace MCGalaxy {
 
         public static bool FilterAll(Player pl, object arg) { return true; }
         public static bool FilterGlobal(Player pl, object arg) {
-            return pl.IsSuper || (pl.level.SeesServerWideChat && !pl.Ignores.All && pl.Chatroom == null);
+            return pl.IsSuper || (pl.level.SeesServerWideChat && !pl.Ignores.All);
         }
         
         public static bool FilterLevel(Player pl, object arg) {
-            return pl.level == arg && !pl.Ignores.All && pl.Chatroom == null;
+            return pl.level == arg && !pl.Ignores.All;
         }
         
-        public static bool FilterChatroom(Player pl, object arg) {
-            string room = (string)arg;
-            return pl.Chatroom == room || pl.spyChatRooms.CaselessContains(room);
-        }
-        public static bool FilterAllChatrooms(Player pl, object arg) { return pl.Chatroom != null; }
-        
-        public static bool FilterRank(Player pl, object arg) { return pl.Rank == (LevelPermission)arg; }
+        static bool DeprecatedFilter(Player pl, object arg)   { return false; }    
+        public static bool FilterRank(Player pl, object arg)  { return pl.Rank == (LevelPermission)arg; }
         public static bool FilterPerms(Player pl, object arg) { return ((ItemPerms)arg).UsableBy(pl.Rank); }
-        public static bool FilterPM(Player pl, object arg) { return pl == arg; }
+        public static bool FilterPM(Player pl, object arg)    { return pl == arg; }
         
         public static ChatMessageFilter[] scopeFilters = new ChatMessageFilter[] {
-            FilterAll, FilterGlobal, FilterLevel, FilterChatroom, 
-            FilterAllChatrooms, FilterRank, FilterPerms, FilterPM,
+            FilterAll, FilterGlobal, FilterLevel, DeprecatedFilter, 
+            DeprecatedFilter, FilterRank, FilterPerms, FilterPM,
         };
         
+        /// <summary> Filters chat to only players that can see the source player. </summary>
         public static ChatMessageFilter FilterVisible(Player source) {
-            return (pl, obj) => Entities.CanSee(pl, source);
+            return (pl, obj) => pl.CanSee(source);
         }
  
         
@@ -137,11 +123,11 @@ namespace MCGalaxy {
         }
         
         public static void Message(ChatScope scope, string msg, object arg,
-                                   ChatMessageFilter filter, bool irc = false) {
+                                   ChatMessageFilter filter, bool relay = false) {
             Player[] players = PlayerInfo.Online.Items;
             ChatMessageFilter scopeFilter = scopeFilters[(int)scope];
             
-            OnChatSysEvent.Call(scope, msg, arg, ref filter, irc);
+            OnChatSysEvent.Call(scope, msg, arg, ref filter, relay);
             foreach (Player pl in players) {
                 if (!scopeFilter(pl, arg)) continue;
                 if (filter != null && !filter(pl, arg)) continue;
@@ -159,21 +145,24 @@ namespace MCGalaxy {
         }
         
         public static void MessageFrom(Player source, string msg,
-                                       ChatMessageFilter filter = null, bool irc = false) {
-            if (source.level.SeesServerWideChat) {
-                MessageFrom(ChatScope.Global, source, msg, null, filter, irc);
+                                       ChatMessageFilter filter = null, bool relay = false) {
+            if (source.level == null || source.level.SeesServerWideChat) {
+                MessageFrom(ChatScope.Global, source, msg, null, filter, relay);
             } else {
-                string prefix = Server.Config.ServerWideChat ? "<Map>" : "";
+                string prefix = Server.Config.ServerWideChat ? "<Local>" : "";
                 MessageFrom(ChatScope.Level, source, prefix + msg, source.level, filter);
             }
         }
-        
+ 
+        /// <summary> Sends a message from the given player (e.g. message when requesting a review) </summary>
+        /// <remarks> For player chat type messages, Chat.MessageChat is more appropriate to use. </remarks>
+        /// <remarks> Only players not ignoring the given player will see this message. </remarks>
         public static void MessageFrom(ChatScope scope, Player source, string msg, object arg,
-                                       ChatMessageFilter filter, bool irc = false) {
+                                       ChatMessageFilter filter, bool relay = false) {
             Player[] players = PlayerInfo.Online.Items;
             ChatMessageFilter scopeFilter = scopeFilters[(int)scope];
             
-            OnChatFromEvent.Call(scope, source, msg, arg, ref filter, irc);
+            OnChatFromEvent.Call(scope, source, msg, arg, ref filter, relay);
             foreach (Player pl in players) {
                 if (!scopeFilter(pl, arg)) continue;
                 if (filter != null && !filter(pl, arg)) continue;
@@ -183,32 +172,40 @@ namespace MCGalaxy {
             }
         }
         
-        
+
         public static void MessageChat(Player source, string msg,
-                                       ChatMessageFilter filter = null, bool irc = false) {
+                                       ChatMessageFilter filter = null, bool relay = false) {
             if (source.level.SeesServerWideChat) {
-                MessageChat(ChatScope.Global, source, msg, null, filter, irc);
+                MessageChat(ChatScope.Global, source, msg, null, filter, relay);
             } else {
-                string prefix = Server.Config.ServerWideChat ? "<Map>" : "";
+                string prefix = Server.Config.ServerWideChat ? "<Local>" : "";
                 MessageChat(ChatScope.Level, source, prefix + msg, source.level, filter);
             }
         }
         
+        /// <summary> Sends a chat message from the given player (e.g. regular player chat or /me) </summary>
+        /// <remarks> Chat messages will increase player's total messages sent in /info,
+        /// and count towards triggering automute for chat spamming </remarks>
+        /// <remarks> Only players not ignoring the given player will see this message. </remarks>
         public static void MessageChat(ChatScope scope, Player source, string msg, object arg,
-                                       ChatMessageFilter filter, bool irc = false) {
+                                       ChatMessageFilter filter, bool relay = false) {
             Player[] players = PlayerInfo.Online.Items;
             ChatMessageFilter scopeFilter = scopeFilters[(int)scope];
+            bool counted = false;
             
-            OnChatEvent.Call(scope, source, msg, arg, ref filter, irc);
+            OnChatEvent.Call(scope, source, msg, arg, ref filter, relay);
             foreach (Player pl in players) {
                 if (Ignoring(pl, source)) continue;
                 // Always show message to self too (unless ignoring self)
+                
                 if (pl != source) {
                     if (!scopeFilter(pl, arg)) continue;
                     if (filter != null && !filter(pl, arg)) continue;
+
+                    if (!counted) { source.TotalMessagesSent++; counted = true; }
                 } else {
                     // don't send PM back to self
-                    if (scope == ChatScope.PM) { continue; }
+                    if (scope == ChatScope.PM) continue;
                 }
                 
                 pl.Message(UnescapeMessage(pl, source, msg));
@@ -218,24 +215,27 @@ namespace MCGalaxy {
         
                 
         static string UnescapeMessage(Player pl, Player src, string msg) {
-            if (pl.Ignores.Nicks && pl.Ignores.Titles) {
-                string srcColoredTruename = src.color + src.truename;
-                return msg
-                    .Replace("λFULL", src.GroupPrefix + srcColoredTruename)
-                    .Replace("λNICK", srcColoredTruename);
+            string nick = pl.FormatNick(src);
+            msg = msg.Replace("λNICK", nick);
+        	
+            if (pl.Ignores.Titles) {
+                return msg.Replace("λFULL", src.GroupPrefix + nick);
             } else if (pl.Ignores.Nicks) {
-                return msg
-                    .Replace("λFULL", src.color + src.prefix + src.truename)
-                    .Replace("λNICK", src.color + src.truename);
-            } else if (pl.Ignores.Titles) {
-                return msg
-                    .Replace("λFULL", src.GroupPrefix + src.ColoredName)
-                    .Replace("λNICK", src.ColoredName);
+                return msg.Replace("λFULL", src.color + src.prefix + src.truename);
             } else {
-                return msg
-                    .Replace("λFULL", src.FullName)
-                    .Replace("λNICK", src.ColoredName);
+                return msg.Replace("λFULL", src.FullName);
             }
+        }
+        
+        internal static string ParseInput(string text, out bool isCommand) {
+            isCommand = false;
+            // Typing //Command appears in chat as /command
+            // Suggested by McMrCat
+            if (text.StartsWith("//")) return text.Substring(1);
+            if (text[0] != '/') return text;
+            
+            isCommand = true;
+            return text.Substring(1);
         }
     }
 }

@@ -18,6 +18,7 @@
 using System;
 using MCGalaxy.Events.LevelEvents;
 using MCGalaxy.Events.PlayerEvents;
+using MCGalaxy.Events.PlayerDBEvents;
 using MCGalaxy.Events.ServerEvents;
 using MCGalaxy.Network;
 
@@ -28,7 +29,7 @@ namespace MCGalaxy.Games {
         protected virtual void HookEventHandlers() {
             OnLevelUnloadEvent.Register(HandleLevelUnload, Priority.High);  
             OnSendingHeartbeatEvent.Register(HandleSendingHeartbeat, Priority.High);
-            OnSQLSaveEvent.Register(SaveStats, Priority.High);
+            OnInfoSaveEvent.Register(HandleSaveStats, Priority.High);
             
             OnPlayerActionEvent.Register(HandlePlayerAction, Priority.High);
             OnPlayerDisconnectEvent.Register(HandlePlayerDisconnect, Priority.High);
@@ -37,12 +38,14 @@ namespace MCGalaxy.Games {
         protected virtual void UnhookEventHandlers() {
             OnLevelUnloadEvent.Unregister(HandleLevelUnload);
             OnSendingHeartbeatEvent.Unregister(HandleSendingHeartbeat);
-            OnSQLSaveEvent.Unregister(SaveStats);
+            OnInfoSaveEvent.Unregister(HandleSaveStats);
             
             OnPlayerActionEvent.Unregister(HandlePlayerAction);            
             OnPlayerDisconnectEvent.Unregister(HandlePlayerDisconnect);
         }
         
+        void HandleSaveStats(Player p, ref bool cancel) { SaveStats(p); }
+		
         protected virtual void HandleSendingHeartbeat(Heartbeat service, ref string name) {
             if (Map == null || !GetConfig().MapInHeartbeat) return;
             name += " (map: " + Map.MapName + ")";
@@ -64,24 +67,28 @@ namespace MCGalaxy.Games {
             }
             
             if (level != Map) return;
-            if (prevLevel == Map || LastMap.Length == 0 || prevLevel.name.CaselessEq(LastMap))
+            
+            if (prevLevel == Map || LastMap.Length == 0) {
                 announce = false;
+            } else if (prevLevel != null && prevLevel.name.CaselessEq(LastMap)) {
+                // prevLevel is null when player joins main map
+                announce = false;
+            }
         }
         
         protected void MessageMapInfo(Player p) {
-            p.Message("This map has &a{0} likes %Sand &c{1} dislikes",
+            p.Message("This map has &a{0} likes &Sand &c{1} dislikes",
                            Map.Config.Likes, Map.Config.Dislikes);
             string[] authors = Map.Config.Authors.SplitComma();
             if (authors.Length == 0) return;
             
-            p.Message("It was created by {0}",
-                           authors.Join(n => PlayerInfo.GetColoredName(p, n)));
+            p.Message("It was created by {0}", authors.Join(n => p.FormatNick(n)));
         }
         
-        protected void HandleLevelUnload(Level lvl) {
+        protected void HandleLevelUnload(Level lvl, ref bool cancel) {
             if (lvl != Map) return;
             Logger.Log(LogType.GameActivity, "Unload cancelled! A {0} game is currently going on!", GameName);
-            lvl.cancelunload = true;
+            cancel = true;
         }
         
         protected void HandlePlayerAction(Player p, PlayerAction action, string message, bool stealth) {

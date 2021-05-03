@@ -16,6 +16,7 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.Reflection;
 using System.Text;
 
 namespace MCGalaxy {
@@ -37,8 +38,8 @@ namespace MCGalaxy {
         /// <summary> User performs a suspicious activity, such as triggering block spam kick, noclipping in a game, etc. </summary>
         SuspiciousActivity,
         
-        /// <summary> Activity on IRC. </summary>
-        IRCCActivity,
+        /// <summary> Activity on a relay bot (e.g. IRC or Discord) </summary>
+        RelayActivity,
         
         
         /// <summary> Warning message, such as failure to save a file. </summary>
@@ -54,8 +55,8 @@ namespace MCGalaxy {
         /// <summary> Chat globally or only on player's level. </summary>
         PlayerChat,
         
-        /// <summary> Chat from IRC. </summary>
-        IRCChat,
+        /// <summary> Chat relayed from an external communication service (e.g. IRC or Discord)  </summary>
+        RelayChat,
         
         /// <summary> Chat to all players in a particular chatroom, or across all chatrooms. </summary>
         ChatroomChat,
@@ -83,7 +84,8 @@ namespace MCGalaxy {
     public delegate void LogHandler(LogType type, string message);
     
     
-    /// <summary> Logs message to file and/or console. </summary>
+    /// <summary> Centralised class for outputting log messages. </summary>
+    /// <remarks> Outputs can be a file on disc, GUI, the console, etc subscribed to the LogHandler delegate. </remarks>
     public static class Logger {
         
         public static LogHandler LogHandler;
@@ -114,16 +116,22 @@ namespace MCGalaxy {
         
         public static void LogError(string action, Exception ex) {
             Log(LogType.Warning, action);
-            LogError(ex);
+            Log(LogType.Error, FormatException(ex));
         }
         
+        /// <summary> Logs a LogType.Error message consisting of full details for the given Exception. </summary>
         public static void LogError(Exception ex) {
+            Log(LogType.Error, FormatException(ex));
+        }
+        
+        /// <summary> Returns a string fully describing the given Exception. </summary>
+        public static string FormatException(Exception ex) {
             StringBuilder sb = new StringBuilder();
             while (ex != null) {
                 DescribeError(ex, sb);
                 ex = ex.InnerException;
             }
-            Log(LogType.Error, sb.ToString());
+            return sb.ToString();
         }
 
         static void DescribeError(Exception ex, StringBuilder sb) {
@@ -133,6 +141,18 @@ namespace MCGalaxy {
             try { sb.AppendLine("Message: " + ex.Message); } catch { }
             try { sb.AppendLine("Target: " + ex.TargetSite.Name); } catch { }
             try { sb.AppendLine("Trace: " + ex.StackTrace); } catch { }
+            
+            // For errors with loading plugins (e.g. missing dependancy) you get a 
+            //   Message: Unable to load one or more of the requested types. Retrieve the LoaderExceptions property for more information.
+            // which is pretty useless by itself, so specifically handle this case
+            try {
+                ReflectionTypeLoadException refEx = ex as ReflectionTypeLoadException;
+                if (refEx == null) return;
+                
+                sb.AppendLine("## Loader exceptions ##");
+                foreach (Exception loadEx in refEx.LoaderExceptions)
+                    DescribeError(loadEx, sb);
+            } catch { }
         }
     }
 }

@@ -70,14 +70,14 @@ namespace MCGalaxy.Commands.Moderation {
             ItemPerms nextPerms = CommandExtraPerms.Find("Review", 2);
             
             foreach (Player pl in players) {
-                if (nextPerms.UsableBy(pl.Rank) && Entities.CanSee(data, p, pl)) {
+                if (nextPerms.UsableBy(pl.Rank) && p.CanSee(pl, data.Rank)) {
                     opsOn = true; break;
                 }
             }
             
             Server.reviewlist.Add(p.name);
             int pos = Server.reviewlist.IndexOf(p.name) + 1;
-            p.Message("You entered the &creview %Squeue at &aposition #" + pos);
+            p.Message("You entered the &creview &Squeue at &aposition #" + pos);
             
             string msg = opsOn ? 
                 "The online staff have been notified. Someone should be with you shortly." :
@@ -85,7 +85,7 @@ namespace MCGalaxy.Commands.Moderation {
             p.Message(msg);
             
             Chat.MessageFrom(ChatScope.Perms, p, 
-                             "λNICK %Srequested a review! &c(Total " + pos + " waiting)", nextPerms, null, true);
+                             "λNICK &Srequested a review! &c(Total " + pos + " waiting)", nextPerms, null, true);
             
             p.NextReviewTime = DateTime.UtcNow.Add(Server.Config.ReviewCooldown);
         }
@@ -125,17 +125,17 @@ namespace MCGalaxy.Commands.Moderation {
                 p.Message("There are no players in the review queue."); return;
             }
             
-            Player who = PlayerInfo.FindExact(user);
+            Player target = PlayerInfo.FindExact(user);
             Server.reviewlist.Remove(user);
             
-            if (who == null) {
+            if (target == null) {
                 p.Message("Player " + user + " is offline, and was removed from the review queue");
                 return;
             }
             
-            Command.Find("TP").Use(p, who.name, data);
-            p.Message("You have been teleported to " + user);
-            who.Message("Your review request has been answered by " + p.ColoredName + ".");
+            Command.Find("TP").Use(p, target.name, data);
+            p.Message("You have been teleported to " + p.FormatNick(target));
+            target.Message("Your review request has been answered by {0}.", target.FormatNick(p));
             AnnounceQueueChanged();
         }
         
@@ -159,8 +159,8 @@ namespace MCGalaxy.Commands.Moderation {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Review enter/view/leave/next/clear");
-            p.Message("%HLets you enter, view, leave, or clear the review queue, or " +
+            p.Message("&T/Review enter/view/leave/next/clear");
+            p.Message("&HLets you enter, view, leave, or clear the review queue, or " +
                                "teleport you to the next player in the review queue.");
         }
     }

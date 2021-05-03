@@ -25,19 +25,27 @@ namespace MCGalaxy.Games {
         
          protected override void HookEventHandlers() {
             OnPlayerMoveEvent.Register(HandlePlayerMove, Priority.High);
+            OnPlayerChatEvent.Register(HandlePlayerChat, Priority.High);
             OnPlayerSpawningEvent.Register(HandlePlayerSpawning, Priority.High);
             OnJoinedLevelEvent.Register(HandleOnJoinedLevel, Priority.High);
+            OnGettingMotdEvent.Register(HandleGettingMotd, Priority.High);
             
             base.HookEventHandlers();
         }
         
         protected override void UnhookEventHandlers() {
             OnPlayerMoveEvent.Unregister(HandlePlayerMove);
+            OnPlayerChatEvent.Unregister(HandlePlayerChat);
             OnPlayerSpawningEvent.Unregister(HandlePlayerSpawning);
             OnJoinedLevelEvent.Unregister(HandleOnJoinedLevel);
+            OnGettingMotdEvent.Unregister(HandleGettingMotd);
             
             base.UnhookEventHandlers();
-        }       
+        }
+		
+		void HandlePlayerChat(Player p, string message) {
+            if (Picker.HandlesMessage(p, message)) { p.cancelchat = true; return; }
+        }
         
         void HandlePlayerMove(Player p, Position next, byte yaw, byte pitch) {
             if (!RoundInProgress || !FreezeMode) return;
@@ -57,12 +65,17 @@ namespace MCGalaxy.Games {
         
         void HandlePlayerSpawning(Player p, ref Position pos, ref byte yaw, ref byte pitch, bool respawning) {
             if (!respawning || !Remaining.Contains(p)) return;
-            Map.Message(p.ColoredName + " %Sis out of countdown!");
+            Map.Message(p.ColoredName + " &Sis out of countdown!");
             OnPlayerDied(p);
         }
         
         void HandleOnJoinedLevel(Player p, Level prevLevel, Level level, ref bool announce) {
             HandleJoinedCommon(p, prevLevel, level, ref announce);
+        }
+        
+        void HandleGettingMotd(Player p, ref string motd) {
+            if (p.level != Map || !FreezeMode || !RoundInProgress) return;
+            motd += " horspeed=0";
         }
     }
 }

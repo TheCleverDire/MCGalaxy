@@ -61,11 +61,11 @@ namespace MCGalaxy.Commands.Info {
         }
         
         void ShowNormal(Player p, MapInfo data, LevelConfig cfg) {
-            p.Message("&bAbout {0}%S: Width={1} Height={2} Length={3}", 
+            p.Message("&bAbout {0}&S: Width={1} Height={2} Length={3}", 
                       cfg.Color + data.Name, data.Width, data.Height, data.Length);
             
             string physicsState = CmdPhysics.states[cfg.Physics];
-            p.Message("  Physics are {0}%S, gun usage is {1}",
+            p.Message("  Physics are {0}&S, gun usage is {1}",
                       physicsState, cfg.Guns ? "&aenabled" : "&cdisabled");
 
             DateTime createTime  = File.GetCreationTimeUtc(LevelInfo.MapPath(data.MapName));
@@ -82,13 +82,13 @@ namespace MCGalaxy.Commands.Info {
                 p.Message("  Created {0} ago, no backups yet", createDelta.Shorten());
             }
             
-            string dbFormat = "  BlockDB (Used for /b) is {0} %Swith {1} entries";
+            string dbFormat = "  BlockDB (Used for /b) is {0} &Swith {1} entries";
             if (data.BlockDBEntries == -1) dbFormat = "  BlockDB (Used for /b) is {0}";
             p.Message(dbFormat, 
                       cfg.UseBlockDB ? "&aEnabled" : "&cDisabled", data.BlockDBEntries);
             
             ShowPermissions(p, data, cfg);
-            p.Message("Use %T/mi env {0} %Sto see environment settings.", data.MapName);
+            p.Message("Use &T/mi env {0} &Sto see environment settings.", data.MapName);
             ShowZombieSurvival(p, data, cfg);
         }
         
@@ -103,8 +103,7 @@ namespace MCGalaxy.Commands.Info {
             if (String.IsNullOrEmpty(realmOwner)) return;
             
             string[] owners = realmOwner.SplitComma();
-            p.Message("  This map is a personal realm of {0}",
-                           owners.Join(n => PlayerInfo.GetColoredName(p, n)));
+            p.Message("  This map is a personal realm of {0}", owners.Join(n => p.FormatNick(n)));
         }
         
         static void PrintRanks(Player p, AccessController access, string initial) {
@@ -117,12 +116,11 @@ namespace MCGalaxy.Commands.Info {
             if (!ZSGame.Instance.HasMap(data.MapName)) return;
             
             string[] authors = cfg.Authors.SplitComma();
-            p.Message("Map authors: {0}",
-                           authors.Join(n => PlayerInfo.GetColoredName(p, n)));
+            p.Message("Map authors: {0}", authors.Join(n => p.FormatNick(n)));
             int winChance = cfg.RoundsPlayed == 0 ? 100 : (cfg.RoundsHumanWon * 100) / cfg.RoundsPlayed;
-            p.Message("&a{0} %Srounds played total, &a{1}% %Swin chance for humans.",
+            p.Message("&a{0} &Srounds played total, &a{1}% &Swin chance for humans.",
                            cfg.RoundsPlayed, winChance);
-            p.Message("This map has &a{0} likes %Sand &c{1} dislikes",
+            p.Message("This map has &a{0} likes &Sand &c{1} dislikes",
                            cfg.Likes, cfg.Dislikes);
         }
         
@@ -135,12 +133,12 @@ namespace MCGalaxy.Commands.Info {
             while (map.Length > 0 && Char.IsNumber(map[map.Length - 1])) {
                 // If the server does not have account with +, we have to account for the
                 // that say Player123's second level is Player1232, and the realm owner is Player123
-                name = plus ? null : PlayerInfo.FindName(map);
+                name = plus ? null : PlayerDB.FindName(map);
                 if (name != null) break;
                 map = map.Substring(0, map.Length - 1);
             }
             
-            if (name == null) name = PlayerInfo.FindName(map);
+            if (name == null) name = PlayerDB.FindName(map);
             if (name != null && !LevelInfo.IsRealmOwner(name, origMap)) return null;
             return name;
         }
@@ -163,19 +161,19 @@ namespace MCGalaxy.Commands.Info {
             p.Message("Colors: &eFog {0}, &eSky {1}, &eClouds {2}, &eSunlight {3}, &eShadowlight {4}", 
                       Color(cfg.FogColor), Color(cfg.SkyColor),
                       Color(cfg.CloudColor), Color(cfg.LightColor), Color(cfg.ShadowColor));           
-            p.Message("Water level: &b{0}%S, Bedrock offset: &b{1}%S, Clouds height: &b{2}%S, Max fog distance: &b{3}",
+            p.Message("Water level: &b{0}&S, Bedrock offset: &b{1}&S, Clouds height: &b{2}&S, Max fog distance: &b{3}",
                       data.Get(EnvProp.EdgeLevel),   data.Get(EnvProp.SidesOffset), 
                       data.Get(EnvProp.CloudsLevel), data.Get(EnvProp.MaxFog));
-            p.Message("Edge Block: &b{0}%S, Horizon Block: &b{1}", 
+            p.Message("Edge Block: &b{0}&S, Horizon Block: &b{1}", 
                       Block.GetName(p, (BlockID)data.Get(EnvProp.SidesBlock)),
                       Block.GetName(p, (BlockID)data.Get(EnvProp.EdgeBlock)));
-            p.Message("Clouds speed: &b{0}%%S, Weather speed: &b{1}%",
+            p.Message("Clouds speed: &b{0}%&S, Weather speed: &b{1}%",
                       (data.Get(EnvProp.CloudsSpeed)  / 256f).ToString("F2"),
                       (data.Get(EnvProp.WeatherSpeed) / 256f).ToString("F2"));
-            p.Message("Weather fade rate: &b{0}%%S, Exponential fog: {1}",
+            p.Message("Weather fade rate: &b{0}%&S, Exponential fog: {1}",
                       (data.Get(EnvProp.WeatherFade) / 128f).ToString("F2"),
                       cfg.ExpFog > 0 ? "&aON" : "&cOFF");
-            p.Message("Skybox rotations: Horizontal &b{0}%S, Vertical &b{1}",
+            p.Message("Skybox rotations: Horizontal &b{0}&S, Vertical &b{1}",
                       data.GetSkybox(EnvProp.SkyboxHorSpeed), 
                       data.GetSkybox(EnvProp.SkyboxVerSpeed));
         }
@@ -231,10 +229,10 @@ namespace MCGalaxy.Commands.Info {
         }
         
         public override void Help(Player p)  {
-            p.Message("%T/MapInfo [map]");
-            p.Message("%HDisplay details of [map]");
-            p.Message("%T/MapInfo env [map]");
-            p.Message("%HDisplay environment details of [map]");
+            p.Message("&T/MapInfo [level]");
+            p.Message("&HDisplay details of [level]");
+            p.Message("&T/MapInfo env [level]");
+            p.Message("&HDisplay environment details of [level]");
         }
     }
 }

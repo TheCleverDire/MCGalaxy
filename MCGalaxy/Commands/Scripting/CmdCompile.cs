@@ -16,6 +16,7 @@
     permissions and limitations under the Licenses.
  */
 using System;
+using System.CodeDom.Compiler;
 using System.IO;
 using MCGalaxy.Scripting;
 
@@ -29,34 +30,32 @@ namespace MCGalaxy.Commands.Scripting {
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length == 0) { Help(p); return; }
             string[] args = message.SplitSpaces();
-            
-            IScripting engine = null;
-            if (args.Length == 1) {
-                engine = IScripting.CS;
-            } else if (args[1].CaselessEq("vb")) {
-                engine = IScripting.VB;
-            } else {
-                Help(p); return;
-            }
 
-            string srcPath = engine.SourcePath(args[0]);
-            string dstPath = IScripting.DllPath(args[0]);   
-            
+            string language  = args.Length > 1 ? args[1] : "";
+            ICompiler engine = ICompiler.Lookup(language, p);
+            if (engine == null) return;
+
+            string srcPath = engine.CommandPath(args[0]);
+            string dstPath = IScripting.CommandPath(args[0]);
             if (!File.Exists(srcPath)) {
-                p.Message("File &9{0} %Snot found.", srcPath);
-            } else if (engine.Compile(srcPath, dstPath)) {
+                p.Message("File &9{0} &Snot found.", srcPath); return;
+            }
+            
+            CompilerResults results = engine.Compile(srcPath, dstPath);
+            if (!results.Errors.HasErrors) {
                 p.Message("Command compiled successfully.");
             } else {
-                p.Message("%WCompilation error. See " + IScripting.ErrorPath + " for more information.");
+                ICompiler.SummariseErrors(results, p);
+                p.Message("&WCompilation error. See " + ICompiler.ErrorPath + " for more information.");
             }
         }
 
         public override void Help(Player p) {
-            p.Message("%T/Compile [class name]");
-            p.Message("%HCompiles a command class file into a DLL.");
-            p.Message("%T/Compile [class name] vb");
-            p.Message("%HCompiles a command class (written in visual basic) file into a DLL.");
-            p.Message("%H  class name: &9Cmd&e<class name>&9.cs");
+            p.Message("&T/Compile [class name]");
+            p.Message("&HCompiles a command class file into a DLL.");
+            p.Message("&T/Compile [class name] vb");
+            p.Message("&HCompiles a command class (written in visual basic) file into a DLL.");
+            p.Message("&H  class name: &9Cmd&e<class name>&9.cs");
         }
     }
 }

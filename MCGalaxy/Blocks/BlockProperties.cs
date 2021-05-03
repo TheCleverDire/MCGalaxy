@@ -74,9 +74,13 @@ namespace MCGalaxy.Blocks {
         /// <summary> Block ID this is changed into when no longer exposed to sunlight. </summary>
         public BlockID DirtBlock;
         
+        
         /// <summary> Whether the properties for this block have been modified and hence require saving. </summary>
         /// <remarks> bit 0 set means modified at global scope, bit 1 set means modified at level scope</remarks>
         public byte ChangedScope;
+        
+        public const byte SCOPE_GLOBAL = 0x01;
+        public const byte SCOPE_LEVEL  = 0x02;
         
         public static BlockProps MakeEmpty() {
             BlockProps props = default(BlockProps);
@@ -118,12 +122,10 @@ namespace MCGalaxy.Blocks {
             }
         }
         
-        public static string PropsPath(string group) { return "blockprops/" + group + ".txt"; }
-        
         public static void Load(string group, BlockProps[] list, byte scope, bool mapOld) {
             lock (list) {
                 if (!Directory.Exists("blockprops")) return;
-                string path = PropsPath(group);
+                string path = Paths.BlockPropsPath(group);
                 if (File.Exists(path)) LoadCore(path, list, scope, mapOld);
             }
         }
@@ -132,7 +134,7 @@ namespace MCGalaxy.Blocks {
             string[] lines = File.ReadAllLines(path);
             for (int i = 0; i < lines.Length; i++) {
                 string line = lines[i].Trim();
-                if (line.Length == 0 || line[0] == '#') continue;
+                if (line.IsCommentLine()) continue;
                 
                 string[] parts = line.Split(':');
                 if (parts.Length < 10) {
@@ -190,6 +192,45 @@ namespace MCGalaxy.Blocks {
                     BlockID.TryParse(parts[16], out list[b].DirtBlock);
                 }
             }
+        }
+        
+        
+        public static BlockProps MakeDefault(BlockProps[] scope, Level lvl, BlockID block) {
+            if (scope == Block.Props) return Block.MakeDefaultProps(block);
+            return IsDefaultBlock(lvl, block) ? Block.Props[block] : MakeEmpty();
+        }
+        
+        static bool IsDefaultBlock(Level lvl, BlockID b) {
+            return Block.IsPhysicsType(b) || lvl.CustomBlockDefs[b] == BlockDefinition.GlobalDefs[b];
+        }
+        
+        public static void ApplyChanges(BlockProps[] scope, Level lvl_, BlockID block, bool save) {
+            byte scopeId = ScopeId(scope);
+            string path;
+            
+            if (scope == Block.Props) {
+                path = "default";
+                Level[] loaded = LevelInfo.Loaded.Items;
+                
+                foreach (Level lvl in loaded) {
+                    if ((lvl.Props[block].ChangedScope & SCOPE_LEVEL) != 0) continue;
+                    if (!IsDefaultBlock(lvl, block)) continue;
+                    
+                    lvl.Props[block] = scope[block];
+                    lvl.UpdateBlockHandlers(block);
+                }                
+            } else {
+                path = "_" + lvl_.name;
+                lvl_.UpdateBlockHandlers(block);
+            }
+            
+            if (save) Save(path, scope, scopeId);
+        }
+        
+        internal static byte ScopeId(BlockProps[] scope) { return scope == Block.Props ? (byte)1 : (byte)2; }
+        
+        public static string ScopedName(BlockProps[] scope, Player p, BlockID block) {
+            return scope == Block.Props ? Block.GetName(Player.Console, block) : Block.GetName(p, block);
         }
     }
 }

@@ -50,13 +50,13 @@ namespace MCGalaxy.DB {
             int i = Server.invalidIds.IndexOf(name);
             if (i >= 0) ids.Add(MaxPlayerID - i);
             
-            Database.Backend.ReadRows("Players", "ID", ids, ListIds, "WHERE Name=@0", name);
+            Database.ReadRows("Players", "ID", ids, ListIds, "WHERE Name=@0", name);
             return ids.ToArray();
         }
         
         /// <summary> Returns a non-database ID for the given name </summary>
         public static int InvalidNameID(string name) {
-            bool added = Server.invalidIds.AddUnique(name);
+            bool added = Server.invalidIds.Add(name);
             if (added) Server.invalidIds.Save();
             
             int index = Server.invalidIds.IndexOf(name);

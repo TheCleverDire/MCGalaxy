@@ -29,11 +29,11 @@ namespace MCGalaxy.Commands.Fun {
         
         public override void Use(Player p, string message, CommandData data) {
             if (p.Game.Referee) {
-                Chat.MessageFrom(p, "λNICK %Sis no longer a referee");
+                Chat.MessageFrom(p, "λNICK &Sis no longer a referee", Chat.FilterVisible(p));
                 OnPlayerActionEvent.Call(p, PlayerAction.UnReferee);
                 p.Game.Referee = false;
             } else {
-                Chat.MessageFrom(p, "λNICK %Sis now a referee");
+                Chat.MessageFrom(p, "λNICK &Sis now a referee", Chat.FilterVisible(p));
                 OnPlayerActionEvent.Call(p, PlayerAction.Referee);
                 p.Game.Referee = true;
             }
@@ -42,19 +42,17 @@ namespace MCGalaxy.Commands.Fun {
             if (p.Supports(CpeExt.InstantMOTD)) {
                 p.SendMapMotd();
             } else if (p.Supports(CpeExt.HackControl)) {
-                if (p.Game.Referee) {
-                    p.Send(Packet.HackControl(true, true, true, true, true, -1));
-                } else {
-                    p.Send(Hacks.MakeHackControl(p, p.GetMotd()));
-                }
+                string motd = p.GetMotd();
+                if (p.Game.Referee) motd += " +hax";
+                p.Send(Hacks.MakeHackControl(p, motd));
             }
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Referee");
-            p.Message("%HTurns referee mode on/off.");
-            p.Message("%HReferee mode enables you to use hacks and TP in games");
-            p.Message("%H  Note that leaving referee mode sends you back to spawn");
+            p.Message("&T/Referee");
+            p.Message("&HTurns referee mode on/off.");
+            p.Message("&HReferee mode enables you to use hacks and TP in games");
+            p.Message("&H  Note that leaving referee mode sends you back to spawn");
         }
     }
 }

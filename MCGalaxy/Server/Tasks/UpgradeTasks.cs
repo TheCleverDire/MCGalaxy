@@ -38,65 +38,6 @@ namespace MCGalaxy.Tasks {
             File.WriteAllText("ranks/agreed.txt", data);
         }
         
-        internal static void MovePreviousLevelFiles(SchedulerTask task) {
-            if (!Directory.Exists("levels")) return;
-            if (Directory.Exists("levels/prev")) return;
-            
-            try {
-                string[] files = Directory.GetFiles("levels", "*.prev");
-                if (files.Length == 0) return;
-                if (!Directory.Exists("levels/prev"))
-                    Directory.CreateDirectory("levels/prev");
-                
-                foreach (string file in files) {
-                    string name = Path.GetFileName(file);
-                    string newFile = "levels/prev/" + name;
-                    
-                    try {
-                        File.Move(file, newFile);
-                    } catch (Exception ex) {
-                        Logger.LogError("Error while trying to move .lvl.prev file", ex);
-                    }
-                }
-            } catch (Exception ex) {
-                Logger.LogError("Error moving .lvl.prev files", ex);
-            }
-        }
-        
-        internal static void CombineEnvFiles(SchedulerTask task) {
-            if (!Directory.Exists("levels/level properties")) return;
-            try {
-                string[] files = Directory.GetFiles("levels/level properties", "*.env");
-                if (files.Length == 0) return;
-                
-                Logger.Log(LogType.SystemActivity, "Combining {0} .env and .properties files..", files.Length);
-                foreach (string envFile in files) {
-                    try {
-                        Combine(envFile);
-                    } catch (Exception ex) {
-                        Logger.LogError("Error combining .env and .properties file", ex);
-                    }
-                }
-                Logger.Log(LogType.SystemActivity, "Finished combining .env and .properties files.");
-            } catch (Exception ex) {
-                Logger.LogError("Error combining .env and .properties files", ex);
-            }
-        }
-        
-        static void Combine(string envPath) {
-            string map = Path.GetFileNameWithoutExtension(envPath);
-            string propsPath = LevelInfo.PropsPath(map);
-            
-            List<string> lines = new List<string>();
-            if (File.Exists(propsPath)) lines = Utils.ReadAllLinesList(propsPath);
-            
-            List<string> envLines = Utils.ReadAllLinesList(envPath);
-            lines.AddRange(envLines);
-            
-            File.WriteAllLines(propsPath, lines.ToArray());
-            File.Delete(envPath);
-        }
-        
         internal static void UpgradeOldTempranks(SchedulerTask task) {
             if (!File.Exists(Paths.TempRanksFile)) return;
 
@@ -128,14 +69,14 @@ namespace MCGalaxy.Tasks {
             File.WriteAllLines(Paths.TempRanksFile, lines);
         }
         
+		const string oldBotsFile = "extra/bots.json";
         internal static void UpgradeBots(SchedulerTask task) {
-            if (!File.Exists(Paths.BotsFile)) return;
-            string json = File.ReadAllText(Paths.BotsFile);
-            File.WriteAllText(Paths.BotsFile + ".bak", json);
+            if (!File.Exists(oldBotsFile)) return;
+            File.Copy(oldBotsFile, oldBotsFile + ".bak", true);
             Logger.Log(LogType.SystemActivity, "Making bots file per-level.. " +
                        "saved backup of global bots file to extra/bots.json.bak");
             
-            List<BotProperties> bots = BotsFile.ReadAll(json);
+            List<BotProperties> bots = BotsFile.ReadAll(oldBotsFile);
             Dictionary<string, List<BotProperties>> botsByLevel = new Dictionary<string, List<BotProperties>>();
             
             foreach (BotProperties bot in bots) {
@@ -150,7 +91,7 @@ namespace MCGalaxy.Tasks {
             }
             
             foreach (var kvp in botsByLevel) {
-                string path = BotsFile.BotsPath(kvp.Key);
+                string path = Paths.BotsPath(kvp.Key);
                 using (StreamWriter w = new StreamWriter(path)) {
                     BotsFile.WriteAll(w, kvp.Value);
                 }
@@ -159,7 +100,7 @@ namespace MCGalaxy.Tasks {
             if (Server.mainLevel.Bots.Count == 0) {
                 BotsFile.Load(Server.mainLevel);
             }
-            File.Delete(Paths.BotsFile);
+            File.Delete(oldBotsFile);
         }
 
         
@@ -181,7 +122,7 @@ namespace MCGalaxy.Tasks {
         static void DumpPlayerTimeSpents() {
             playerIds = new List<int>();
             playerSeconds = new List<long>();
-            Database.Backend.ReadRows("Players", "ID,TimeSpent", null, ReadTimeSpent);
+            Database.ReadRows("Players", "ID,TimeSpent", null, ReadTimeSpent);
         }
         
         static object ReadTimeSpent(IDataRecord record, object arg) {

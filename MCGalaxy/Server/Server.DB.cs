@@ -21,12 +21,10 @@ using System.Data;
 using System.IO;
 using MCGalaxy.SQL;
 
-namespace MCGalaxy
-{
-    public sealed partial class Server
-    {
-
-        static ColumnDesc[] createPlayers = new ColumnDesc[] {
+namespace MCGalaxy {
+    public sealed partial class Server {
+        
+        static ColumnDesc[] playersTable = new ColumnDesc[] {
             new ColumnDesc("ID", ColumnType.Integer, priKey: true, autoInc: true, notNull: true),
             new ColumnDesc("Name", ColumnType.VarChar, 17),
             new ColumnDesc("IP", ColumnType.Char, 15),
@@ -45,8 +43,8 @@ namespace MCGalaxy
             new ColumnDesc("title_color", ColumnType.VarChar, 6),
             new ColumnDesc("Messages", ColumnType.UInt24),
         };
-
-        static ColumnDesc[] createOpstats = new ColumnDesc[] {
+        
+        static ColumnDesc[] opstatsTable = new ColumnDesc[] {
             new ColumnDesc("ID", ColumnType.Integer, priKey: true, autoInc: true, notNull: true),
             new ColumnDesc("Time", ColumnType.DateTime),
             new ColumnDesc("Name", ColumnType.VarChar, 17),
@@ -69,9 +67,9 @@ namespace MCGalaxy
                 return;
             }
 
-            Database.Backend.CreateTable("Opstats", createOpstats);
-            Database.Backend.CreateTable("Players", createPlayers);
-
+            Database.CreateTable("Opstats", opstatsTable);
+            Database.CreateTable("Players", playersTable);
+            
             //since 5.5.11 we are cleaning up the table Playercmds
             //if Playercmds exists copy-filter to Opstats and remove Playercmds
             if (Database.TableExists("Playercmds"))
@@ -80,35 +78,26 @@ namespace MCGalaxy
                 foreach (string cmd in Server.Opstats)
                     Database.Execute(string.Format(sql, "cmd = '" + cmd + "'"));
                 Database.Execute(string.Format(sql, "cmd = 'review' AND cmdmsg = 'next'"));
-                Database.Backend.DeleteTable("Playercmds");
+                Database.DeleteTable("Playercmds");
             }
 
             List<string> columns = Database.Backend.ColumnNames("Players");
             if (columns.Count == 0) return;
-
-            if (!columns.CaselessContains("LastLogout"))
-            {
-                Database.Backend.AddColumn("Players", new ColumnDesc("LastLogout", ColumnType.DateTime), "");
+            
+            if (!columns.CaselessContains("Color")) {
+                Database.AddColumn("Players", new ColumnDesc("color", ColumnType.VarChar, 6), "totalKicked");
             }
-            if (!columns.CaselessContains("Color"))
-            {
-                Database.Backend.AddColumn("Players", new ColumnDesc("color", ColumnType.VarChar, 6), "totalKicked");
+            if (!columns.CaselessContains("Title_Color")) {
+                Database.AddColumn("Players", new ColumnDesc("title_color", ColumnType.VarChar, 6), "color");
             }
-            if (!columns.CaselessContains("Title_Color"))
-            {
-                Database.Backend.AddColumn("Players", new ColumnDesc("title_color", ColumnType.VarChar, 6), "color");
+            if (!columns.CaselessContains("TimeSpent")) {
+                Database.AddColumn("Players", new ColumnDesc("TimeSpent", ColumnType.VarChar, 20), "totalKicked");
             }
-            if (!columns.CaselessContains("TimeSpent"))
-            {
-                Database.Backend.AddColumn("Players", new ColumnDesc("TimeSpent", ColumnType.VarChar, 20), "totalKicked");
+            if (!columns.CaselessContains("TotalCuboided")) {
+                Database.AddColumn("Players", new ColumnDesc("totalCuboided", ColumnType.Int64), "totalBlocks");
             }
-            if (!columns.CaselessContains("TotalCuboided"))
-            {
-                Database.Backend.AddColumn("Players", new ColumnDesc("totalCuboided", ColumnType.Int64), "totalBlocks");
-            }
-            if (!columns.CaselessContains("Messages"))
-            {
-                Database.Backend.AddColumn("Players", new ColumnDesc("Messages", ColumnType.UInt24), "title_color");
+            if (!columns.CaselessContains("Messages")) {
+                Database.AddColumn("Players", new ColumnDesc("Messages", ColumnType.UInt24), "title_color");
             }
         }
     }

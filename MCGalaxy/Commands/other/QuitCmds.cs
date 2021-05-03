@@ -25,14 +25,15 @@ namespace MCGalaxy.Commands.Misc {
         public override string shortcut { get { return "rq"; } }
         public override string type { get { return CommandTypes.Other; } }
         public override bool MessageBlockRestricted { get { return true; } }
+        public override bool SuperUseable { get { return false; } }
         
         public override void Use(Player p, string message, CommandData data) {
             p.Leave("RAGEQUIT!!");
         }
 
         public override void Help(Player p) {
-            p.Message("%T/RageQuit");
-            p.Message("%HMakes you ragequit");
+            p.Message("&T/RageQuit");
+            p.Message("&HMakes you ragequit");
         }
     }
     
@@ -40,6 +41,7 @@ namespace MCGalaxy.Commands.Misc {
         public override string name { get { return "Quit"; } }
         public override string type { get { return CommandTypes.Other; } }
         public override bool MessageBlockRestricted { get { return true; } }
+        public override bool SuperUseable { get { return false; } }
         
         public override void Use(Player p, string message, CommandData data) {
             string msg = message.Length > 0 ? "Left the game: " + message : "Left the game.";
@@ -48,8 +50,8 @@ namespace MCGalaxy.Commands.Misc {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Quit <reason>");
-            p.Message("%HLeave the server.");
+            p.Message("&T/Quit <reason>");
+            p.Message("&HLeave the server.");
         }
     }
     
@@ -58,6 +60,7 @@ namespace MCGalaxy.Commands.Misc {
         public override string shortcut { get { return "Crash"; } }
         public override string type { get { return CommandTypes.Moderation; } }
         public override bool MessageBlockRestricted { get { return true; } }
+        public override bool SuperUseable { get { return false; } }
 
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length > 0) { Help(p); return; }
@@ -66,8 +69,8 @@ namespace MCGalaxy.Commands.Misc {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/CrashServer");
-            p.Message("%HCrash the server with a generic error");
+            p.Message("&T/CrashServer");
+            p.Message("&HCrash the server with a generic error");
         }
     }
     
@@ -76,10 +79,11 @@ namespace MCGalaxy.Commands.Misc {
         public override string shortcut { get { return "Hax"; } }
         public override string type { get { return CommandTypes.Moderation; } }
         public override bool MessageBlockRestricted { get { return true; } }
+        public override bool SuperUseable { get { return false; } }
 
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length > 0) {
-                p.Message("%WIncorrect syntax. Abuse detected.");
+                p.Message("&WIncorrect syntax. Abuse detected.");
                 Thread.Sleep(3000);
             }
             
@@ -88,8 +92,8 @@ namespace MCGalaxy.Commands.Misc {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Hacks");
-            p.Message("%HPerforms various server hacks. OPERATORS ONLY!!!");
+            p.Message("&T/Hacks");
+            p.Message("&HPerforms various server hacks. OPERATORS ONLY!!!");
         }
     }
 }

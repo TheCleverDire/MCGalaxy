@@ -34,24 +34,25 @@ namespace MCGalaxy.Commands.Chatting {
             UsePlayer(p, data, message, "title");
         }
         
-        protected override void SetPlayerData(Player p, Player who, string title) {
+        protected override void SetPlayerData(Player p, string target, string title) {
             if (title.Length >= 20) { p.Message("Title must be under 20 letters."); return; }
-
+            Player who = PlayerInfo.FindExact(target);
+            
             if (title.Length == 0) {
-                Chat.MessageFrom(who, "λNICK %Shad their title removed");
+                MessageFrom(target, who, "had their title removed");
             } else {
-                Chat.MessageFrom(who, "λNICK %Shad their title changed to &b[" + title + "&b]");
+                MessageFrom(target, who, "had their title changed to &b[" + title + "&b]");
             }
             
-            who.title = title;
-            who.SetPrefix();
-            PlayerDB.Update(who.name, PlayerData.ColumnTitle, title.UnicodeToCp437());
+            if (who != null) who.title = title;
+            if (who != null) who.SetPrefix();
+            PlayerDB.Update(target, PlayerData.ColumnTitle, title.UnicodeToCp437());
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Title [player] [title]");
-            p.Message("%HSets the title of [player]");
-            p.Message("%H  If [title] is not given, removes [player]'s title.");
+            p.Message("&T/Title [player] [title]");
+            p.Message("&HSets the title of [player]");
+            p.Message("&H  If [title] is not given, removes [player]'s title.");
         }
     }
 }

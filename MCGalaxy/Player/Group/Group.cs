@@ -39,7 +39,6 @@ namespace MCGalaxy {
         
         const int mapGenLimitAdmin = 225 * 1000 * 1000;
         const int mapGenLimit = 30 * 1000 * 1000;
-        public static bool cancelrank = false;
         
         public string Name;
         [ConfigPerm("Permission", null, LevelPermission.Null)]
@@ -219,11 +218,7 @@ namespace MCGalaxy {
             if (grp == null) grp = DefaultRank;
             p.group = grp;
             
-            if (PlayerDB.FindColor(p).Length == 0 && p.color != grp.Color) {
-                p.color = grp.Color;
-                Entities.GlobalRespawn(p);
-            }         
-            p.SetPrefix();
+            p.UpdateColor(PlayerInfo.DefaultColor(p));
         }
 
         static readonly object saveLock = new object();

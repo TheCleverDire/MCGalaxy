@@ -36,24 +36,26 @@ namespace MCGalaxy.Commands.Moderation {
             if (name == null) return;
             
             List<string> notes = Server.Notes.FindAllExact(name);
-            string target = PlayerInfo.GetColoredName(p, name);
+            string nick = p.FormatNick(name);
             
             if (notes.Count == 0) {
-                p.Message("{0} %Shas no notes.", target); return;
+                p.Message("{0} &Shas no notes.", nick); return;
             } else {
-                p.Message("  Notes for {0}:", target);
+                p.Message("  Notes for {0}:", nick);
             }
             
             foreach (string line in notes) {
                 string[] args = line.SplitSpaces();
                 if (args.Length <= 3) continue;
                 
-                if (args.Length == 4) {
-                    p.Message(Action(args[1]) + " by " + args[2] + " on " + args[3]);
-                } else {
-                    p.Message(Action(args[1]) + " by " + args[2] + " on " + args[3]
-                                   + " - " + args[4].Replace("%20", " "));
-                }
+                string reason = args.Length > 4 ? args[4] : "";
+                long duration = 0;
+                if (args.Length > 5) long.TryParse(args[5], out duration);
+                
+                p.Message("{0} by {1} &Son {2}{3}{4}",
+                          Action(args[1]), p.FormatNick(args[2]), args[3],
+                          duration      == 0 ? "" : " for " + TimeSpan.FromTicks(duration).Shorten(true),
+                          reason.Length == 0 ? "" : " - "   + reason.Replace("%20", " "));
             }
         }
         
@@ -69,8 +71,8 @@ namespace MCGalaxy.Commands.Moderation {
         }
 
         public override void Help(Player p) {
-            p.Message("%T/Notes [name] %H- views that player's notes.");
-            p.Message("%HNotes are things such as bans, kicks, warns, mutes.");
+            p.Message("&T/Notes [name] &H- views that player's notes.");
+            p.Message("&HNotes are things such as bans, kicks, warns, mutes.");
         }
     }
     
@@ -78,14 +80,15 @@ namespace MCGalaxy.Commands.Moderation {
         public override string name { get { return "MyNotes"; } }
         public override string type { get { return CommandTypes.Other; } }
         public override bool SuperUseable { get { return false; } }
-
+        public override LevelPermission defaultRank { get { return LevelPermission.Guest; } }
+        
         public override void Use(Player p, string message, CommandData data) { 
             base.Use(p, p.name, data); 
         }
 
         public override void Help(Player p) {
-            p.Message("%T/MyNotes %H- views your own notes.");
-            p.Message("%HNotes are things such as bans, kicks, warns, mutes.");
+            p.Message("&T/MyNotes &H- views your own notes.");
+            p.Message("&HNotes are things such as bans, kicks, warns, mutes.");
         }
     }
 }

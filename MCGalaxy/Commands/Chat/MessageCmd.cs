@@ -28,30 +28,24 @@ namespace MCGalaxy.Commands.Chatting {
             if (!TryMessage(p, msg.Replace("λTARGET", reciever))) return false;
 
             if (messageWho && p != target && !Chat.Ignoring(target, p)) {
-                msg = msg.Replace("λNICK", p.ColoredName);
+                msg = msg.Replace("λNICK", target.FormatNick(p));
                 target.Message(msg.Replace("λTARGET", "you"));
             }
             return true;
         }
         
-        protected bool TryMessage(Player p, string msg) {
+        protected bool TryMessage(Player p, string msg) { return TryMessage(p, msg, false); }
+        
+        protected bool TryMessage(Player p, string msg, bool relay) {
             if (!CanSpeak(p, name)) return false;
-            Chat.MessageFrom(p, msg, null);
+            Chat.MessageFrom(p, msg, null, relay);
             
             p.CheckForMessageSpam();
             return true;
         }
         
         public static bool CanSpeak(Player p, string cmd) {
-            if (p.IsConsole) return true;
-            
-            if (p.muted) { 
-                p.Message("Cannot use %T/{0} %Swhile muted.", cmd); return false; 
-            }
-            if (Server.chatmod && !p.voice) { 
-                p.Message("Cannot use %T/{0} %Swhile chat moderation is on without %T/Voice%S.", cmd); return false; 
-            }
-            return true;
+            return p.CheckCanSpeak("use &T/" + cmd);
         }
     }
     
@@ -59,12 +53,12 @@ namespace MCGalaxy.Commands.Chatting {
         public override string name { get { return "High5"; } }
         
         public override void Use(Player p, string message, CommandData data) {
-            TryMessageAction(p, message, "λNICK %Sjust highfived λTARGET", true);
+            TryMessageAction(p, message, "λNICK &Sjust highfived λTARGET", true);
         }
 
         public override void Help(Player p) {
-            p.Message("%T/High5 [player]");
-            p.Message("%HHigh five someone! :D");
+            p.Message("&T/High5 [player]");
+            p.Message("&HHigh five someone! :D");
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright 2015 MCGalaxy team
+    Copyright 2015 MCGalaxy
         
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -42,7 +42,7 @@ namespace MCGalaxy.Core {
             if (count == 0) return;
             
             string suffix = count == 1 ? " player is " : " players are ";
-            p.Message(count + suffix + "waiting for a review. Type %T/Review view");
+            p.Message(count + suffix + "waiting for a review. Type &T/Review view");
         }
         
         static void LoadReach(Player p) {

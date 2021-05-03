@@ -17,8 +17,8 @@
 */
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
-using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 using MCGalaxy.Events.LevelEvents;
@@ -32,7 +32,7 @@ namespace MCGalaxy.Gui {
         delegate void StringCallback(string s);
         delegate void PlayerListCallback(List<Player> players);
         delegate void VoidDelegate();
-        bool mapgen = false;
+        bool mapgen, loaded;
 
         public NotifyIcon notifyIcon = new NotifyIcon();
         Player curPlayer;
@@ -43,7 +43,12 @@ namespace MCGalaxy.Gui {
         }
 
         void Window_Load(object sender, EventArgs e) {
-            MaximizeBox = false;
+            LoadIcon();
+            // Necessary as some versions of WINE may call Window_Load multiple times
+            //  (however icon must still be reloaded each time)
+            if (loaded) return;
+            loaded = true;
+            
             Text = "Starting " + Server.SoftwareNameVersioned + "...";
             Show();
             BringToFront();
@@ -58,10 +63,17 @@ namespace MCGalaxy.Gui {
             Text = Server.Config.Name + " - " + Server.SoftwareNameVersioned;
             MakeNotifyIcon();
             
-            main_Players.DataSource = new PlayerCollection();
-            main_Players.Font = new Font("Calibri", 8.25f);            
-            main_Maps.DataSource = new LevelCollection();
+            main_Players.Font = new Font("Calibri", 8.25f);
             main_Maps.Font = new Font("Calibri", 8.25f);
+        }
+        
+        void LoadIcon() {
+            // Normally this code would be in InitializeComponent method in Window.Designer.cs,
+        	//  however that doesn't work properly with some WINE versions (you get WINE icon instead)
+            try {
+                ComponentResourceManager resources = new ComponentResourceManager(typeof(Window));
+                Icon = (Icon)(resources.GetObject("$this.Icon"));
+            } catch { }
         }
         
         void UpdateNotifyIconText() {
@@ -101,7 +113,7 @@ namespace MCGalaxy.Gui {
         
         void LogMessage(LogType type, string message) {
             if (!Server.Config.FileLogging[(int)type]) return;
-        	
+            
             if (InvokeRequired) {
                 BeginInvoke(logCallback, type, message); return;
             }           
@@ -177,6 +189,7 @@ namespace MCGalaxy.Gui {
         
         void Player_PlayerDisconnect(Player p, string reason) {
             RunOnUI_Async(() => {
+                Main_UpdateMapList();
                 Main_UpdatePlayersList();
                 Players_UpdateList(); 
             });
@@ -185,6 +198,7 @@ namespace MCGalaxy.Gui {
         void Player_OnJoinedLevel(Player p, Level prevLevel, Level lvl) {
             RunOnUI_Async(() => {
                 Main_UpdateMapList();
+                Main_UpdatePlayersList();
                 Players_UpdateSelected(); 
             });
         }
@@ -226,7 +240,7 @@ namespace MCGalaxy.Gui {
         }
 
         void UpdateUrl(string s) {
-            RunOnUI_Async(() => { main_txtUrl.Text = s; });
+            RunOnUI_Async(() => { Main_UpdateUrl(s); });
         }
 
         void Window_FormClosing(object sender, FormClosingEventArgs e) {

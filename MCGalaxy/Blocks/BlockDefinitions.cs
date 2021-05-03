@@ -91,24 +91,28 @@ namespace MCGalaxy {
         }
         
         static ConfigElement[] elems;
-        public static BlockDefinition[] Load(bool global, string mapName) {
+        public static BlockDefinition[] Load(string path) {
             BlockDefinition[] defs = new BlockDefinition[Block.ExtendedCount];
-            string path = global ? GlobalPath : "blockdefs/lvl_" + mapName + ".json";
             if (!File.Exists(path)) return defs;
             if (elems == null) elems = ConfigElement.GetAll(typeof(BlockDefinition));
             
             try {
-                JsonContext ctx = new JsonContext();
-                ctx.Val = File.ReadAllText(path);
-                JsonArray array = (JsonArray)Json.ParseStream(ctx);
+                string json = File.ReadAllText(path);
+                
+                JsonReader reader = new JsonReader(json);
+                reader.OnMember   = (obj, key, value) => {
+                    if (obj.Meta == null) obj.Meta = new BlockDefinition();
+                    ConfigElement.Parse(elems, obj.Meta, key, (string)value);
+                };
+                
+                JsonArray array = (JsonArray)reader.Parse();
                 if (array == null) return defs;
                 
                 foreach (object raw in array) {
                     JsonObject obj = (JsonObject)raw;
-                    if (obj == null) continue;
+                    if (obj == null || obj.Meta == null) continue;
                     
-                    BlockDefinition def = new BlockDefinition();
-                    obj.Deserialise(elems, def);
+                    BlockDefinition def = (BlockDefinition)obj.Meta;
                     if (String.IsNullOrEmpty(def.Name)) continue;
                     
                     BlockID block = def.GetBlock();
@@ -117,6 +121,9 @@ namespace MCGalaxy {
                     } else {
                         defs[block] = def;
                     }
+                    
+                    // In case user manually edited fallback in the json file
+                    def.FallBack = Math.Min(def.FallBack, Block.CpeMaxBlock);
                 }
             } catch (Exception ex) {
                 Logger.LogError("Error Loading block defs from " + path, ex);
@@ -125,9 +132,13 @@ namespace MCGalaxy {
         }
         
         public static void Save(bool global, Level lvl) {
-            if (elems == null) elems = ConfigElement.GetAll(typeof(BlockDefinition));
-            string path = global ? GlobalPath : "blockdefs/lvl_" + lvl.MapName + ".json";
+            string path = global ? GlobalPath : Paths.MapBlockDefs(lvl.MapName);
             BlockDefinition[] defs = global ? GlobalDefs : lvl.CustomBlockDefs;
+            Save(global, defs, path);
+        }
+        
+        public static void Save(bool global, BlockDefinition[] defs, string path) {
+            if (elems == null) elems = ConfigElement.GetAll(typeof(BlockDefinition));
             
             using (StreamWriter w = new StreamWriter(path)) {
                 w.WriteLine("[");
@@ -149,7 +160,7 @@ namespace MCGalaxy {
         
         public static void LoadGlobal() {
             BlockDefinition[] oldDefs = GlobalDefs;
-            GlobalDefs = Load(true, null);
+            GlobalDefs = Load(GlobalPath);
             GlobalDefs[Block.Air] = null;
             
             try {
@@ -199,7 +210,6 @@ namespace MCGalaxy {
                 pl.Send(def.MakeDefinePacket(pl));
                 pl.SendCurrentBlockPermissions();
             }
-            Save(global, level);
         }
         
         public static void Remove(BlockDefinition def, BlockDefinition[] defs, Level level) {
@@ -219,7 +229,6 @@ namespace MCGalaxy {
                 
                 pl.Send(Packet.UndefineBlock(def, pl.hasExtBlocks));
             }
-            Save(global, level);
         }
         
         public static void UpdateOrder(BlockDefinition def, bool global, Level level) {
@@ -340,8 +349,9 @@ namespace MCGalaxy {
                 if (!global && pl.level != level) continue;
                 if (pl.hasBlockDefs) continue;
                 
-                // if custom block is replacing core block, need to always reload for fallback
-                if (block >= Block.CpeCount && !pl.level.MayHaveCustomBlocks) continue;                
+                // If custom block is replacing core block, need to always reload for fallback
+                // But if level doesn't use custom blocks, don't need to reload for the player
+                if (block >= Block.CpeCount && !pl.level.MightHaveCustomBlocks()) continue;
                 PlayerActions.ReloadMap(pl);
             }
         }

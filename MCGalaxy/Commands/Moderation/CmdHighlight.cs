@@ -58,7 +58,7 @@ namespace MCGalaxy.Commands.Moderation {
                 p.Message("Place or break two blocks to determine the edges.");
                 HighlightAreaArgs args = new HighlightAreaArgs();
                 args.ids = ids; args.who = parts[0]; args.delta = delta;
-                p.MakeSelection(2,  "Selecting region for %SHighlight", args, DoHighlightArea);
+                p.MakeSelection(2,  "Selecting region for &SHighlight", args, DoHighlightArea);
             }
         }
         
@@ -75,7 +75,7 @@ namespace MCGalaxy.Commands.Moderation {
             HighlightDrawOp op = new HighlightDrawOp();
             op.Start = DateTime.UtcNow.Subtract(delta);
             op.who = who; op.ids = ids;
-            DrawOpPerformer.Setup(op, p, marks);
+            op.Setup(p, p.level, marks);
             
             BufferedBlockSender buffer = new BufferedBlockSender(p);
             op.Perform(marks, null,
@@ -86,22 +86,22 @@ namespace MCGalaxy.Commands.Moderation {
             buffer.Flush();
             
             if (op.found) {
-                p.Message("Now highlighting past &b{0} %Sfor {1}",
-                               delta.Shorten(true), PlayerInfo.GetColoredName(p, who));
-                p.Message("%WUse /reload to un-highlight");
+                p.Message("Now highlighting past &b{0} &Sfor {1}",
+                           delta.Shorten(true), p.FormatNick(who));
+                p.Message("&WUse /reload to un-highlight");
             } else {
-                p.Message("No changes found by {1} %Sin the past &b{0}",
-                               delta.Shorten(true), PlayerInfo.GetColoredName(p, who));
+                p.Message("No changes found by {1} &Sin the past &b{0}",
+                           delta.Shorten(true), p.FormatNick(who));
             }
         }
 
         public override void Help(Player p) {
-            p.Message("%T/Highlight [player] <timespan>");
-            p.Message("%HHighlights blocks changed by [player] in the past <timespan>");
-            p.Message("%T/Highlight area [player] <timespan>");
-            p.Message("%HOnly highlights in the specified region.");
-            p.Message("%H If <timespan> is not given, highlights for last 30 minutes");
-            p.Message("%W/Highlight cannot be disabled, use /reload to un-highlight");
+            p.Message("&T/Highlight [player] <timespan>");
+            p.Message("&HHighlights blocks changed by [player] in the past <timespan>");
+            p.Message("&T/Highlight area [player] <timespan>");
+            p.Message("&HOnly highlights in the specified region.");
+            p.Message("&H If <timespan> is not given, highlights for last 30 minutes");
+            p.Message("&W/Highlight cannot be disabled, use /reload to un-highlight");
         }
     }
 }

@@ -19,7 +19,7 @@ using System;
 using BlockID = System.UInt16;
 
 namespace MCGalaxy.Events.PlayerEvents {
-    public enum PlayerAction { Me, Referee, UnReferee, AFK, UnAFK };
+    public enum PlayerAction { Me, Referee, UnReferee, AFK, UnAFK, Hide, Unhide };
     public enum MouseButton { Left, Right, Middle }  
     public enum MouseAction { Pressed, Released }
     public enum TargetBlockFace { AwayX, TowardsX, AwayY, TowardsY, AwayZ, TowardsZ, None }
@@ -50,16 +50,6 @@ namespace MCGalaxy.Events.PlayerEvents {
                 try { items[i].method(p, next, yaw, pitch); } 
                 catch (Exception ex) { LogHandlerException(ex, items[i]); }
             }
-        }
-    }
-    
-    public delegate void OnSQLSave(Player p);
-    /// <summary> This event is called whenever the server saves player's data to MySQL or SQLite </summary>
-    public sealed class OnSQLSaveEvent : IEvent<OnSQLSave> {
-        
-        public static void Call(Player p) {
-            if (handlers.Count == 0) return;
-            CallCommon(pl => pl(p));
         }
     }
     
@@ -110,7 +100,8 @@ namespace MCGalaxy.Events.PlayerEvents {
     }
 
     public delegate void OnPlayerDeath(Player p, BlockID cause);
-    /// <summary> Called whenever a player dies in-game </summary>
+    /// <summary> Called whenever a player dies. </summary>
+    /// <remarks> Can be caused by e.g. walking into a deadly block like nerve_gas </remarks>
     public sealed class OnPlayerDeathEvent : IEvent<OnPlayerDeath> {
         
         public static void Call(Player p, BlockID block) {
@@ -130,14 +121,29 @@ namespace MCGalaxy.Events.PlayerEvents {
     }
 
     public delegate void SelectionBlockChange(Player p, ushort x, ushort y, ushort z, BlockID block);
-    public delegate void OnBlockChange(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing);
-    /// <summary> Called whenever a player places or deletes a block. </summary>
-    public sealed class OnBlockChangeEvent : IEvent<OnBlockChange> {
+    public delegate void OnBlockChanging(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing, ref bool cancel);
+    /// <summary> Called whenever a player is manually placing or deleting a block. </summary>
+    /// <remarks> The client always assumes a block change succeeds. 
+    /// So if you cancel this event, make sure you have sent a block change or reverted it using p.RevertBlock </remarks>
+    public sealed class OnBlockChangingEvent : IEvent<OnBlockChanging> {
         
-        public static void Call(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing) {
-            IEvent<OnBlockChange>[] items = handlers.Items;
+        public static void Call(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing, ref bool cancel) {
+            IEvent<OnBlockChanging>[] items = handlers.Items;
             for (int i = 0; i < items.Length; i++) {
-                try { items[i].method(p, x, y, z, block, placing); } 
+                try { items[i].method(p, x, y, z, block, placing, ref cancel); } 
+                catch (Exception ex) { LogHandlerException(ex, items[i]); }
+            }
+        }
+    }
+    
+    public delegate void OnBlockChanged(Player p, ushort x, ushort y, ushort z, ChangeResult result);
+    /// <summary> Called whenever a player has manually placed or deleted a block. </summary>
+    public sealed class OnBlockChangedEvent : IEvent<OnBlockChanged> {
+        
+        public static void Call(Player p, ushort x, ushort y, ushort z, ChangeResult result) {
+            IEvent<OnBlockChanged>[] items = handlers.Items;
+            for (int i = 0; i < items.Length; i++) {
+                try { items[i].method(p, x, y, z, result); } 
                 catch (Exception ex) { LogHandlerException(ex, items[i]); }
             }
         }
@@ -160,14 +166,14 @@ namespace MCGalaxy.Events.PlayerEvents {
         }
     }
 
-    public delegate void OnMessageReceived(Player p, string message);
+    public delegate void OnMessageReceived(Player p, ref string message, ref bool cancel);
     /// <summary> Called whenever a player recieves a message from the server or from another player. </summary>
     public sealed class OnMessageRecievedEvent : IEvent<OnMessageReceived> {
         
-        public static void Call(Player p, string message) {
+        public static void Call(Player p, ref string message, ref bool cancel) {
             IEvent<OnMessageReceived>[] items = handlers.Items;
             for (int i = 0; i < items.Length; i++) {
-                try { items[i].method(p, message); } 
+                try { items[i].method(p, ref message, ref cancel); } 
                 catch (Exception ex) { LogHandlerException(ex, items[i]); }
             }
         }
@@ -225,6 +231,21 @@ namespace MCGalaxy.Events.PlayerEvents {
         }
     }
 
+    public delegate void OnSettingColor(Player p, ref string color);
+    /// <summary> Called when color is being updated for a player. </summary>
+    /// <example> You can use this to ensure player's color remains fixed to red while in a game. </example>
+    public sealed class OnSettingColorEvent : IEvent<OnSettingColor> {
+        
+        public static void Call(Player p, ref string color) {
+            IEvent<OnSettingColor>[] items = handlers.Items;
+            // Can't use CallCommon because we need to pass arguments by ref
+            for (int i = 0; i < items.Length; i++) {
+                try { items[i].method(p, ref color); } 
+                catch (Exception ex) { LogHandlerException(ex, items[i]); }
+            }
+        }
+    }
+    
     public delegate void OnGettingMotd(Player p, ref string motd);
     /// <summary> Called when MOTD is being retrieved for a player. </summary>
     /// <remarks> e.g. You can use this event to make one player always have +hax motd. </remarks>
@@ -280,6 +301,20 @@ namespace MCGalaxy.Events.PlayerEvents {
         public static void Call(Player p) {
             if (handlers.Count == 0) return;
             CallCommon(pl => pl(p));
+        }
+    } 
+    
+    public delegate void OnGettingCanSee(Player p, LevelPermission plRank, ref bool canSee, Player target);
+    /// <summary> Called when code is checking if this player can see the given player. </summary>
+    public sealed class OnGettingCanSeeEvent : IEvent<OnGettingCanSee> {
+        
+        public static void Call(Player p, LevelPermission plRank, ref bool canSee, Player target) {
+            IEvent<OnGettingCanSee>[] items = handlers.Items;
+            // Can't use CallCommon because we need to pass arguments by ref
+            for (int i = 0; i < items.Length; i++) {
+                try { items[i].method(p, plRank, ref canSee, target); } 
+                catch (Exception ex) { LogHandlerException(ex, items[i]); }
+            }
         }
     }    
 }

@@ -26,7 +26,11 @@ namespace MCGalaxy.Commands.Bots {
         public override LevelPermission defaultRank { get { return LevelPermission.Admin; } }
         public override bool SuperUseable { get { return false; } }
         public override CommandAlias[] Aliases {
-            get { return new[] { new CommandAlias("BotAdd", "add"), new CommandAlias("BotRemove", "remove") }; }
+            get { return new[] {
+                    new CommandAlias("BotAdd", "add"),
+                    new CommandAlias("BotRemove", "remove"),
+                    new CommandAlias("BotInfo", "info")
+                }; }
         }
         public override CommandPerm[] ExtraPerms {
             get { return new[] { new CommandPerm(LevelPermission.Operator, "can modify bots that do not belong to them") }; }
@@ -35,6 +39,8 @@ namespace MCGalaxy.Commands.Bots {
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length == 0) { Help(p); return; }
             string[] args = message.SplitSpaces(3);
+            if (args[0].CaselessEq("info")) { BotInfo(p, args.Length < 2 ? "" : args[1]); return; }
+            
             if (args.Length < 2) { Help(p); return; }
             
             if (!Formatter.ValidName(p, args[1], "bot")) return;
@@ -46,7 +52,7 @@ namespace MCGalaxy.Commands.Bots {
             } else if (IsDeleteCommand(args[0])) {
                 RemoveBot(p, bot, value);
             } else if (args[0].CaselessEq("text")) {
-                SetBotText(p, bot, value);
+                SetBotText(p, bot, value, data.Rank);
             } else if (args[0].CaselessEq("deathmsg") || args[0].CaselessEq("deathmessage")) {
                 SetDeathMessage(p, bot, value);
             } else if (args[0].CaselessEq("rename")) {
@@ -98,13 +104,13 @@ namespace MCGalaxy.Commands.Bots {
                     if (PlayerBot.CanEditAny(p) || ownerName.CaselessEq(p.name)) {
                         int removedCount = PlayerBot.RemoveBotsOwnedBy(p, ownerName, p.level, false);
                         if (removedCount == 0) {
-                            p.Message("There are no bots owned by {0}%S in this level.", PlayerInfo.GetColoredName(p, ownerName));
+                            p.Message("There are no bots owned by {0}&S in this level.", p.FormatNick(ownerName));
                         } else {
-                            p.Message("Removed {0} bot{1} belonging to {2}%S.", removedCount, removedCount > 1 ? "s" : "", PlayerInfo.GetColoredName(p, ownerName));
+                            p.Message("Removed {0} bot{1} belonging to {2}&S.", removedCount, removedCount > 1 ? "s" : "", p.FormatNick(ownerName));
                             BotsFile.Save(p.level);
                         }
                     } else {
-                        p.Message("%WYou cannot remove all bots belonging to {0}%W unless you are the owner of this map.", PlayerInfo.GetColoredName(p, ownerName));
+                        p.Message("&WYou cannot remove all bots belonging to {0}&W unless you are the owner of this map.", p.FormatNick(ownerName));
                     }
                     return;
                 }
@@ -118,28 +124,32 @@ namespace MCGalaxy.Commands.Bots {
                         BotsFile.Save(p.level);
                     }
                 } else {
-                    p.Message("%WYou cannot remove all bots unless you are the owner of this map.");
+                    p.Message("&WYou cannot remove all bots unless you are the owner of this map.");
                 }
 
             } else {
                 PlayerBot bot = Matcher.FindBots(p, botName);
                 if (bot == null) return;
-                if (!bot.EditableBy(p, "remove")) { return; }
+                if (!bot.EditableBy(p, "remove")) return;
+                
                 PlayerBot.Remove(bot);
                 p.Message("Removed bot {0}", bot.ColoredName);
             }
         }
         
-        void SetBotText(Player p, string botName, string text) {
+        void SetBotText(Player p, string botName, string text, LevelPermission plRank) {
             PlayerBot bot = Matcher.FindBots(p, botName);
             if (bot == null) return;
-            if (!bot.EditableBy(p, "set the text of")) { return; }
+            if (!bot.EditableBy(p, "set the text of")) return;
+            
             if (text == null) {
-                p.Message("Removed text shown when bot {0} %Sclicked on", bot.ColoredName);
+                p.Message("Removed text shown when bot {0} &Sclicked on", bot.ColoredName);
                 bot.ClickedOnText = null;
             } else {
-                if (!MessageBlock.Validate(p, text, false)) return;
-                p.Message("Set text shown when bot {0} %Sis clicked on to {1}", bot.ColoredName, text);
+                bool allCmds = HasExtraPerm(p, "MB", plRank, 1);
+                if (!MessageBlock.Validate(p, text, allCmds)) return;
+                
+                p.Message("Set text shown when bot {0} &Sis clicked on to {1}", bot.ColoredName, text);
                 bot.ClickedOnText = text;
             }
             BotsFile.Save(p.level);
@@ -148,13 +158,13 @@ namespace MCGalaxy.Commands.Bots {
         void SetDeathMessage(Player p, string botName, string text) {
             PlayerBot bot = Matcher.FindBots(p, botName);
             if (bot == null) return;
-            if (!bot.EditableBy(p, "set the death message of")) { return; }
+            if (!bot.EditableBy(p, "set the death message of")) return;
+            
             if (text == null) {
-                p.Message("Reset shown when bot {0} %Skills someone", bot.ColoredName);
+                p.Message("Reset shown when bot {0} &Skills someone", bot.ColoredName);
                 bot.DeathMessage = null;
             } else {
-                if (!MessageBlock.Validate(p, text, false)) return;
-                p.Message("Set message shown when bot {0} %Skills someone to {1}", bot.ColoredName, text);
+                p.Message("Set message shown when bot {0} &Skills someone to {1}", bot.ColoredName, text);
                 bot.DeathMessage = text;
             }
             BotsFile.Save(p.level);
@@ -194,27 +204,48 @@ namespace MCGalaxy.Commands.Bots {
             props.FromBot(bot);
             props.ApplyTo(clone);
             clone.Owner = p.name;
-            clone.SetModel(clone.Model, p.level);
+            clone.SetModel(clone.Model);
             BotsFile.LoadAi(props, clone);
             // Preserve custom name tag
             if (bot.DisplayName == bot.name) clone.DisplayName = newName;
             TryAddBot(p, clone);
         }
         
+        void BotInfo(Player p, string botName) {
+            if (botName.Length == 0) {
+                if (!p.Supports(CpeExt.PlayerClick)) {
+                    p.Message("Your client does not support clicking on entities.");
+                    p.Message("You must type &T/botinfo [name] &Sto see info.");
+                    p.Message("To help find the name of a nicknamed bot, try");
+                    p.Message("&T/whonick bot [nickname]");
+                    return;
+                }
+                p.checkingBotInfo = true;
+                p.Message("Left, right, or middle click a bot to display its information.");
+                return;
+            }
+            PlayerBot bot = Matcher.FindBots(p, botName);
+            if (bot == null) return;
+            bot.DisplayInfo(p);
+            if (p.checkingBotInfo) { p.checkingBotInfo = false; p.Message("Note: pending click-to-check bot info has been cancelled."); }
+        }
+        
         public override void Help(Player p) {
-            p.Message("%T/Bot add [name] %H- Adds a new bot at your position");
-            p.Message("%T/Bot remove [name] %H- Removes the bot with that name");
-            p.Message("%T/Bot remove all %H- Removes all bots on your map.");
-            p.Message("%T/Bot remove all [owner]");
-            p.Message("%HRemoves all bots owned by [owner] on your map.");
-            p.Message("%T/Bot text [name] <text>");
-            p.Message("%HSets the text shown when a player clicks on this bot");
-            p.Message("%HSee %T/Help mb %Hfor more details on <text>");
-            p.Message("%T/Bot deathmessage [name] <message>");
-            p.Message("%HSets the message shown when this bot kills a player");
-            p.Message("%T/Bot rename [name] [new name] %H- Renames a bot");
-            p.Message("%H  Note: To only change name tag of a bot, use %T/Nick bot");
-            p.Message("%T/Bot copy [name] [new name] %H- Clones an existing bot");
+            p.Message("&T/Bot add [name] &H- Adds a new bot at your position");
+            p.Message("&T/Bot remove [name] &H- Removes the bot with that name");
+            p.Message("&T/Bot remove all &H- Removes all bots on your map.");
+            p.Message("&T/Bot remove all [owner]");
+            p.Message("&HRemoves all bots owned by [owner] on your map.");
+            p.Message("&T/Bot text [name] <text>");
+            p.Message("&HSets the text shown when a player clicks on this bot");
+            p.Message("&HSee &T/Help mb &Hfor more details on <text>");
+            p.Message("&T/Bot deathmessage [name] <message>");
+            p.Message("&HSets the message shown when this bot kills a player");
+            p.Message("&T/Bot rename [name] [new name] &H- Renames a bot");
+            p.Message("&H  Note: To only change name tag of a bot, use &T/Nick bot");
+            p.Message("&T/Bot copy [name] [new name] &H- Clones an existing bot");
+            p.Message("&T/Bot info &H- Displays info of the next bot you click");
+            p.Message("&T/Bot info [name] &H- Displays info of bot with that name");
         }
     }
 }

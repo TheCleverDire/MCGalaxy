@@ -59,7 +59,7 @@ namespace MCGalaxy.Commands.Building {
                 
                 if (dArgs.Pal.Entries == null || dArgs.Pal.Entries.Length == 0) {
                     p.Message("Palette {0} does not have any entries", dArgs.Pal.Name);
-                    p.Message("Use %T/Palette %Sto add entries to it"); return;
+                    p.Message("Use &T/Palette &Sto add entries to it"); return;
                 }
             }
             
@@ -84,7 +84,7 @@ namespace MCGalaxy.Commands.Building {
             }
 
             p.Message("Place or break two blocks to determine direction.");
-            p.MakeSelection(2, "Selecting direction for %SImagePrint", dArgs, DoImage);
+            p.MakeSelection(2, "Selecting direction for &SImagePrint", dArgs, DoImage);
         }
         
         bool DoImage(Player p, Vec3S32[] m, object state, BlockID block) {
@@ -136,10 +136,11 @@ namespace MCGalaxy.Commands.Building {
             int resizedHeight = height - LargestDelta(lvl, yEnd);
             
             // Preserve aspect ratio of image
-            float ratio = Math.Min(resizedWidth / (float)width, resizedHeight / (float)height);
-            resizedWidth = (int)(width * ratio); resizedHeight = (int)(height * ratio);
+            float ratio   = Math.Min(resizedWidth / (float)width, resizedHeight / (float)height);
+            resizedWidth  = Math.Max(1, (int)(width  * ratio));
+            resizedHeight = Math.Max(1, (int)(height * ratio));
             
-            p.Message("%WImage is too large ({0}x{1}), resizing to ({2}x{3})",
+            p.Message("&WImage is too large ({0}x{1}), resizing to ({2}x{3})",
                       width, height, resizedWidth, resizedHeight);
             width = resizedWidth; height = resizedHeight;
         }
@@ -158,11 +159,7 @@ namespace MCGalaxy.Commands.Building {
         }
         
         static int LargestDelta(Level lvl, Vec3S32 point) {
-            Vec3S32 clamped;
-            clamped.X = Math.Max(0, Math.Min(point.X, lvl.Width  - 1));
-            clamped.Y = Math.Max(0, Math.Min(point.Y, lvl.Height - 1));
-            clamped.Z = Math.Max(0, Math.Min(point.Z, lvl.Length - 1));
-            
+            Vec3S32 clamped = lvl.ClampPos(point);
             int dx = Math.Abs(point.X - clamped.X);
             int dy = Math.Abs(point.Y - clamped.Y);
             int dz = Math.Abs(point.Z - clamped.Z);
@@ -170,11 +167,11 @@ namespace MCGalaxy.Commands.Building {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/ImagePrint [file/url] [palette] <mode> <width height>");
-            p.Message("%HPrints image from given URL, or from a .bmp file in /extra/images/ folder");
-            p.Message("%HPalettes: &f{0}", ImagePalette.Palettes.Join(pal => pal.Name));
-            p.Message("%HModes: &fVertical, Vertical2Layer, Horizontal");
-            p.Message("%H  <width height> optionally resize the printed image");
+            p.Message("&T/ImagePrint [file/url] [palette] <mode> <width height>");
+            p.Message("&HPrints image from given URL, or from a .bmp file in /extra/images/ folder");
+            p.Message("&HPalettes: &f{0}", ImagePalette.Palettes.Join(pal => pal.Name));
+            p.Message("&HModes: &fVertical, Vertical2Layer, Horizontal");
+            p.Message("&H  <width height> optionally resize the printed image");
         }
 
         class DrawArgs { public bool Layer, Dual; public ImagePalette Pal; public byte[] Data; public int Width, Height; }

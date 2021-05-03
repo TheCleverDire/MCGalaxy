@@ -31,10 +31,11 @@ namespace MCGalaxy.Games {
             OnPlayerDeathEvent.Register(HandlePlayerDeath, Priority.High);
             OnPlayerChatEvent.Register(HandlePlayerChat, Priority.High);
             OnPlayerCommandEvent.Register(HandlePlayerCommand, Priority.High);            
-            OnBlockChangeEvent.Register(HandleBlockChange, Priority.High);
+            OnBlockChangingEvent.Register(HandleBlockChanging, Priority.High);
             
             OnPlayerSpawningEvent.Register(HandlePlayerSpawning, Priority.High);
             OnTabListEntryAddedEvent.Register(HandleTabListEntryAdded, Priority.High);
+            OnSentMapEvent.Register(HandleSentMap, Priority.High);
             OnJoinedLevelEvent.Register(HandleJoinedLevel, Priority.High);
             
             base.HookEventHandlers();
@@ -44,10 +45,11 @@ namespace MCGalaxy.Games {
             OnPlayerDeathEvent.Unregister(HandlePlayerDeath);
             OnPlayerChatEvent.Unregister(HandlePlayerChat);
             OnPlayerCommandEvent.Unregister(HandlePlayerCommand);           
-            OnBlockChangeEvent.Unregister(HandleBlockChange);
+            OnBlockChangingEvent.Unregister(HandleBlockChanging);
             
             OnPlayerSpawningEvent.Unregister(HandlePlayerSpawning);
             OnTabListEntryAddedEvent.Unregister(HandleTabListEntryAdded);
+            OnSentMapEvent.Unregister(HandleSentMap);
             OnJoinedLevelEvent.Unregister(HandleJoinedLevel);
             
             base.UnhookEventHandlers();
@@ -87,13 +89,13 @@ namespace MCGalaxy.Games {
             p.cancelcommand = true;
         }
         
-        void HandleBlockChange(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing) {
+        void HandleBlockChanging(Player p, ushort x, ushort y, ushort z, BlockID block, bool placing, ref bool cancel) {
             if (p.level != Map) return;
             CtfTeam team = TeamOf(p);
             if (team == null) {
                 p.RevertBlock(x, y, z);
+                cancel = true;
                 p.Message("You are not on a team!");
-                p.cancelBlock = true;
                 return;
             }
             
@@ -103,6 +105,7 @@ namespace MCGalaxy.Games {
             }
             if (pos == team.FlagPos && !Map.IsAirAt(x, y, z)) {
                 ReturnFlag(p, team);
+                cancel = true;
             }
         }
         
@@ -131,21 +134,14 @@ namespace MCGalaxy.Games {
             }
         }
         
-        void HandleJoinedLevel(Player p, Level prevLevel, Level level, ref bool announce) {
-            HandleJoinedCommon(p, prevLevel, level, ref announce);
-            
+        void HandleSentMap(Player p, Level prevLevel, Level level) {
             if (level != Map) return;
             MessageMapInfo(p);
-            if (TeamOf(p) != null) return;
-            
-            if (Blue.Members.Count > Red.Members.Count) {
-                JoinTeam(p, Red);
-            } else if (Red.Members.Count > Blue.Members.Count) {
-                JoinTeam(p, Blue);
-            } else {
-                bool red = new Random().Next(2) == 0;
-                JoinTeam(p, red ? Red : Blue);
-            }
+            if (TeamOf(p) == null) AutoAssignTeam(p);
+        }
+		
+        void HandleJoinedLevel(Player p, Level prevLevel, Level level, ref bool announce) {
+            HandleJoinedCommon(p, prevLevel, level, ref announce);
         }
     }
 }

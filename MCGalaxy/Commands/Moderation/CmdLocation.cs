@@ -1,5 +1,5 @@
 /*
-    Copyright 2015 MCGalaxy team
+    Copyright 2015 MCGalaxy
 
     Dual-licensed under the    Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -30,12 +30,6 @@ namespace MCGalaxy.Commands.Moderation {
             get { return new[] { new CommandPerm(LevelPermission.Admin, "can see state/province") }; }
         }
         
-        class GeoInfo {
-            [ConfigString] public string region;
-            [ConfigString] public string country;
-        }
-        static ConfigElement[] elems;
-        
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length == 0) {
                 if (p.IsSuper) { SuperRequiresArgs(p, "player name or IP"); return; }
@@ -46,31 +40,31 @@ namespace MCGalaxy.Commands.Moderation {
             if (ip == null) return;
             
             if (HttpUtil.IsPrivateIP(ip)) {
-                p.Message("%WPlayer has an internal IP, cannot trace"); return;
+                p.Message("&WPlayer has an internal IP, cannot trace"); return;
             }
 
-            JsonContext ctx = new JsonContext();
+            string json, region = null, country = null;
             using (WebClient client = HttpUtil.CreateWebClient()) {
-                ctx.Val = client.DownloadString("http://ipinfo.io/" + ip + "/geo");
+                json = client.DownloadString("http://ipinfo.io/" + ip + "/geo");
             }
             
-            JsonObject obj = (JsonObject)Json.ParseStream(ctx);
-            GeoInfo info = new GeoInfo();
-            if (obj == null || !ctx.Success) {
-                p.Message("%WError parsing GeoIP info"); return;
-            }
+            JsonReader reader = new JsonReader(json);
+            reader.OnMember   = (obj, key, value) => {
+            	if (key == "region")  region  = (string)value;
+            	if (key == "country") country = (string)value;
+            };
             
-            if (elems == null) elems = ConfigElement.GetAll(typeof(GeoInfo));
-            obj.Deserialise(elems, info);            
+            reader.Parse();
+            if (reader.Failed) { p.Message("&WError parsing GeoIP info"); return; }           
             
-            string suffix = HasExtraPerm(p, data.Rank, 1) ? "&b{1}%S/&b{2}" : "&b{2}";
-            string target = name == null ? ip : "of " + PlayerInfo.GetColoredName(p, name);
-            p.Message("The IP {0} %Straces to: " + suffix, target, info.region, info.country);
+            string suffix = HasExtraPerm(p, data.Rank, 1) ? "&b{1}&S/&b{2}" : "&b{2}";
+            string nick   = name == null ? ip : "of " + p.FormatNick(name);
+            p.Message("The IP {0} &Straces to: " + suffix, nick, region, country);
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Location [name/IP]");
-            p.Message("%HTracks down location of the given IP, or IP player is on.");
+            p.Message("&T/Location [name/IP]");
+            p.Message("&HTracks down location of the given IP, or IP player is on.");
         }
     }
 }

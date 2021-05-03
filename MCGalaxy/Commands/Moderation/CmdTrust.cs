@@ -23,17 +23,17 @@ namespace MCGalaxy.Commands.Moderation {
 
         public override void Use(Player p, string message, CommandData data) {
             if (message.Length == 0 || message.IndexOf(' ') != -1) { Help(p); return; }
-            Player who = PlayerInfo.FindMatches(p, message);
-            if (who == null) return;
+            Player target = PlayerInfo.FindMatches(p, message);
+            if (target == null) return;
             
-            who.ignoreGrief = !who.ignoreGrief;
-            p.Message(who.ColoredName + "%S's trust status: " + who.ignoreGrief);
-            who.Message("Your trust status was changed to: " + who.ignoreGrief);
+            target.ignoreGrief = !target.ignoreGrief;
+            p.Message("{0}&S's trust status: " + target.ignoreGrief, p.FormatNick(target));
+            target.Message("Your trust status was changed to: " + target.ignoreGrief);
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Trust [name]");
-            p.Message("%HTurns off the anti-grief for [name]");
+            p.Message("&T/Trust [name]");
+            p.Message("&HTurns off the anti-grief for [name]");
         }
     }
 }

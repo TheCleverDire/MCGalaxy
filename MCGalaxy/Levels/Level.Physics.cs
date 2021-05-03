@@ -42,8 +42,10 @@ namespace MCGalaxy {
             }
             
             if (physics != level) OnPhysicsLevelChangedEvent.Call(this, level);
-            physics = level;
-            //StartPhysics(); This isnt needed, the physics will start when we set the new value above
+            if (level > 0 && physics == 0) StartPhysics();
+            
+            Physicsint     = level;
+            Config.Physics = level;
         }
         
         public void StartPhysics() {
@@ -61,11 +63,15 @@ namespace MCGalaxy {
         void PhysicsLoop() {
             int wait = Config.PhysicsSpeed;
             while (true) {
-                if (PhysicsPaused) { Thread.Sleep(500); continue; }
-
                 try {
+                    
+                    if (PhysicsPaused) {
+                        if (physics == 0) break;
+                        Thread.Sleep(500); continue; 
+                    } 
+                    
                     if (wait > 0) Thread.Sleep(wait);
-                    if (physics == 0) { lastCheck = 0; break; }
+                    if (physics == 0) break;
                     
                     // No block calculations in this tick
                     if (ListCheck.Count == 0) {
@@ -74,9 +80,12 @@ namespace MCGalaxy {
                         continue;
                     }
 
-                    DateTime tickStart = DateTime.UtcNow;
+                    DateTime tickStart = default(DateTime);
                     try {
-                        lock (physTickLock) PhysicsTick();
+                        lock (physTickLock) {
+                            tickStart = DateTime.UtcNow;
+                            PhysicsTick();
+                        }
                     } catch (Exception ex) {
                         Logger.LogError("Error in physics tick", ex);
                     }
@@ -96,9 +105,7 @@ namespace MCGalaxy {
                             OnPhysicsStateChangedEvent.Call(this, PhysicsState.Stopped);
                             wait = Config.PhysicsSpeed;
                         } else {
-                            Player[] online = PlayerInfo.Online.Items;
                             Message("Physics warning!");
-                            
                             Logger.Log(LogType.Warning, "Physics warning on " + name);
                             OnPhysicsStateChangedEvent.Call(this, PhysicsState.Warning);
                         }
@@ -107,6 +114,8 @@ namespace MCGalaxy {
                     wait = Config.PhysicsSpeed;
                 }
             }
+            
+            lastCheck = 0;
             physThreadStarted = false;
         }
 
@@ -127,7 +136,7 @@ namespace MCGalaxy {
             lastCheck = ListCheck.Count;
             const uint mask = PhysicsArgs.TypeMask;
             
-            HandlePhysics[] handlers = physicsHandlers;
+            HandlePhysics[] handlers = PhysicsHandlers;
             ExtraInfoHandler extraHandler = ExtraInfoPhysics.normalHandler;
             if (physics == 5) {
                 handlers = physicsDoorsHandlers;
@@ -197,8 +206,7 @@ namespace MCGalaxy {
                 }
             }
             
-            if (bulkSender != null)
-                bulkSender.Flush();
+            if (bulkSender != null) bulkSender.Flush();
             ListUpdate.Clear(); listUpdateExists.Clear();
         }
         
@@ -308,11 +316,15 @@ namespace MCGalaxy {
         }
         
         
+        void ClearPhysicsLists() {
+            ListCheck.Count  = 0; listCheckExists.Clear();
+            ListUpdate.Count = 0; listUpdateExists.Clear();
+        }
+        
         public void ClearPhysics() {
             for (int i = 0; i < ListCheck.Count; i++ )
                 RevertPhysics(ListCheck.Items[i]);
-            ListCheck.Clear(); listCheckExists.Clear();
-            ListUpdate.Clear(); listUpdateExists.Clear();
+            ClearPhysicsLists();
         }
         
         void RevertPhysics(Check C) {
@@ -345,7 +357,7 @@ namespace MCGalaxy {
             if (Props[block].IsMessageBlock || Props[block].IsPortal) return false;
             if (Props[block].IsDoor || Props[block].IsTDoor) return false;
             if (Props[block].OPBlock) return false;
-            return physicsHandlers[block] != null;
+            return PhysicsHandlers[block] != null;
         }
         
         internal bool CheckSpongeWater(ushort x, ushort y, ushort z) {

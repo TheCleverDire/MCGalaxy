@@ -17,6 +17,7 @@
  */
 using System.IO;
 using MCGalaxy.DB;
+using MCGalaxy.Events.PlayerEvents;
 
 namespace MCGalaxy.Commands.Moderation {
     public sealed class CmdHide : Command2 {
@@ -24,6 +25,7 @@ namespace MCGalaxy.Commands.Moderation {
         public override string type { get { return CommandTypes.Moderation; } }
         public override LevelPermission defaultRank { get { return LevelPermission.Operator; } }
         public override bool SuperUseable { get { return false; } }
+        public override bool UpdatesLastCmd { get { return false; } }
         public override CommandPerm[] ExtraPerms {
             get { return new[] { new CommandPerm(LevelPermission.Admin, "can hide silently") }; }
         }
@@ -32,7 +34,7 @@ namespace MCGalaxy.Commands.Moderation {
         }
         
         static void AnnounceOps(Player p, string msg) {
-            ItemPerms perms = new ItemPerms(p.hideRank, null, null);
+            ItemPerms perms = new ItemPerms(p.hideRank);
             Chat.MessageFrom(ChatScope.Perms, p, msg, perms, null, true);
         }
 
@@ -53,27 +55,29 @@ namespace MCGalaxy.Commands.Moderation {
             p.hidden = !p.hidden;
             if (p.hidden) {
                 p.hideRank = data.Rank;
-                AnnounceOps(p, "To Ops -λNICK%S- is now &finvisible");               
+                AnnounceOps(p, "To Ops -λNICK&S- is now &finvisible");               
                 
                 if (!silent) {
-                    string leaveMsg = "&c- λFULL %S" + PlayerDB.GetLogoutMessage(p);
+                    string leaveMsg = "&c- λFULL &S" + PlayerDB.GetLogoutMessage(p);
                     Chat.MessageFrom(ChatScope.All, p, leaveMsg, null, null, true);
                 }
                 
                 if (!p.opchat) opchat.Use(p, "", data);
-                Server.hidden.AddUnique(p.name);
+                Server.hidden.Add(p.name);
+                OnPlayerActionEvent.Call(p, PlayerAction.Hide);
             } else {
-                AnnounceOps(p, "To Ops -λNICK%S- is now &fvisible");
+                AnnounceOps(p, "To Ops -λNICK&S- is now &fvisible");
                 p.hideRank = LevelPermission.Banned;
                 
                 if (!silent) {
-                    string joinMsg = "&a+ λFULL %S" + PlayerDB.GetLoginMessage(p);
+                    string joinMsg = "&a+ λFULL &S" + PlayerDB.GetLoginMessage(p);
                     Chat.MessageFrom(ChatScope.All, p, joinMsg, null, null, true);
                 }
                 
                 if (p.opchat) opchat.Use(p, "", data);
                 if (p.adminchat) adminchat.Use(p, "", data);
                 Server.hidden.Remove(p.name);
+                OnPlayerActionEvent.Call(p, PlayerAction.Unhide);
             }
             
             Entities.GlobalSpawn(p, false);
@@ -82,9 +86,9 @@ namespace MCGalaxy.Commands.Moderation {
         }
 
         public override void Help(Player p) {
-            p.Message("%T/Hide %H- Toggles your visibility to other players, also toggles opchat.");
-            p.Message("%T/Hide silent %H- Hides without showing join/leave message");
-            p.Message("%HUse %T/OHide %Hto hide other players.");
+            p.Message("&T/Hide &H- Toggles your visibility to other players, also toggles opchat.");
+            p.Message("&T/Hide silent &H- Hides without showing join/leave message");
+            p.Message("&HUse &T/OHide &Hto hide other players.");
         }
     }
 }

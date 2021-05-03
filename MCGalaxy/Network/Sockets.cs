@@ -18,29 +18,34 @@ using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using System.IO;
+using System.Net.Security;
+using System.Threading;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MCGalaxy.Network {
     
+    public enum SendFlags {
+        None        = 0x00,
+        Synchronous = 0x01,
+        LowPriority = 0x02,
+    }
+    
     /// <summary> Abstracts sending to/receiving from a network socket. </summary>
     public abstract class INetSocket {
-        protected INetProtocol protocol;
-        
+        protected INetProtocol protocol;        
         /// <summary> Whether the socket has been closed/disconnected. </summary>
         public bool Disconnected;
-        /// <summary> The IP address of the remote end (i.e. client) of the socket. </summary>
-        public string IP;
         
+        /// <summary> Gets the IP address of the remote end (i.e. client) of the socket. </summary>
+        public abstract string IP { get; }      
         /// <summary> Sets whether this socket operates in low-latency mode (e.g. for TCP, disabes nagle's algorithm). </summary>
         public abstract bool LowLatency { set; }
         
         /// <summary> Initialises state to begin asynchronously sending and receiving data. </summary>
-        public abstract void Init();
-        
-        /// <summary> Sends a block of data, either synchronously or asynchronously. </summary>
-        public abstract void Send(byte[] buffer, bool sync);
-        /// <summary> Asynchronously sends a block of low-priority data. </summary>
-        public abstract void SendLowPriority(byte[] buffer);
-        
+        public abstract void Init();        
+        /// <summary> Sends a block of data. </summary>
+        public abstract void Send(byte[] buffer, SendFlags flags);      
         /// <summary> Closes this network socket. </summary>
         public abstract void Close();
         
@@ -53,7 +58,14 @@ namespace MCGalaxy.Network {
             } else if (opcode == 'G' && Server.Config.WebClient) {
                 pending.Remove(this);
                 return new WebSocket(this);
-            } else {
+            } 
+#if SECURE_WEBSOCKETS
+            else if (opcode == 0x16 && Server.Config.WebClient) {
+                pending.Remove(this);
+                return new SecureSocket(this);
+            }
+#endif
+            else {
                 Logger.Log(LogType.UserActivity, "Disconnected {0} (unknown opcode {1})", IP, opcode);
                 Close();
                 return null;
@@ -118,8 +130,6 @@ namespace MCGalaxy.Network {
         
         public TcpSocket(Socket s) {
             socket = s;
-            IP = ((IPEndPoint)s.RemoteEndPoint).Address.ToString();
-            
             recvArgs.UserToken = this;
             recvArgs.SetBuffer(recvBuffer, 0, recvBuffer.Length);
             sendArgs.UserToken = this;
@@ -132,6 +142,9 @@ namespace MCGalaxy.Network {
             ReceiveNextAsync();
         }
         
+        public override string IP {
+            get { return ((IPEndPoint)socket.RemoteEndPoint).Address.ToString(); }
+        }        
         public override bool LowLatency { set { socket.NoDelay = value; } }
         
         
@@ -164,11 +177,12 @@ namespace MCGalaxy.Network {
         
         
         static EventHandler<SocketAsyncEventArgs> sendCallback = SendCallback;
-        public override void Send(byte[] buffer, bool sync) {
+        public override void Send(byte[] buffer, SendFlags flags) {
             if (Disconnected || !socket.Connected) return;
 
+            // TODO: Low priority sending support
             try {
-                if (sync) {
+            	if ((flags & SendFlags.Synchronous) != 0) {
                     socket.Send(buffer, 0, buffer.Length, SocketFlags.None);
                     return;
                 }
@@ -186,9 +200,6 @@ namespace MCGalaxy.Network {
                 // Socket was already closed by another thread
             }
         }
-        
-        // TODO: do this seprately
-        public override void SendLowPriority(byte[] buffer) { Send(buffer, false); }
         
         bool TrySendAsync(byte[] buffer) {
             // BlockCopy has some overhead, not worth it for very small data
@@ -208,11 +219,20 @@ namespace MCGalaxy.Network {
         static void SendCallback(object sender, SocketAsyncEventArgs e) {
             TcpSocket s = (TcpSocket)e.UserToken;
             try {
-                // TODO: Need to check if all data was sent or not?
-                int sent = e.BytesTransferred;
                 lock (s.sendLock) {
+                    // check if last packet was only partially sent
+                    for (;;) {
+                        int sent  = e.BytesTransferred;
+                        int count = e.Count;
+                        if (sent >= count || sent <= 0) break;
+                        
+                        // last packet was only partially sent - resend rest of packet
+                        s.sendArgs.SetBuffer(e.Offset + sent, e.Count - sent);
+                        s.sendInProgress = s.socket.SendAsync(s.sendArgs);
+                        if (s.sendInProgress) return;
+                    }
+                    
                     s.sendInProgress = false;
-
                     while (s.sendQueue.Count > 0) {
                         // DoSendAsync returns false if SendAsync completed sync
                         // If that happens, SendCallback isn't called so we need to send data here instead
@@ -251,234 +271,139 @@ namespace MCGalaxy.Network {
         }
     }
     
-    /// <summary> Abstracts a WebSocket on top of a TCP socket. </summary>
-    public sealed class WebSocket : INetSocket, INetProtocol {
+    /// <summary> Abstracts a WebSocket on top of a socket. </summary>
+    public sealed class WebSocket : ServerWebSocket {
         readonly INetSocket s;
         
-        public WebSocket(INetSocket socket) {
-            IP = socket.IP;
-            s  = socket;
-        }
+        public WebSocket(INetSocket socket) { s  = socket; }
         
         // Init taken care by underlying socket
         public override void Init() { }
+        public override string IP { get { return s.IP; } }
         public override bool LowLatency { set { s.LowLatency = value; } }
-        
-        bool readingHeaders = true;
-        bool conn, upgrade, version, proto;
-        string verKey;
-        
-        void AcceptConnection() {
-            const string fmt =
-                "HTTP/1.1 101 Switching Protocols\r\n" +
-                "Upgrade: websocket\r\n" +
-                "Connection: Upgrade\r\n" +
-                "Sec-WebSocket-Accept: {0}\r\n" +
-                "Sec-WebSocket-Protocol: ClassiCube\r\n" +
-                "\r\n";
-            
-            string key = verKey + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-            SHA1   sha = SHA1.Create();
-            byte[] raw = sha.ComputeHash(Encoding.ASCII.GetBytes(key));
-            
-            string headers = String.Format(fmt, Convert.ToBase64String(raw));
-            s.Send(Encoding.ASCII.GetBytes(headers), false);
-            readingHeaders = false;
+
+        protected override void SendRaw(byte[] data, SendFlags flags) {
+            s.Send(data, flags);
+        } 
+        public override void Send(byte[] buffer, SendFlags flags) {
+            s.Send(WrapData(buffer), flags);
         }
         
-        void ProcessHeader(string raw) {
-            // end of headers
-            if (raw.Length == 0) {
-                if (conn && upgrade && version && proto && verKey != null) {
-                    AcceptConnection();
-                } else {
-                    // don't pretend to be a http server (so IP:port isn't marked as one by bots)
-                    Close();
-                }
-            }
-            
-            int sep = raw.IndexOf(':');
-            if (sep == -1) return; // not a proper header
-            string key = raw.Substring(0, sep);
-            string val = raw.Substring(sep + 1).Trim();
-            
-            if (key.CaselessEq("Connection")) {
-                conn    = val.CaselessContains("Upgrade");
-            } else if (key.CaselessEq("Upgrade")) {
-                upgrade = val.CaselessEq("websocket");
-            } else if (key.CaselessEq("Sec-WebSocket-Version")) {
-                version = val.CaselessEq("13");
-            } else if (key.CaselessEq("Sec-WebSocket-Key")) {
-                verKey  = val;
-            } else if (key.CaselessEq("Sec-WebSocket-Protocol")) {
-                proto   = val.CaselessEq("ClassiCube");
-            }
+        protected override void HandleData(byte[] data, int len) {
+            HandleReceived(data, len);
         }
         
-        int ReadHeaders(byte[] buffer, int bufferLen) {
-            int i;
-            for (i = 0; i < bufferLen - 1; ) {
-                int end = -1;
-                
-                // find end of header
-                for (int j = i; j < bufferLen - 1; j++) {
-                    if (buffer[j] != '\r' || buffer[j + 1] != '\n') continue;
-                    end = j; break;
-                }
-                
-                if (end == -1) break;
-                string value = Encoding.ASCII.GetString(buffer, i, end - i);
-                ProcessHeader(value);
-                i = end + 2;
-            }
-            return i;
-        }
-        
-        int state, opcode, frameLen, maskRead, frameRead;
-        byte[] mask = new byte[4], frame;
-        
-        const int state_header1 = 0;
-        const int state_header2 = 1;
-        const int state_extLen1 = 2;
-        const int state_extLen2 = 3;
-        const int state_mask    = 4;
-        const int state_data    = 5;
-        
-        void DecodeFrame() {
-            for (int i = 0; i < frameLen; i++) {
-                frame[i] ^= mask[i & 3];
-            }
-            
-            switch (opcode) {
-                    // TODO: reply to ping frames
-                case 0x00:
-                case 0x02:
-                    if (frameLen == 0) return;
-                    HandleReceived(frame, frameLen);
-                    break;
-                case 0x08:
-                    // Connection is getting closed
-                    Disconnect(1000); break;
-                default:
-                    Disconnect(1003); break;
-            }
-        }
-        
-        int ProcessData(byte[] data, int offset, int len) {
-            switch (state) {
-                case state_header1:
-                    if (offset >= len) break;
-                    opcode = data[offset++] & 0x0F;
-                    state  = state_header2;
-                    goto case state_header2;
-                    
-                case state_header2:
-                    if (offset >= len) break;
-                    int flags = data[offset++] & 0x7F;
-                    
-                    if (flags == 127) {
-                        // unsupported 8 byte extended length
-                        Disconnect(1009);
-                        return len;
-                    } else if (flags == 126) {
-                        // two byte extended length
-                        state = state_extLen1;
-                        goto case state_extLen1;
-                    } else {
-                        // length is inline
-                        frameLen = flags;
-                        state    = state_mask;
-                        goto case state_mask;
-                    }
-                    
-                case state_extLen1:
-                    if (offset >= len) break;
-                    frameLen = data[offset++] << 8;
-                    state    = state_extLen2;
-                    goto case state_extLen2;
-                    
-                case state_extLen2:
-                    if (offset >= len) break;
-                    frameLen |= data[offset++];
-                    state     = state_mask;
-                    goto case state_mask;
-                    
-                case state_mask:
-                    for (; maskRead < 4; maskRead++) {
-                        if (offset >= len) return offset;
-                        mask[maskRead] = data[offset++];
-                    }
-                    
-                    state = state_data;
-                    goto case state_data;
-                    
-                case state_data:
-                    if (frame == null || frameLen > frame.Length) frame = new byte[frameLen];
-                    int copy = Math.Min(len - offset, frameLen - frameRead);
-                    
-                    Buffer.BlockCopy(data, offset, frame, frameRead, copy);
-                    offset += copy; frameRead += copy;
-                    
-                    if (frameRead == frameLen) {
-                        DecodeFrame();
-                        maskRead  = 0;
-                        frameRead = 0;
-                        state     = state_header1;
-                    }
-                    break;
-            }
-            return offset;
-        }
-        
-        int INetProtocol.ProcessReceived(byte[] buffer, int bufferLen) {
-            int offset = 0;
-            if (readingHeaders) {
-                offset = ReadHeaders(buffer, bufferLen);
-                if (readingHeaders) return offset;
-            }
-            
-            while (offset < bufferLen) {
-                offset = ProcessData(buffer, offset, bufferLen);
-            }
-            return offset;
-        }
-        
-        static byte[] WrapData(byte[] data) {
-            int headerLen = 2 + (data.Length >= 126 ? 2 : 0);
-            byte[] packet = new byte[headerLen + data.Length];
-            packet[0] = 0x82; // FIN bit, binary opcode
-            
-            if (headerLen > 2) {
-                packet[1] = 126;
-                packet[2] = (byte)(data.Length >> 8);
-                packet[3] = (byte)data.Length;
-            } else {
-                packet[1] = (byte)data.Length;
-            }
-            Buffer.BlockCopy(data, 0, packet, headerLen, data.Length);
-            return packet;
-        }
-        
-        public override void Send(byte[] buffer, bool sync) {
-            s.Send(WrapData(buffer), sync);
-        }
-        public override void SendLowPriority(byte[] buffer) {
-            s.SendLowPriority(WrapData(buffer));
-        }
-        
-        void Disconnect(int reason) {
-            byte[] packet = new byte[4];
-            packet[0] = 0x88; // FIN BIT, close opcode
-            packet[1] = 2;
-            packet[2] = (byte)(reason >> 8);
-            packet[3] = (byte)reason;
-            
+        protected override void Disconnect(int reason) {
+            base.Disconnect(reason);
             if (protocol != null) protocol.Disconnect();
-            s.Send(packet, true);
             s.Close();
         }
         
-        public void Disconnect() { Disconnect(1000); }
         public override void Close() { s.Close(); }
     }
+    
+#if SECURE_WEBSOCKETS
+// This code is unfinished and experimental, and is terrible quality. I apologise in advance.
+    public sealed class SecureSocket : INetSocket, INetProtocol {
+        readonly INetSocket raw;
+        WrapperStream wrapper;
+        SslStream ssl;
+        
+        public SecureSocket(INetSocket socket) {
+            raw = socket;
+            
+            wrapper = new WrapperStream();
+            wrapper.s = this;
+            
+            ssl = new SslStream(wrapper);
+            new Thread(IOThread).Start();
+        }
+        
+        // Init taken care by underlying socket
+        public override void Init() { }        
+        public override string IP { get { return raw.IP; } }
+        public override bool LowLatency { set { raw.LowLatency = value; } }
+        public override void Close() { raw.Close(); }
+        public void Disconnect() { Close(); }
+        
+        // This is an extremely UGLY HACK 
+        readonly object locker = new object();
+        public override void Send(byte[] buffer, SendFlags flags) {
+            try {
+                lock (locker) ssl.Write(buffer);
+            } catch (Exception ex) {
+                Logger.LogError("Error writing to secure stream", ex);
+            }
+        }
+        
+        public int ProcessReceived(byte[] data, int count) {
+            lock (wrapper.locker) {
+                for (int i = 0; i < count; i++) {
+                    wrapper.input.Add(data[i]);
+                }
+            }
+            return count;
+        }
+        
+        void IOThread() {
+            try {
+                // UGLY HACK I don't know what this file should even contain??? seems you need public and private key
+                X509Certificate2 cert = new X509Certificate2(Server.Config.SslCertPath, Server.Config.SslCertPass);
+                ssl.AuthenticateAsServer(cert);
+                
+                Server.s.Log(".. reading player packets ..");
+                byte[] buffer = new byte[4096];
+                for (;;) {
+                    int read = ssl.Read(buffer, 0, 4096);
+                    if (read == 0) break;
+                    this.HandleReceived(buffer, read);
+                }
+            } catch (Exception ex) {
+                Logger.LogError("Error reading from secure stream", ex);
+            }
+        }
+        
+        // UGLY HACK because can't derive from two base classes
+        sealed class WrapperStream : Stream {
+            public SecureSocket s;
+            public readonly object locker = new object();
+            public readonly List<byte> input = new List<byte>();
+            
+            public override bool CanRead { get { return true; } }
+            public override bool CanSeek { get { return false; } }
+            public override bool CanWrite { get { return true; } }
+            
+            static Exception ex = new NotSupportedException();
+            public override void Flush() { }
+            public override long Length { get { throw ex; } }
+            public override long Position { get { throw ex; } set { throw ex; } }
+            public override long Seek(long offset, SeekOrigin origin) { throw ex; }
+            public override void SetLength(long length) { throw ex; }
+            
+            public override int Read(byte[] buffer, int offset, int count) {
+                // UGLY HACK wait until got some data
+                for (;;) {
+                    lock (locker) { if (input.Count > 0) break; }
+                    Thread.Sleep(1);
+                }
+                
+                // now actually output the data
+                lock (locker) {
+                    count = Math.Min(count, input.Count);
+                    for (int i = 0; i < count; i++) {
+                        buffer[offset++] = input[i];
+                    }
+                    input.RemoveRange(0, count);
+                }
+                return count;
+            }
+            
+            public override void Write(byte[] buffer, int offset, int count) {
+                byte[] data = new byte[count];
+                Buffer.BlockCopy(buffer, offset, data, 0, count);
+                s.raw.Send(data, false);
+            }
+        }
+    }
+#endif
 }

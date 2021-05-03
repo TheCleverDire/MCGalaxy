@@ -45,7 +45,7 @@ namespace MCGalaxy.Commands.Chatting {
                 if (args.Length == 1) {
                     p.Message("You need to provide either \"all\" or a number."); return;
                 } else if (args[1].CaselessEq("all")) {
-                    Database.Backend.DeleteRows("Inbox" + p.name);
+                    Database.DeleteRows("Inbox" + p.name);
                     p.Message("Deleted all messages.");
                 } else {
                     DeleteByID(p, args[1], entries);
@@ -63,8 +63,8 @@ namespace MCGalaxy.Commands.Chatting {
                 p.Message("Message #{0} does not exist.", num);
             } else {
                 string[] entry = entries[num - 1];
-                Database.Backend.DeleteRows("Inbox" + p.name,
-                                            "WHERE PlayerFrom=@0 AND TimeSent=@1", entry[i_from], entry[i_sent]);
+                Database.DeleteRows("Inbox" + p.name,
+                                    "WHERE PlayerFrom=@0 AND TimeSent=@1", entry[i_from], entry[i_sent]);
                 p.Message("Deleted message #{0}", num);
             }
         }
@@ -83,20 +83,20 @@ namespace MCGalaxy.Commands.Chatting {
         static void Output(Player p, string[] entry) {
             DateTime time = entry[i_sent].ParseDBDate();
             TimeSpan delta = DateTime.Now - time;
-            string sender = PlayerInfo.GetColoredName(p, entry[i_from]);
+            string sender = p.FormatNick(entry[i_from]);
             
             p.Message("From {0} &a{1} ago:", sender, delta.Shorten());
             p.Message(entry[i_text]);
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Inbox");
-            p.Message("%HDisplays all your messages.");
-            p.Message("%T/Inbox [num]");
-            p.Message("%HDisplays the message at [num]");
-            p.Message("%T/Inbox del [num]/all");
-            p.Message("%HDeletes the message at [num], deletes all messages if \"all\"");
-            p.Message("  %HUse %T/Send %Hto reply to a message");
+            p.Message("&T/Inbox");
+            p.Message("&HDisplays all your messages.");
+            p.Message("&T/Inbox [num]");
+            p.Message("&HDisplays the message at [num]");
+            p.Message("&T/Inbox del [num]/all");
+            p.Message("&HDeletes the message at [num], deletes all messages if \"all\"");
+            p.Message("  &HUse &T/Send &Hto reply to a message");
         }
     }
 }

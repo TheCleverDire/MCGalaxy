@@ -51,8 +51,12 @@ namespace MCGalaxy {
             p.Message("When using /{0} from {2}, you must provide a {1}.", cmd, type, p.SuperName);
         }
         
+        protected bool HasExtraPerm(Player p, string cmd, LevelPermission plRank, int num) {
+            return CommandExtraPerms.Find(cmd, num).UsableBy(plRank);
+        }
+        
         protected bool HasExtraPerm(Player p, LevelPermission plRank, int num) {
-            return CommandExtraPerms.Find(name, num).UsableBy(plRank);
+            return HasExtraPerm(p, name, plRank, num);
         }
         
         protected bool CheckExtraPerm(Player p, CommandData data, int num) {
@@ -63,28 +67,39 @@ namespace MCGalaxy {
             return false;
         }
         
-        protected internal static bool CheckRank(Player p, CommandData data, Player who, 
+        protected internal static bool CheckRank(Player p, CommandData data, Player target, 
                                                  string action, bool canAffectOwnRank) {
-            return p == who || CheckRank(p, data, who.Rank, action, canAffectOwnRank);
+            return CheckRank(p, data, target.name, target.Rank, action, canAffectOwnRank);
         }
         
-        protected internal static bool CheckRank(Player p, CommandData data, LevelPermission rank, 
+        protected internal static bool CheckRank(Player p, CommandData data, 
+                                                 string plName, LevelPermission plRank,
                                                  string action, bool canAffectOwnRank) {
-            if (canAffectOwnRank && rank <= data.Rank) return true;
-            if (!canAffectOwnRank && rank < data.Rank) return true;
+            if (p.name.CaselessEq(plName)) return true;
+            if (p.IsConsole || plRank < data.Rank) return true;
+            if (canAffectOwnRank && plRank == data.Rank) return true;
             
-            if (canAffectOwnRank)
-                p.Message("Can only {0} players ranked {1} %Sor below", action, p.group.ColoredName);
-            else
+            if (canAffectOwnRank) {
+                p.Message("Can only {0} players ranked {1} &Sor below", action, p.group.ColoredName);
+            } else {
                 p.Message("Can only {0} players ranked below {1}", action, p.group.ColoredName);
+            }
             return false;
         }
+        
+        protected string CheckOwn(Player p, string name, string type) {
+            if (name.CaselessEq("-own")) {
+                if (p.IsSuper) { SuperRequiresArgs(p, type); return null; }
+                return p.name;
+            }
+            return name;
+        }
+        
         
         protected static bool IsListModifier(string str) {
             int ignored;
             return str.CaselessEq("all") || int.TryParse(str, out ignored);
-        }
-        
+        }      
         
         protected internal static bool IsCreateCommand(string str) {
             return str.CaselessEq("create") || str.CaselessEq("add") || str.CaselessEq("new");

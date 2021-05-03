@@ -1,5 +1,5 @@
 /*
-    Copyright 2015 MCGalaxy team
+    Copyright 2015 MCGalaxy
     
     Dual-licensed under the Educational Community License, Version 2.0 and
     the GNU General Public License, Version 3 (the "Licenses"); you may
@@ -42,7 +42,7 @@ namespace MCGalaxy.Commands.Maintenance {
             if (args[0] == null) return;
             Player who = PlayerInfo.FindExact(args[0]);
             if (args.Length == 1) {
-                p.Message("%WYou must specify a type to modify.");
+                p.Message("&WYou must specify a type to modify.");
                 MessageValidTypes(p); return;
             }
             
@@ -83,23 +83,23 @@ namespace MCGalaxy.Commands.Maintenance {
                 
                 IPAddress ip;
                 if (!IPAddress.TryParse(args[2], out ip)) {
-                    p.Message("%W\"{0}\" is not a valid IP address.", args[2]); return;
+                    p.Message("&W\"{0}\" is not a valid IP address.", args[2]); return;
                 }
                 
                 if (who != null) who.ip = args[2];
                 PlayerDB.Update(args[0], PlayerData.ColumnIP, args[2]);
                 MessageDataChanged(p, args[0], args[1], args[2]);
             }  else if (opt == "modified") {
-                SetInteger(p, args, PlayerData.ColumnTotalBlocks, int.MaxValue, who,
+                SetInteger(p, args, PlayerData.ColumnBlocks, int.MaxValue, who,
                            v => who.TotalModified = v, type_lo);
             } else if (opt == "drawn") {
-                SetInteger(p, args, PlayerData.ColumnTotalCuboided, int.MaxValue, who,
+                SetInteger(p, args, PlayerData.ColumnDrawn, int.MaxValue, who,
                            v => who.TotalDrawn = v, type_lo);
             } else if (opt == "placed") {
-                SetInteger(p, args, PlayerData.ColumnTotalBlocks, int.MaxValue, who,
+                SetInteger(p, args, PlayerData.ColumnBlocks, int.MaxValue, who,
                            v => who.TotalPlaced = v, type_hi);
             } else if (opt == "deleted") {
-                SetInteger(p, args, PlayerData.ColumnTotalCuboided, int.MaxValue, who,
+                SetInteger(p, args, PlayerData.ColumnDrawn, int.MaxValue, who,
                            v => who.TotalDeleted = v, type_hi);
             } else if (opt == "totalkicked") {
                 SetInteger(p, args, PlayerData.ColumnKicked, 16777215, who,
@@ -112,12 +112,12 @@ namespace MCGalaxy.Commands.Maintenance {
                             v => who.TotalTime = v);
             } else if (opt == "color") {
                 SetColor(p, args, PlayerData.ColumnColor, who,
-                         v => who.color = (v.Length == 0 ? who.group.Color : v));
+                         v => who.UpdateColor(v.Length == 0 ? who.group.Color : v));
             } else if (opt == "titlecolor") {
                 SetColor(p, args, PlayerData.ColumnTColor, who,
                          v => who.titlecolor = v);
             } else {
-                p.Message("%WInvalid type");
+                p.Message("&WInvalid type");
                 MessageValidTypes(p);
             }
         }
@@ -179,8 +179,8 @@ namespace MCGalaxy.Commands.Maintenance {
         
         static object ReadLong(IDataRecord record, object arg) { return record.GetInt64(0); }
         static long GetLong(string name, string column) {
-            return (long)Database.Backend.ReadRows("Players", column, null, ReadLong,
-                                                   "WHERE Name=@0", name);
+            return (long)Database.ReadRows("Players", column, null, ReadLong,
+        	                               "WHERE Name=@0", name);
         }
         
         static void SetInteger(Player p, string[] args, string column, int max, Player who,
@@ -198,12 +198,12 @@ namespace MCGalaxy.Commands.Maintenance {
                 string dbValue = args[2];
                 // special case handling for packed forms of totalBlocks and totalCuboided
                 if (type == 1) {
-                    long packed = GetLong(args[0], column) & ~PlayerData.LowerBitsMask; // hi value only
+                    long packed = GetLong(args[0], column) & ~PlayerData.LoBitsMask; // hi value only
                     packed |= (uint)value;
                     dbValue = packed.ToString();
                 } else if (type == 2) {
-                    long packed = GetLong(args[0], column) & PlayerData.LowerBitsMask; // lo value only
-                    packed |= ((long)value) << PlayerData.LowerBits;
+                    long packed = GetLong(args[0], column) & PlayerData.LoBitsMask; // lo value only
+                    packed |= ((long)value) << PlayerData.HiBitsShift;
                     dbValue = packed.ToString();
                 }
                 PlayerDB.Update(args[0], column, dbValue);
@@ -213,24 +213,24 @@ namespace MCGalaxy.Commands.Maintenance {
 
         
         static void MessageDataChanged(Player p, string name, string type, string value) {
-            name = PlayerInfo.GetColoredName(p, name);
+            name = p.FormatNick(name);
             if (value.Length == 0) {
-                p.Message("The {1} data for &b{0} %Shas been reset.", name, type);
+                p.Message("The {1} data for &b{0} &Shas been reset.", name, type);
             } else {
-                p.Message("The {1} data for &b{0} %Shas been updated to &a{2}%S.", name, type, value);
+                p.Message("The {1} data for &b{0} &Shas been updated to &a{2}&S.", name, type, value);
             }
         }
 
         static void MessageValidTypes(Player p) {
-            p.Message("%HValid types: %SFirstLogin, LastLogin, Logins, Title, IP, Deaths, Money, " +
+            p.Message("&HValid types: &SFirstLogin, LastLogin, Logins, Title, IP, Deaths, Money, " +
                       "Modified, Drawn, Placed, Deleted, TotalKicked, TimeSpent, Color, TitleColor, Messages ");
         }
         
         public override void Help(Player p) {
-            p.Message("%T/PlayerEdit [username] [type] <value>");
-            p.Message("%HEdits an online or offline player's information. Use with caution!");
+            p.Message("&T/PlayerEdit [username] [type] <value>");
+            p.Message("&HEdits an online or offline player's information. Use with caution!");
             MessageValidTypes(p);
-            p.Message("%HTo see value format for a specific type, leave <value> blank.");
+            p.Message("&HTo see value format for a specific type, leave <value> blank.");
         }
     }
 }

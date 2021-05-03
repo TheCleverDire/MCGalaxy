@@ -32,28 +32,25 @@ namespace MCGalaxy.Commands.Info {
 
         public override void Use(Player p, string message, CommandData data) {
             string[] args = message.SplitSpaces();
-            string modifier = args.Length > 1 ? args[1] : "";            
+            string modifier = args.Length > 1 ? args[1] : "";
             string type = args[0];
             BlockID block;
             
             if (type.Length == 0 || type.CaselessEq("basic")) {
                 p.Message("Basic blocks: ");
-                MultiPageOutput.Output(p, BasicBlocks(), 
-                                       b => FormatBlockName(p, b),
-                                       "Blocks basic", "blocks", modifier, false);
+                OutputBlocks(p, "basic", modifier,
+                             b => !Block.IsPhysicsType(b));
             } else if (type.CaselessEq("all") || type.CaselessEq("complex")) {
                 p.Message("Complex blocks: ");
-                MultiPageOutput.Output(p, ComplexBlocks(), 
-                                       b => FormatBlockName(p, b),
-                                       "Blocks complex", "blocks", modifier, false);
+                OutputBlocks(p, "complex", modifier,
+                             b => Block.IsPhysicsType(b));
             } else if ((block = Block.Parse(p, type)) != Block.Invalid) {
                 OutputBlockInfo(p, block);
             } else if (Group.Find(type) != null) {
                 Group grp = Group.Find(type);
-                p.Message("Blocks which {0} %Scan place: ", grp.ColoredName);
-                MultiPageOutput.Output(p, RankBlocks(grp.Permission), 
-                                       b => FormatBlockName(p, b),
-                                       "Blocks " + type, "blocks", modifier, false);
+                p.Message("Blocks which {0} &Scan place: ", grp.ColoredName);
+                OutputBlocks(p, type, modifier,
+                             b => grp.Blocks[b]);
             } else if (args.Length > 1) {
                 Help(p);
             } else {
@@ -61,30 +58,14 @@ namespace MCGalaxy.Commands.Info {
             }
         }
         
-        static List<BlockID> BasicBlocks() {
-            List<BlockID> blocks = new List<BlockID>(Block.CpeCount);
-            for (BlockID block = Block.Air; block < Block.CpeCount; block++) { 
-                blocks.Add(block); 
+        static void OutputBlocks(Player p, string type, string modifier, Predicate<BlockID> selector) {
+            List<BlockID> blocks = new List<BlockID>(Block.ExtendedCount);
+            for (BlockID b = 0; b < Block.ExtendedCount; b++) {
+                if (Block.ExistsFor(p, b) && selector(b)) blocks.Add(b);
             }
-            return blocks;
-        }
-        
-        static List<BlockID> ComplexBlocks() {
-            List<BlockID> blocks = new List<BlockID>(Block.Count);
-            for (BlockID block = Block.CpeCount; block < Block.Count; block++) {
-                if (Block.ExistsGlobal(block)) blocks.Add(block);
-            }
-            return blocks;
-        }
-        
-        static List<BlockID> RankBlocks(LevelPermission perm) {
-            List<BlockID> blocks = new List<BlockID>(Block.Count);
-            foreach (BlockPerms perms in BlockPerms.List) {
-                if (!perms.UsableBy(perm)) continue;
-                if (!Block.ExistsGlobal(perms.ID)) continue;
-                blocks.Add(perms.ID);
-            }
-            return blocks;
+
+            MultiPageOutput.Output(p, blocks, b => FormatBlockName(p, b),
+                                   "Blocks " + type, "blocks", modifier, false);
         }
         
         internal static string FormatBlockName(Player p, BlockID block) {
@@ -117,17 +98,17 @@ namespace MCGalaxy.Commands.Info {
         }
         
         static void OutputPhysicsInfo(Player p, BlockProps[] scope, BlockID b) {
-            BlockProps props = scope[b];
             BlockID conv = Block.Convert(b);
             p.Message("&c  Appears as a \"{0}\" block", Block.GetName(p, conv));
 
+            // TODO: Use scope[b] instead of hardcoded global
             if (Block.LightPass(b))   p.Message("  Allows light through");
             if (Block.NeedRestart(b)) p.Message("  The block's physics will auto-start");
             
             if (Physics(scope, b)) {
-                p.Message("  Affects physics in some way"); //AFFECT!
+                p.Message("  Affects physics in some way");
             } else {
-                p.Message("  Does not affect physics in any way"); //It's AFFECT!
+                p.Message("  Does not affect physics in any way");
             }
 
             if (Block.AllowBreak(b))     p.Message("  Anybody can activate this block");
@@ -149,11 +130,11 @@ namespace MCGalaxy.Commands.Info {
         }
         
         public override void Help(Player p) {
-            p.Message("%T/Blocks %H- Lists all basic blocks");
-            p.Message("%T/Blocks complex %H- Lists all complex blocks");
-            p.Message("%T/Blocks [block] %H- Lists information about that block");
-            p.Message("%T/Blocks [rank] %H- Lists all blocks [rank] can use");
-            p.Message("%HTo see available ranks, type %T/ViewRanks");
+            p.Message("&T/Blocks &H- Lists all basic blocks");
+            p.Message("&T/Blocks complex &H- Lists all complex blocks");
+            p.Message("&T/Blocks [block] &H- Lists information about that block");
+            p.Message("&T/Blocks [rank] &H- Lists all blocks [rank] can use");
+            p.Message("&HTo see available ranks, type &T/ViewRanks");
         }
     }
 }
